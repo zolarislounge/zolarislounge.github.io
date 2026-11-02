@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zolaris Lounge</title>
+<meta name="theme-color" content="#3D0D0B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Cormorant+Garamond:wght@400;500&family=Josefin+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --maroon:#3D0D0B; --maroon-2:#5A1A16; --maroon-soft:#F4ECEA;
+  --ink:#1E1413; --muted:#7A6A68; --line:#E8DEDC; --bg:#FFFFFF; --cream:#FAF6F4;
+  --fa:'Vazirmatn',system-ui,sans-serif; --lat:'Cormorant Garamond',serif; --brand:'Josefin Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--fa);color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+img{display:block;max-width:100%}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+.ph{outline:1px dashed #C9A9A4;outline-offset:2px;border-radius:2px} /* placeholder marker */
+
+/* announcement */
+.announce{background:var(--maroon);color:#F3E6E3;font-size:12.5px;line-height:1.9;text-align:center;padding:8px 16px;letter-spacing:.2px}
+
+/* header */
+header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{height:34px;width:auto}
+.brand span{font-family:var(--brand);font-weight:300;letter-spacing:3px;font-size:15px;color:var(--maroon);direction:ltr;white-space:nowrap;display:none}
+@media (min-width:480px){.brand span{display:inline}}
+.nav{display:none;gap:28px;font-size:14px}
+.nav a{color:var(--muted);transition:color .2s}
+.nav a:hover,.nav a.on{color:var(--maroon)}
+.icons{display:flex;align-items:center;gap:4px}
+.ib{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;position:relative;transition:background .2s}
+.ib:hover{background:var(--maroon-soft)}
+.ib svg{width:21px;height:21px;stroke:var(--ink);fill:none;stroke-width:1.5}
+.badge{position:absolute;top:4px;left:4px;min-width:17px;height:17px;border-radius:9px;background:var(--maroon);color:#fff;font-size:10px;display:grid;place-items:center;padding:0 4px}
+.badge[data-n="0"]{display:none}
+
+/* hero */
+.hero{background:var(--maroon);color:#fff;position:relative;overflow:hidden}
+.hero .wrap{display:grid;gap:24px;padding-top:44px;padding-bottom:44px;align-items:center}
+.hero h1{font-weight:300;font-size:clamp(28px,6vw,52px);line-height:1.35}
+.hero h1 em{font-style:normal;font-family:var(--brand);letter-spacing:4px;font-size:.62em;display:block;color:#D9BDB7;direction:ltr;text-align:right;margin-bottom:6px}
+.hero p{color:#E3CFCB;max-width:440px;font-size:15px}
+.hero .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 26px;font-size:14px;transition:all .2s;white-space:nowrap}
+.btn-light{background:#fff;color:var(--maroon)}
+.btn-light:hover{background:var(--maroon-soft)}
+.btn-ghost{border:1px solid rgba(255,255,255,.45);color:#fff}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.hero-mark{justify-self:center;width:min(38vw,150px);opacity:.95}
+@media (min-width:768px){.hero-mark{width:300px}}
+.hero-mark img{width:100%}
+.hero::after{content:"";position:absolute;inset:auto -10% -40% auto;width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%)}
+
+/* categories */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:22px 0 6px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.chip{flex:none;height:38px;padding:0 18px;border:1px solid var(--line);border-radius:20px;font-size:13.5px;color:var(--muted);transition:all .2s}
+.chip:hover{border-color:var(--maroon);color:var(--maroon)}
+.chip.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
+
+/* toolbar */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;font-size:13px;color:var(--muted)}
+.bar button{display:flex;align-items:center;gap:6px;color:var(--ink)}
+.bar svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5}
+.bar select{font:inherit;border:0;background:none;color:var(--ink);cursor:pointer}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px 14px;padding-bottom:20px}
+.card{display:flex;flex-direction:column;text-align:center}
+.media{position:relative;aspect-ratio:3/4;background:var(--cream);overflow:hidden;display:grid;place-items:center}
+.media .ph-img{width:100%;height:100%;display:grid;place-items:center;color:#B9A19C;font-size:12px;gap:6px;transition:transform .5s}
+.media .ph-img img{width:34%;opacity:.12}
+.card:hover .ph-img{transform:scale(1.03)}
+.fav{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.fav svg{width:17px;height:17px;stroke:var(--ink);fill:none;stroke-width:1.5;transition:all .2s}
+.fav.on svg{fill:var(--maroon);stroke:var(--maroon)}
+.tag{position:absolute;top:12px;left:12px;font-size:11px;padding:2px 10px;background:#fff;color:var(--muted)}
+.tag.new{background:var(--maroon);color:#fff}
+.name{font-family:var(--lat);font-size:19px;margin-top:12px;direction:ltr;line-height:1.3}
+.cat{font-size:12px;color:var(--muted)}
+.price{font-size:14px;margin:2px 0 10px}
+.price s{color:var(--muted);font-size:12px;margin-left:6px}
+.add{height:40px;background:var(--maroon);color:#fff;font-size:13px;margin:0 auto;padding:0 18px;transition:background .2s;width:100%;max-width:200px}
+.add:hover{background:var(--maroon-2)}
+.add.out{background:#fff;color:var(--muted);border:1px solid var(--line);cursor:default}
+.more{display:block;margin:12px auto 56px;height:46px;padding:0 34px;border:1px solid var(--maroon);color:var(--maroon);font-size:14px;transition:all .2s}
+.more:hover{background:var(--maroon);color:#fff}
+
+/* features strip */
+.feat{background:var(--cream);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.feat .wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;padding-top:32px;padding-bottom:32px}
+.feat div{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;font-size:13.5px}
+.feat svg{width:26px;height:26px;stroke:var(--maroon);fill:none;stroke-width:1.3}
+.feat small{color:var(--muted);font-size:12px}
+
+/* footer */
+footer{background:var(--maroon);color:#E3CFCB;font-size:13.5px}
+footer .wrap{display:grid;gap:32px;padding-top:48px;padding-bottom:28px}
+footer h4{color:#fff;font-weight:500;font-size:14px;margin-bottom:10px}
+footer li{list-style:none;margin:4px 0}
+footer a:hover{color:#fff}
+.f-brand img{height:110px;width:auto;margin-bottom:10px}
+.copy{border-top:1px solid rgba(255,255,255,.12);padding:16px;text-align:center;font-size:12px;color:#BFA19B}
+
+/* whatsapp */
+.wa{position:fixed;bottom:18px;left:18px;width:52px;height:52px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:30}
+.wa svg{width:28px;height:28px;fill:#fff}
+
+/* drawers */
+.scrim{position:fixed;inset:0;background:rgba(30,10,8,.45);opacity:0;pointer-events:none;transition:opacity .3s;z-index:50}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;width:min(84vw,340px);background:#fff;z-index:60;transition:transform .35s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.drawer.r{right:0;transform:translateX(100%)}
+.drawer.l{left:0;transform:translateX(-100%)}
+.drawer.on{transform:none}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:500}
+.dlist a{display:flex;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);font-size:14px}
+.dlist a:hover{color:var(--maroon);background:var(--cream)}
+.fgroup{padding:16px 20px;border-bottom:1px solid var(--line)}
+.fgroup h5{font-size:13px;font-weight:500;margin-bottom:10px}
+.sizes{display:flex;flex-wrap:wrap;gap:8px}
+.sizes button{min-width:42px;height:36px;border:1px solid var(--line);font-size:12px;direction:ltr}
+.sizes button.on{border-color:var(--maroon);background:var(--maroon);color:#fff}
+.swatches{display:flex;gap:10px}
+.swatches span{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);cursor:pointer}
+.dfoot{margin-top:auto;padding:16px 20px;display:flex;gap:10px}
+.dfoot .btn{flex:1}
+.btn-m{background:var(--maroon);color:#fff}
+.btn-o{border:1px solid var(--line)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+.toast{position:fixed;bottom:84px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;font-size:13px;padding:10px 18px;opacity:0;transition:all .3s;z-index:70;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (min-width:768px){
+  .hero .wrap{grid-template-columns:1.2fr 1fr;padding-top:80px;padding-bottom:80px}
+  .grid{grid-template-columns:repeat(3,1fr);gap:40px 22px}
+  .feat .wrap{grid-template-columns:repeat(4,1fr)}
+  footer .wrap{grid-template-columns:1.3fr 1fr 1fr 1fr}
+}
+@media (min-width:1024px){
+  .nav{display:flex}
+  .menu-btn{display:none!important}
+  .grid{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="announce">سفارشات طبق روال هر هفته دو بار ارسال می‌شود.<br>برای ارتباط با ما در واتس‌اپ و بله با شماره <a href="tel:09121816762" dir="ltr" style="white-space:nowrap;text-decoration:underline;text-underline-offset:3px">۰۹۱۲۱۸۱۶۷۶۲</a> در ارتباط باشید.</div>
+
+<header>
+  <div class="wrap hdr">
+    <a href="#" class="brand" aria-label="Zolaris Lounge">
+      <img src="assets/logo-z-maroon.png" alt="">
+      <span>ZOLARIS LOUNGE</span>
+    </a>
+    <nav class="nav">
+      <a href="#" class="on">صفحه اصلی</a>
+      <a href="#shop">فروشگاه</a>
+      <a href="#shop">جدیدترین‌ها</a>
+      <a href="#about">درباره ما</a>
+      <a href="#contact">تماس با ما</a>
+    </nav>
+    <div class="icons">
+      <button class="ib" aria-label="جستجو"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      <button class="ib" aria-label="حساب کاربری"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
+      <button class="ib" aria-label="علاقه‌مندی‌ها"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg><span class="badge" id="favN" data-n="0">0</span></button>
+      <button class="ib" aria-label="سبد خرید" data-open="cart"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="badge" id="cartN" data-n="0">0</span></button>
+      <button class="ib menu-btn" aria-label="منو" data-open="menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1><em>ZOLARIS LOUNGE</em>طراحی شده برای زنانی که الهام‌بخش هستند</h1>
+      <div class="cta">
+        <a href="#shop" class="btn btn-light">مشاهده محصولات</a>
+        <a href="#shop" class="btn btn-ghost">جدیدترین‌ها</a>
+      </div>
+    </div>
+    <div class="hero-mark"><img src="assets/logo-z-white.png" alt="Zolaris"></div>
+  </div>
+</section>
+
+<main class="wrap" id="shop">
+  <div class="cats" id="cats"></div>
+  <div class="bar">
+    <button data-open="filter"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>فیلترها</button>
+    <span id="count"></span>
+    <select aria-label="مرتب‌سازی"><option>جدیدترین</option><option>ارزان‌ترین</option><option>گران‌ترین</option></select>
+  </div>
+  <div class="grid" id="grid"></div>
+  <button class="more" id="more">نمایش بیشتر</button>
+</main>
+
+<section class="feat">
+  <div class="wrap">
+    <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg>ارسال سفارشات<small>هر هفته دو مرتبه</small></div>
+    <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg>امکان تعویض<small class="ph">[شرایط تعویض/مرجوعی]</small></div>
+    <div><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>پرداخت امن<small class="ph">[نام درگاه پرداخت]</small></div>
+    <div><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>پشتیبانی<small class="ph">[ساعات پاسخگویی]</small></div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="f-brand" id="about">
+      <img src="assets/logo-full-white.png" alt="Zolaris Lounge">
+      <p>طراحی شده برای زنانی که الهام‌بخش هستند</p>
+    </div>
+    <div><h4>فروشگاه</h4><ul><li><a href="#shop">همه محصولات</a></li><li><a href="#shop">جدیدترین‌ها</a></li><li><a href="#shop">حراج</a></li></ul></div>
+    <div><h4>راهنما</h4><ul><li><a href="#">راهنمای سایز</a></li><li><a href="#">شرایط ارسال</a></li><li><a href="#">تعویض و مرجوعی</a></li><li><a href="#">سوالات متداول</a></li></ul></div>
+    <div><h4>تماس با ما</h4><ul><li>تلفن و واتس‌اپ/بله: <a href="tel:09121816762" dir="ltr" style="white-space:nowrap">۰۹۱۲۱۸۱۶۷۶۲</a></li><li>آدرس: قزوین، فلسطین، روبه‌روی مخابرات، بین کافه سور و هایپرمارکت، پلاک ۳۸۰، طبقه ۳، واحد زولاریس</li><li>اینستاگرام: <a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" dir="ltr">@zolaris.lounge</a></li><li class="ph">[جای نماد اعتماد (اینماد)]</li></ul></div>
+  </div>
+  <div class="copy">© Zolaris Lounge — تمام حقوق محفوظ است</div>
+</footer>
+
+<a class="wa" href="https://wa.me/989121816762" target="_blank" rel="noopener" aria-label="گفتگو در واتس‌اپ"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg></a>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer r" id="menu">
+  <div class="dh">منو<button class="ib" data-close><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="dlist" id="menuList"></div>
+</aside>
+
+<aside class="drawer r" id="filter">
+  <div class="dh">فیلترها<button class="ib" data-close><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="fgroup"><h5>سایز</h5><div class="sizes" id="sizes"></div></div>
+  <div class="fgroup"><h5>رنگ</h5><div class="swatches"><span style="background:#111"></span><span style="background:#3D0D0B"></span><span style="background:#7B5A44"></span><span style="background:#C9B8A6"></span><span style="background:#fff"></span></div></div>
+  <div class="fgroup"><h5>موجودی</h5><label style="font-size:13px"><input type="checkbox"> فقط کالاهای موجود</label></div>
+  <div class="dfoot"><button class="btn btn-m" data-close>اعمال</button><button class="btn btn-o" id="clearF">حذف فیلترها</button></div>
+</aside>
+
+<aside class="drawer l" id="cart">
+  <div class="dh">سبد خرید<button class="ib" data-close><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div id="cartBody"></div>
+  <div class="dfoot"><button class="btn btn-m" style="flex:1">ادامه و پرداخت</button></div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS=['همه محصولات','مانتو و کت','پالتو','شومیز و تاپ','شلوار و دامن','تیشرت','هودی و پلیور','شال','کیف','کفش','اکسسوری'];
+// محصولات نمونه — باید با محصولات واقعی جایگزین شوند
+const P=Array.from({length:16},(_,i)=>({
+  id:i+1,name:'Sample '+String(i+1).padStart(2,'0'),
+  cat:CATS[1+(i%(CATS.length-1))],
+  price:null,
+  variable:i%3!==1, out:i===6||i===13, isNew:i<3
+}));
+const fa=n=>n.toLocaleString('fa-IR');
+let shown=8, cat=0, cart=[], favs=new Set();
+
+const cats=document.getElementById('cats');
+cats.innerHTML=CATS.map((c,i)=>`<button class="chip${i?'':' on'}" data-i="${i}">${c}</button>`).join('');
+cats.onclick=e=>{const b=e.target.closest('.chip');if(!b)return;cat=+b.dataset.i;shown=8;cats.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));render()};
+
+document.getElementById('menuList').innerHTML=['صفحه اصلی',...CATS,'درباره ما','تماس با ما'].map(c=>`<a href="#shop">${c}<span>‹</span></a>`).join('');
+document.getElementById('sizes').innerHTML=['XS','S','M','L','XL','XXL','Free'].map(s=>`<button>${s}</button>`).join('');
+document.getElementById('sizes').onclick=e=>e.target.tagName==='BUTTON'&&e.target.classList.toggle('on');
+document.getElementById('clearF').onclick=()=>document.querySelectorAll('#sizes .on').forEach(b=>b.classList.remove('on'));
+
+const heart='<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>';
+function render(){
+  const list=P.filter(p=>!cat||p.cat===CATS[cat]);
+  document.getElementById('count').textContent=fa(list.length)+' محصول نمونه';
+  document.getElementById('grid').innerHTML=list.slice(0,shown).map(p=>`
+    <article class="card">
+      <div class="media">
+        <div class="ph-img"><img src="assets/logo-z-maroon.png" alt="">جای عکس محصول</div>
+        <button class="fav${favs.has(p.id)?' on':''}" data-fav="${p.id}" aria-label="علاقه‌مندی">${heart}</button>
+        ${p.out?'<span class="tag">ناموجود</span>':p.isNew?'<span class="tag new">جدید</span>':''}
+      </div>
+      <h3 class="name">${p.name}</h3>
+      <div class="cat">${p.cat}</div>
+      <div class="price">[قیمت] تومان</div>
+      ${p.out?'<button class="add out" disabled>ناموجود</button>':`<button class="add" data-add="${p.id}">${p.variable?'انتخاب گزینه‌ها':'افزودن به سبد خرید'}</button>`}
+    </article>`).join('');
+  document.getElementById('more').style.display=list.length>shown?'block':'none';
+}
+document.getElementById('more').onclick=()=>{shown+=8;render()};
+
+const toast=t=>{const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1800)};
+const setBadge=(id,n)=>{const b=document.getElementById(id);b.dataset.n=n;b.textContent=fa(n)};
+function renderCart(){
+  setBadge('cartN',cart.length);
+  document.getElementById('cartBody').innerHTML=cart.length?cart.map((p,i)=>`<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);align-items:center"><div style="width:56px;aspect-ratio:3/4;background:var(--cream)"></div><div style="flex:1"><div class="name" style="margin:0;font-size:17px;text-align:right">${p.name}</div><div class="cat">${p.cat}</div></div><button data-rm="${i}" style="color:var(--muted);font-size:12px">حذف</button></div>`).join(''):'<div class="empty">سبد خرید شما خالی است</div>';
+}
+document.getElementById('grid').onclick=e=>{
+  const f=e.target.closest('[data-fav]'),a=e.target.closest('[data-add]');
+  if(f){const id=+f.dataset.fav;favs.has(id)?favs.delete(id):favs.add(id);f.classList.toggle('on');setBadge('favN',favs.size)}
+  if(a){const p=P.find(x=>x.id==a.dataset.add);if(p.variable){toast('صفحه محصول و انتخاب سایز در مرحله بعد ساخته می‌شود');return}cart.push(p);renderCart();toast('به سبد خرید اضافه شد')}
+};
+document.getElementById('cartBody').onclick=e=>{const r=e.target.closest('[data-rm]');if(r){cart.splice(+r.dataset.rm,1);renderCart()}};
+
+const scrim=document.getElementById('scrim');
+const closeAll=()=>{document.querySelectorAll('.drawer.on').forEach(d=>d.classList.remove('on'));scrim.classList.remove('on')};
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]');if(o){closeAll();document.getElementById(o.dataset.open).classList.add('on');scrim.classList.add('on')}
+  if(e.target.closest('[data-close]')||e.target===scrim||e.target.closest('.dlist a'))closeAll();
+});
+document.addEventListener('keydown',e=>e.key==='Escape'&&closeAll());
+render();renderCart();
+</script>
+</body>
+</html>
