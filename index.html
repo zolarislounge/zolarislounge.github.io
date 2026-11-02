@@ -17,6 +17,7 @@
   --ease:cubic-bezier(.22,.8,.2,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{font-family:var(--fa);color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
@@ -126,6 +127,100 @@ footer a:hover{color:#fff}
 .search input{flex:1;height:50px;border:1px solid var(--line);padding:0 16px;font:inherit;font-size:15px}
 .toast{position:fixed;bottom:92px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:#fff;font-size:13px;padding:10px 18px;opacity:0;transition:all .35s var(--ease);z-index:70;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.bad{background:#B3261E;white-space:normal;text-align:center;max-width:calc(100vw - 32px)}
+
+/* shop: badges, prices */
+.media{cursor:pointer}
+.name{cursor:pointer}
+.badge{position:absolute;top:12px;right:10px;font-size:11px;background:var(--m);color:#fff;padding:2px 9px;line-height:1.8}
+.badge.sale{background:#2E7D4F}.badge.out{background:#fff;color:var(--mut);border:1px solid var(--line)}
+.price s{color:var(--mut);font-weight:400;margin-left:4px}
+.soon{color:var(--mut);font-weight:400}
+.add:disabled{cursor:default}
+.ib.acct.in::after{content:"";position:absolute;bottom:7px;left:9px;width:8px;height:8px;border-radius:50%;background:#2E7D4F;border:2px solid #fff}
+.favbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#FAF6F5;padding:10px 14px;margin-bottom:18px;font-size:13px}
+.favbar button{color:var(--m);text-decoration:underline;text-underline-offset:3px;font-size:13px}
+
+/* sheets (product, checkout, result) */
+.sheet{position:fixed;z-index:60;background:#fff;left:50%;top:50%;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;transform:translate(-50%,-46%);opacity:0;pointer-events:none;transition:all .35s var(--ease);box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.sheet.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.sheet{visibility:hidden;transition:transform .35s var(--ease),opacity .35s var(--ease),visibility 0s .35s}
+.sheet.on{visibility:visible;transition:transform .35s var(--ease),opacity .35s var(--ease),visibility 0s}
+.sheet.wide{width:min(900px,calc(100vw - 24px))}
+.sheet.narrow{width:min(420px,calc(100vw - 24px))}
+@media (max-width:640px){
+  .sheet{left:0;right:0;top:auto;bottom:0;width:100%!important;max-height:92vh;transform:translateY(100%);opacity:1}
+  .sheet.on{transform:none}
+}
+.sheet-x{position:absolute;top:8px;left:8px;z-index:2;background:rgba(255,255,255,.9)}
+.pv-body{display:grid}
+@media (min-width:720px){.pv-body{grid-template-columns:1fr 1fr}}
+.pv-img{background:#fff;aspect-ratio:3/4}
+.pv-img img{width:100%;height:100%;object-fit:cover}
+.pv-info{padding:22px 20px 26px;display:flex;flex-direction:column;gap:6px}
+.pv-name{font-family:var(--sans);font-weight:300;font-size:26px;line-height:1.3;direction:ltr;text-align:right}
+.pv-price{font-size:16px;font-weight:700}
+.pv-price s{color:var(--mut);font-weight:400}
+.pv-info h5{font-size:13px;font-weight:500;margin-top:12px}
+.pv-info .chips button:disabled{opacity:.4;text-decoration:line-through;cursor:default}
+.pv-add{margin-top:16px;flex:none}
+.pv-add:disabled{background:#DDD3D1;cursor:default}
+.pv-desc{margin-top:14px;font-size:13.5px;color:#5b4a47;white-space:pre-wrap;border-top:1px solid var(--line);padding-top:14px}
+.pv-rev{margin-top:10px;border-top:1px solid var(--line);padding-top:4px;font-size:13px}
+.rv{padding:10px 0;border-bottom:1px solid var(--line)}
+.rv div{display:flex;justify-content:space-between}
+.stars{color:#C8962E;letter-spacing:1px}
+.rvf{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.rate{display:flex;flex-direction:row-reverse;justify-content:flex-end;gap:2px}
+.rate input{display:none}
+.rate label{font-size:24px;color:#E2D6D3;cursor:pointer;line-height:1}
+.rate label:hover,.rate label:hover~label,.rate input:checked~label{color:#C8962E}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);width:max-content}
+.qty button{width:40px;height:40px;font-size:18px}
+.qty button:disabled{opacity:.3;cursor:default}
+.qty span{min-width:30px;text-align:center}
+.qty.sm{margin-top:6px}.qty.sm button{width:30px;height:30px;font-size:15px}
+.warn{color:#B3261E;font-size:12px}
+.ctot{display:flex;justify-content:space-between;padding:16px 18px;font-size:14px}
+.muted{color:var(--mut);font-size:12.5px}
+.ok{color:#2E7D4F}
+.link{color:var(--m);text-decoration:underline;text-underline-offset:3px;font-size:13px;align-self:flex-start}
+
+/* forms */
+.form{display:flex;flex-direction:column;gap:12px;padding:18px}
+.form label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#5b4a47}
+.fld{width:100%;height:46px;border:1px solid #E4D9D6;padding:0 12px;font:inherit;font-size:15px;background:#fff;color:var(--ink);outline:none;border-radius:0}
+textarea.fld{height:auto;padding:10px 12px;resize:vertical}
+.fld:focus{border-color:var(--m)}
+.ltr{direction:ltr;text-align:left}
+.form .btn{flex:none}
+.btn.sm{height:36px;font-size:12.5px;flex:none;padding:0 14px;margin-top:6px;align-self:flex-start}
+.btn:disabled{opacity:.5;cursor:default}
+.err{color:#B3261E;font-size:12.5px;min-height:18px}
+.note{background:#FAF6F5;padding:10px 12px;font-size:13px;color:var(--m)}
+.hello{font-size:16px;font-weight:500;display:flex;flex-direction:column}
+.hello small{color:var(--mut);font-size:12.5px;font-weight:400;text-align:right}
+.form h5{font-size:13.5px;font-weight:500;margin-top:4px}
+.form details{border-top:1px solid var(--line);padding-top:10px}
+.form summary{cursor:pointer;font-size:13.5px}
+.form details .form{padding:12px 0 4px}
+.mo{border:1px solid var(--line);padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:2px}
+.mo div{display:flex;justify-content:space-between;align-items:center}
+.mo small{color:var(--mut);font-size:12px}
+.st{font-size:11px;padding:1px 8px;background:#F1ECEB;color:#5b4a47}
+.st.new{background:#FFF1DE;color:#94570F}.st.paid,.st.done{background:#E5F3EA;color:#2E7D4F}.st.ok{background:#E4EEF8;color:#2F5D8A}.st.ship{background:#EFE7F7;color:#5D3F86}.st.cancel{background:#FBE9E8;color:#B3261E}
+.sumbox{background:#FAF6F5;padding:12px 14px;font-size:13px;display:flex;flex-direction:column;gap:5px}
+.sumbox div{display:flex;justify-content:space-between;gap:10px}
+.sumbox .tot{border-top:1px dashed #DCCDC9;padding-top:8px;margin-top:3px;font-size:14px}
+.cpn{display:flex;gap:8px}
+.cpn .btn{flex:none;padding:0 18px;height:46px}
+.res{padding:30px 22px 22px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.res .ic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:700;color:#fff;background:#2E7D4F}
+.res.bad .ic{background:#B3261E}.res.wait .ic{background:var(--mut)}
+.res h3{font-size:17px}
+.res p{font-size:13.5px;color:#5b4a47;line-height:2}
+.res .code{font-size:18px;color:var(--m);letter-spacing:.05em}
+.res .btn{width:100%;flex:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.card{opacity:1;transform:none}}
 </style>
 </head>
@@ -138,8 +233,8 @@ footer a:hover{color:#fff}
     <div class="icons">
       <button class="ib" aria-label="منو" data-open="menu"><svg viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg></button>
       <button class="ib" aria-label="جستجو" data-search><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button>
-      <button class="ib" aria-label="حساب کاربری"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
-      <button class="ib" aria-label="علاقه‌مندی‌ها"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.8A4 4 0 0 1 12 7.6a4 4 0 0 1 7 2.6C19 15.6 12 20 12 20z"/></svg><span class="cnt" id="favN">۰</span></button>
+      <button class="ib acct" id="acctBtn" aria-label="حساب کاربری" data-open="acct"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
+      <button class="ib" id="favBtn" aria-label="علاقه‌مندی‌ها"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.8A4 4 0 0 1 12 7.6a4 4 0 0 1 7 2.6C19 15.6 12 20 12 20z"/></svg><span class="cnt" id="favN">۰</span></button>
       <button class="ib" aria-label="سبد خرید" data-open="cart"><svg viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1 11.5h-11z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg><span class="cnt" id="cartN">۰</span></button>
     </div>
     <nav class="nav"><a href="#">صفحه اصلی</a><a href="#shop">همه محصولات</a><a href="#contact">تماس با ما</a></nav>
@@ -149,9 +244,10 @@ footer a:hover{color:#fff}
 
 <main class="wrap" id="shop">
   <div class="bar">
-    <select class="sort" id="sort" aria-label="مرتب‌سازی"><option value="new">جدیدترین</option><option value="name">بر اساس نام</option></select>
+    <select class="sort" id="sort" aria-label="مرتب‌سازی"><option value="new">جدیدترین</option><option value="cheap">ارزان‌ترین</option><option value="exp">گران‌ترین</option><option value="name">بر اساس نام</option></select>
     <button class="fbtn" data-open="filter">Filters <svg viewBox="0 0 24 24"><path d="M3 7h10M17 7h4M3 17h4M11 17h10"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
   </div>
+  <div class="favbar" id="favBar" hidden>فقط علاقه‌مندی‌ها نمایش داده می‌شن <button id="favOff">نمایش همه</button></div>
   <div class="grid" id="grid"></div>
 </main>
 
@@ -190,87 +286,37 @@ footer a:hover{color:#fff}
 <aside class="drawer r" id="filter">
   <div class="dh">فیلترها<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="fg"><h5>دسته‌بندی</h5><div class="chips" id="fcat"></div></div>
-  <div class="fg"><h5>سایز</h5><div class="chips" id="fsize"></div></div>
-  <div class="fg"><h5>رنگ</h5><div class="sw"><span style="background:#7d7d7d" title="طوسی"></span><span style="background:#F3EBDD" title="شیری"></span><span style="background:#6B7A2E" title="سبز"></span><span style="background:#7A3E1D" title="قهوه‌ای"></span><span style="background:#7E1D24" title="زرشکی"></span></div></div>
+  <div class="fg" id="fsizeWrap" hidden><h5>سایز</h5><div class="chips" id="fsize"></div></div>
   <div class="dfoot"><button class="btn btn-m" data-close>اعمال فیلتر</button><button class="btn btn-o" id="fclear">حذف فیلترها</button></div>
 </aside>
 
 <aside class="drawer l" id="cart">
   <div class="dh">سبد خرید<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="cartBody"></div>
-  <div class="dfoot"><button class="btn btn-m">ادامه و پرداخت</button></div>
+  <div class="dfoot"><button class="btn btn-m" id="checkoutBtn" disabled>ادامه و ثبت سفارش</button></div>
 </aside>
+
+<aside class="drawer r" id="acct">
+  <div class="dh">حساب کاربری<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div id="acctBody"></div>
+</aside>
+
+<section class="sheet wide" id="pv" role="dialog" aria-modal="true" aria-label="جزئیات محصول">
+  <button class="ib sheet-x" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <div class="pv-body"></div>
+</section>
+
+<section class="sheet" id="co" role="dialog" aria-modal="true" aria-label="ثبت سفارش">
+  <div class="dh">ثبت سفارش<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div id="coBody"></div>
+</section>
+
+<section class="sheet narrow" id="res" role="dialog" aria-modal="true"><div id="resBody"></div></section>
 
 <div class="search" id="search"><form onsubmit="return false"><input type="search" placeholder="جستجو در محصولات…" aria-label="جستجو"><button type="button" class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></form></div>
 <div class="toast" id="toast"></div>
 
-<script>
-// دسته‌بندی‌ها و محصولات — عکس‌ها واقعی؛ نام‌ها پیشنهادی و قیمت‌ها جای‌خالی
-const CATS = ['همه محصولات','بافت و پلیور','مانتو، کت و جلیقه','پالتو','شومیز و تاپ','شلوار و دامن','تیشرت','شال','کیف','کفش','اکسسوری'];
-const P = [
-  {id:1, img:'assets/products/knit-1-w.jpg', name:'Argyle Grey',      cat:'بافت و پلیور'},
-  {id:2, img:'assets/products/knit-2-w.jpg', name:'Ivory Lace',       cat:'بافت و پلیور'},
-  {id:3, img:'assets/products/knit-3-w.jpg', name:'Argyle Olive',     cat:'بافت و پلیور'},
-  {id:4, img:'assets/products/knit-4-w.jpg', name:'Argyle Pistachio', cat:'بافت و پلیور'},
-  {id:5, img:'assets/products/knit-5-w.jpg', name:'Argyle Bordeaux',  cat:'بافت و پلیور'},
-];
-const $ = s => document.querySelector(s);
-const fa = n => n.toLocaleString('fa-IR');
-let cat = 0, cart = [], favs = new Set();
-
-const heart = '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.8A4 4 0 0 1 12 7.6a4 4 0 0 1 7 2.6C19 15.6 12 20 12 20z"/></svg>';
-function render(){
-  let list = P.filter(p => !cat || p.cat === CATS[cat]);
-  if ($('#sort').value === 'name') list = [...list].sort((a,b)=>a.name.localeCompare(b.name));
-  $('#grid').innerHTML = list.length ? list.map(p => `
-    <article class="card">
-      <div class="media"><img src="${p.img}" alt="${p.name}" loading="lazy">
-        <button class="fav${favs.has(p.id)?' on':''}" data-fav="${p.id}" aria-label="علاقه‌مندی">${heart}</button></div>
-      <h3 class="name">${p.name}</h3>
-      <div class="cat">${p.cat}</div>
-      <div class="price"><span class="ph">[قیمت]</span> هزار تومان</div>
-      <button class="add" data-add="${p.id}">افزودن به سبد خرید</button>
-    </article>`).join('') : '<p class="empty" style="grid-column:1/-1">فعلاً محصولی در این دسته نیست.</p>';
-  reveal();
-}
-function reveal(){
-  const cards = document.querySelectorAll('.card:not(.in)');
-  if (!('IntersectionObserver' in window)) return cards.forEach(c=>c.classList.add('in'));
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }), {threshold:.05});
-  cards.forEach((c,i) => { c.style.transitionDelay = (i%2)*.08+'s'; io.observe(c); });
-}
-$('#sort').onchange = render;
-
-// menu + filter category chips
-$('#menuList').innerHTML = ['صفحه اصلی',...CATS,'درباره ما','تماس با ما'].map((c,i)=>`<a href="#shop" data-cat="${i-1}"${i===1?' class="on"':''}>${c}<span>‹</span></a>`).join('');
-$('#fcat').innerHTML = CATS.map((c,i)=>`<button data-fc="${i}"${i?'':' class="on"'}>${c}</button>`).join('');
-$('#fsize').innerHTML = ['Free','S','M','L','XL'].map(s=>`<button dir="ltr">${s}</button>`).join('');
-function setCat(i){ cat = Math.max(0,i); document.querySelectorAll('[data-fc]').forEach(b=>b.classList.toggle('on',+b.dataset.fc===cat)); document.querySelectorAll('#menuList a').forEach(a=>a.classList.toggle('on',+a.dataset.cat===cat)); render(); }
-
-function count(id,n){ const el=$(id); el.textContent=fa(n); el.classList.toggle('on',n>0); }
-function renderCart(){
-  count('#cartN', cart.length);
-  $('#cartBody').innerHTML = cart.length ? cart.map((p,i)=>`<div class="ci"><img src="${p.img}" alt=""><div><b>${p.name}</b><small>${p.cat}</small></div><button data-rm="${i}">حذف</button></div>`).join('') : '<p class="empty">سبد خرید شما خالی است</p>';
-}
-function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),1800); }
-
-const closeAll = () => { document.querySelectorAll('.drawer.on,.search.on').forEach(d=>d.classList.remove('on')); $('#scrim').classList.remove('on'); document.body.style.overflow=''; };
-document.addEventListener('click', e => {
-  const o = e.target.closest('[data-open]');
-  if (o){ closeAll(); $('#'+o.dataset.open).classList.add('on'); $('#scrim').classList.add('on'); document.body.style.overflow='hidden'; return; }
-  if (e.target.closest('[data-search]')){ closeAll(); $('#search').classList.add('on'); $('#scrim').classList.add('on'); setTimeout(()=>$('#search input').focus(),300); return; }
-  const mc = e.target.closest('[data-cat]'); if (mc){ setCat(+mc.dataset.cat); closeAll(); return; }
-  const fc = e.target.closest('[data-fc]'); if (fc){ setCat(+fc.dataset.fc); return; }
-  if (e.target.closest('#fsize button')) e.target.closest('button').classList.toggle('on');
-  if (e.target.closest('#fclear')){ document.querySelectorAll('#fsize .on').forEach(b=>b.classList.remove('on')); setCat(0); }
-  if (e.target.closest('[data-close]') || e.target.id==='scrim') closeAll();
-  const f = e.target.closest('[data-fav]'); if (f){ const id=+f.dataset.fav; favs.has(id)?favs.delete(id):favs.add(id); f.classList.toggle('on'); count('#favN',favs.size); }
-  const a = e.target.closest('[data-add]'); if (a){ cart.push(P.find(p=>p.id==a.dataset.add)); renderCart(); toast('به سبد خرید اضافه شد'); a.classList.add('done'); a.textContent='اضافه شد ✓'; setTimeout(()=>{a.classList.remove('done'); a.textContent='افزودن به سبد خرید';},1300); }
-  const r = e.target.closest('[data-rm]'); if (r){ cart.splice(+r.dataset.rm,1); renderCart(); }
-});
-document.addEventListener('keydown', e => e.key==='Escape' && closeAll());
-addEventListener('scroll', () => document.querySelector('header').classList.toggle('scrolled', scrollY>10), {passive:true});
-render(); renderCart();
-</script>
+<script src="assets/vendor/supabase.js"></script>
+<script src="assets/store.js"></script>
 </body>
 </html>

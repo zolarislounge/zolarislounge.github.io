@@ -14,9 +14,9 @@ import { clientIp, isIranIp } from './iran.ts';
 const ZIBAL = 'https://gateway.zibal.ir';
 const PENDING = 'در انتظار پرداخت';
 const PAID = 'پرداخت شده';
-// TODO(Zolaris): دامنه‌ی نهایی رو اینجا بذار (مثلاً https://zolaris.ir)
-const ALLOWED_RETURN = ['https://zolaris.netlify.app'];
-const DEFAULT_RETURN = 'https://zolaris.netlify.app/';
+// اگه دامنه‌ی اختصاصی گرفتی (مثلاً https://zolaris.ir) اینجا اضافه‌ش کن
+const ALLOWED_RETURN = ['https://zolarislounge.github.io', 'https://zolaris.netlify.app'];
+const DEFAULT_RETURN = 'https://zolarislounge.github.io/';
 const SHOP_NAME = 'زولاریس';
 
 const cors = {

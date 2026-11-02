@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/vendor/supabase.js"></script>
 <style>
 :root{
   --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#8C7C79; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
@@ -766,6 +766,9 @@ VIEWS.products = async () => {
 const toLocalInput = d => { if (!d) return ''; const t = new Date(d); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 16); };
 const fromLocalInput = v => v ? new Date(v).toISOString() : null;
 
+// همون دسته‌هایی که منوی سایت نشون می‌ده (assets/store.js)
+const SITE_CATS = ['بافت و پلیور', 'مانتو، کت و جلیقه', 'پالتو', 'شومیز و تاپ', 'شلوار و دامن', 'تیشرت', 'شال', 'کیف', 'کفش', 'اکسسوری'];
+const CAT_SLUG = { 'بافت و پلیور': 'knit', 'مانتو، کت و جلیقه': 'coat', 'پالتو': 'overcoat', 'شومیز و تاپ': 'top', 'شلوار و دامن': 'bottom', 'تیشرت': 'tshirt', 'شال': 'scarf', 'کیف': 'bag', 'کفش': 'shoes', 'اکسسوری': 'accessory' };
 function productDialog(p, all) {
   const isNew = !p;
   p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
@@ -780,7 +783,7 @@ function productDialog(p, all) {
         <p class="small muted" style="margin-top:6px">عکس عمودی (۳ به ۴) بهتره. خودکار کوچیک و فشرده می‌شه.</p></div></div>
       <label class="f">نام محصول<input class="in" id="pfN" required maxlength="120" value="${esc(p.name)}"></label>
       <div class="row c2">
-        <label class="f">دسته (نمایشی)<input class="in" id="pfCL" required maxlength="60" list="catl" value="${esc(p.category_label)}" placeholder="مثلاً بافت"><datalist id="catl">${cats.map(([, l]) => `<option>${esc(l)}</option>`).join('')}</datalist></label>
+        <label class="f">دسته (نمایشی)<input class="in" id="pfCL" required maxlength="60" list="catl" value="${esc(p.category_label)}" placeholder="مثلاً بافت"><datalist id="catl">${[...new Set([...SITE_CATS, ...cats.map(([, l]) => l)])].map(l => `<option>${esc(l)}</option>`).join('')}</datalist></label>
         <label class="f">شناسه‌ی دسته (انگلیسی، برای فیلتر سایت)<input class="in ltr" id="pfC" required maxlength="40" pattern="[a-z0-9\\-]+" value="${esc(p.category)}" placeholder="knit"></label>
       </div>
       <div class="row c3">
@@ -804,7 +807,7 @@ function productDialog(p, all) {
       ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="pfDel">حذف</button>'}</div>`, 'wide');
 
   const slug = s => s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  $('#pfCL', d).oninput = e => { const hit = cats.find(([, l]) => l === e.target.value.trim()); if (hit) $('#pfC', d).value = hit[0]; };
+  $('#pfCL', d).oninput = e => { const v = e.target.value.trim(), hit = cats.find(([, l]) => l === v); if (hit) $('#pfC', d).value = hit[0]; else if (CAT_SLUG[v]) $('#pfC', d).value = CAT_SLUG[v]; };
   $('#pfC', d).oninput = e => { e.target.value = slug(e.target.value); };
   $('#pfSP', d).oninput = e => { $('#pfSaleDates', d).hidden = !intOf(e.target.value); };
   const drawV = () => {
