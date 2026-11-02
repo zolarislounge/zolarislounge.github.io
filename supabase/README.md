@@ -1,7 +1,9 @@
 # بک‌اند Zolaris (Supabase) — کپی ساختار حناگالری
 
+پروژه: ZOLARIS — ref `avwgfmdnwibtxurlnphw` — منطقه ap-southeast-1 (سنگاپور)
+
 - `migrations/001_schema.sql` — جدول‌ها، توابع، تریگرها، RLS، فضای عکس (بدون هیچ داده‌ای از حناگالری)
-- `migrations/002_cron.sql` — لغو خودکار سفارش‌های پرداخت‌نشده + بررسی پرداخت‌های جامونده (`<PROJECT_REF>` رو عوض کن)
+- `migrations/002_cron.sql` — لغو خودکار سفارش‌های پرداخت‌نشده + بررسی پرداخت‌های جامونده 
 - `functions/` — payment (زیبال)، geo (تشخیص فیلترشکن)، notify-order (پیامک سفارش)، send-sms-hook (کد ورود)، admin-reset-customer-password
 
 ## Secrets لازم (فقط در داشبورد Supabase وارد شوند، هرگز در کد یا چت)

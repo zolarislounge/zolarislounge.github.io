@@ -1,4 +1,4 @@
--- کارهای زمان‌بندی‌شده (کپی از حناگالری). بعد از ساخت پروژه، <PROJECT_REF> رو با شناسه‌ی پروژه‌ی Zolaris عوض کن.
+-- کارهای زمان‌بندی‌شده (کپی از حناگالری). بعد از ساخت پروژه، avwgfmdnwibtxurlnphw رو با شناسه‌ی پروژه‌ی Zolaris عوض کن.
 
 -- هر ۵ دقیقه: سفارش‌هایی که پرداخت نشدن و وقتشون تموم شده لغو می‌شن و موجودی برمی‌گرده
 select cron.schedule('zl-expire-unpaid', '*/5 * * * *', $$select public._expire_unpaid_orders()$$);
@@ -6,7 +6,7 @@ select cron.schedule('zl-expire-unpaid', '*/5 * * * *', $$select public._expire_
 -- هر ۵ دقیقه: پرداخت‌هایی که مشتری انجام داده ولی به سایت برنگشته، از زیبال پرسیده و تایید می‌شن
 select cron.schedule('zl-payment-sweep', '*/5 * * * *', $$
   select net.http_post(
-    url := 'https://<PROJECT_REF>.supabase.co/functions/v1/payment',
+    url := 'https://avwgfmdnwibtxurlnphw.supabase.co/functions/v1/payment',
     body := '{"action":"sweep"}'::jsonb,
     headers := '{"Content-Type":"application/json"}'::jsonb,
     timeout_milliseconds := 60000)
