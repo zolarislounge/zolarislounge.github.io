@@ -44,21 +44,20 @@ header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.94);backdro
 .badge[data-n="0"]{display:none}
 
 /* hero */
-.hero{background:var(--maroon);color:#fff;position:relative;overflow:hidden}
-.hero .wrap{display:grid;gap:24px;padding-top:44px;padding-bottom:44px;align-items:center}
-.hero h1{font-weight:300;font-size:clamp(28px,6vw,52px);line-height:1.35}
-.hero h1 em{font-style:normal;font-family:var(--brand);letter-spacing:4px;font-size:.62em;display:block;color:#D9BDB7;direction:ltr;text-align:right;margin-bottom:6px}
-.hero p{color:#E3CFCB;max-width:440px;font-size:15px}
-.hero .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.hero{background:var(--maroon);color:#fff;position:relative;overflow:hidden;text-align:center}
+.hero .wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:36px;padding-bottom:64px}
+.hero-mark{width:min(34vw,140px)}
+.hero-mark img{width:100%}
+.hero h1{font-family:var(--lat);font-weight:400;font-size:clamp(26px,7vw,44px);letter-spacing:1px;direction:ltr;line-height:1.1;margin-top:-4px}
+.hero .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.hero .slogan{color:#F3E6E3;font-size:clamp(15px,4vw,18px);font-weight:300}
 .btn{display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 26px;font-size:14px;transition:all .2s;white-space:nowrap}
 .btn-light{background:#fff;color:var(--maroon)}
 .btn-light:hover{background:var(--maroon-soft)}
 .btn-ghost{border:1px solid rgba(255,255,255,.45);color:#fff}
 .btn-ghost:hover{background:rgba(255,255,255,.08)}
-.hero-mark{justify-self:center;width:min(38vw,150px);opacity:.95}
-@media (min-width:768px){.hero-mark{width:300px}}
-.hero-mark img{width:100%}
-.hero::after{content:"";position:absolute;inset:auto -10% -40% auto;width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%)}
+.hero-wave{position:absolute;left:0;right:0;bottom:-3px;width:100%;height:28px;display:block}
+@media (min-width:768px){.hero .wrap{padding-top:56px;padding-bottom:90px}.hero-mark{width:170px}.hero-wave{height:48px}}
 
 /* categories */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:22px 0 6px;scrollbar-width:none}
@@ -183,15 +182,15 @@ footer a:hover{color:#fff}
 
 <section class="hero">
   <div class="wrap">
-    <div>
-      <h1><em>ZOLARIS LOUNGE</em>طراحی شده برای زنانی که الهام‌بخش هستند</h1>
-      <div class="cta">
-        <a href="#shop" class="btn btn-light">مشاهده محصولات</a>
-        <a href="#shop" class="btn btn-ghost">جدیدترین‌ها</a>
-      </div>
+    <div class="hero-mark"><img src="assets/logo-z-white.png" alt=""></div>
+    <h1>ZOLARIS LOUNGE</h1>
+    <div class="cta">
+      <a href="#shop" class="btn btn-light">مشاهده محصولات</a>
+      <a href="#shop" class="btn btn-ghost">جدیدترین‌ها</a>
     </div>
-    <div class="hero-mark"><img src="assets/logo-z-white.png" alt="Zolaris"></div>
+    <p class="slogan">طراحی شده برای زنانی که الهام‌بخش هستند</p>
   </div>
+  <svg class="hero-wave" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50V22C240 2 480 2 720 18s480 22 720 0v32z" fill="#fff"/></svg>
 </section>
 
 <main class="wrap" id="shop">
