@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>پنل مدیریت Zolaris</title>
+<meta name="theme-color" content="#3D0D0B">
+<link rel="icon" href="assets/logo-z-maroon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#8C7C79; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
+  --ok:#2E7D4F; --warn:#B5762E; --bad:#B3261E; --info:#2F5D8A;
+  --fa:'Vazirmatn',system-ui,sans-serif; --serif:'Bodoni Moda',Didot,Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--fa);color:var(--ink);background:var(--bg);line-height:1.7;font-size:14px;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+img{display:block;max-width:100%}
+[hidden]{display:none!important}
+.num{font-feature-settings:"tnum"}
+
+/* buttons & fields */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 16px;border-radius:10px;background:var(--m);color:#fff;font-weight:500;font-size:13.5px;white-space:nowrap;transition:background .2s,opacity .2s}
+.btn:hover{background:var(--m2)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:#fff;color:var(--m);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--soft)}
+.btn.danger{background:#fff;color:var(--bad);border:1px solid #F0D3D1}
+.btn.danger:hover{background:#FDF3F2}
+.btn.sm{height:32px;padding:0 11px;font-size:12.5px;border-radius:8px}
+.btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--mut);font-weight:500}
+.in,select.in,textarea.in{width:100%;height:42px;border:1px solid #E4D9D6;border-radius:10px;padding:0 12px;background:#fff;color:var(--ink);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea.in{height:auto;min-height:84px;padding:10px 12px;resize:vertical;line-height:1.7}
+.in:focus{border-color:var(--m);box-shadow:0 0 0 3px rgba(61,13,11,.08)}
+.ltr{direction:ltr;text-align:left}
+.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--m)}
+.row{display:grid;gap:12px}
+@media(min-width:640px){.row.c2{grid-template-columns:1fr 1fr}.row.c3{grid-template-columns:1fr 1fr 1fr}}
+
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--m)}
+.lbox{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:30px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.lbox img{height:56px;margin:0 auto 6px}
+.lbox h1{text-align:center;font-size:17px;font-weight:700;margin-bottom:2px}
+.lbox p.sub{text-align:center;color:var(--mut);font-size:12.5px;margin-bottom:20px}
+.seg{display:flex;background:var(--soft);border-radius:10px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;height:34px;border-radius:8px;font-size:13px;color:var(--mut)}
+.seg button.on{background:#fff;color:var(--m);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.lbox form{display:flex;flex-direction:column;gap:12px}
+.lbox .btn{height:44px;width:100%}
+.err{color:var(--bad);font-size:12.5px;min-height:20px}
+.link{color:var(--m);font-size:12.5px;text-decoration:underline;text-underline-offset:3px}
+
+/* layout */
+#app{display:flex;min-height:100vh}
+aside{width:230px;flex:none;background:var(--m);color:#E8D6D2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side-brand{display:flex;align-items:center;gap:10px;padding:20px 18px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.side-brand img{height:34px}
+.side-brand b{font-family:var(--serif);font-size:18px;color:#fff;direction:ltr;letter-spacing:.02em}
+.side-brand small{display:block;font-size:11px;color:#C4A8A2;font-family:var(--fa)}
+nav.menu{padding:12px 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+nav.menu button{display:flex;align-items:center;gap:11px;height:42px;padding:0 12px;border-radius:10px;text-align:right;font-size:13.5px;color:#E3CFCB;transition:background .2s}
+nav.menu button:hover{background:rgba(255,255,255,.07)}
+nav.menu button.on{background:#fff;color:var(--m);font-weight:500}
+nav.menu svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;flex:none}
+nav.menu .badge{margin-right:auto;background:#C9483F;color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+.side-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#C4A8A2}
+.side-foot button{color:#fff;font-size:12.5px;margin-top:4px;text-decoration:underline;text-underline-offset:3px}
+main{flex:1;min-width:0;padding:26px 30px 60px}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.ph h2{font-size:20px;font-weight:700}
+.ph .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* mobile: menu becomes a top tab bar */
+@media(max-width:860px){
+  #app{flex-direction:column}
+  aside{width:auto;height:auto;position:sticky;top:0;z-index:20}
+  .side-brand{padding:10px 16px;border:0}
+  .side-brand img{height:28px}
+  nav.menu{flex-direction:row;overflow-x:auto;padding:0 10px 10px;gap:4px;scrollbar-width:none}
+  nav.menu::-webkit-scrollbar{display:none}
+  nav.menu button{flex:none;height:36px;padding:0 12px;font-size:13px}
+  nav.menu svg{display:none}
+  .side-foot{position:absolute;top:10px;left:16px;padding:0;border:0}
+  .side-foot span{display:none}
+  main{padding:18px 16px 50px}
+}
+
+/* cards & tables */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+.card.pad{padding:18px}
+.card h3{font-size:14.5px;font-weight:700;margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(min-width:900px){.kpis{grid-template-columns:repeat(5,1fr)}}
+.kpi{padding:16px}
+.kpi small{color:var(--mut);font-size:12px;display:block}
+.kpi b{font-size:22px;font-weight:700;display:block;margin-top:2px}
+.kpi.main{background:var(--m);color:#fff;border-color:var(--m)}
+.kpi.main small{color:#D9BFBA}
+.g2{display:grid;gap:16px}
+@media(min-width:1000px){.g2{grid-template-columns:1.4fr 1fr}}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-weight:500;color:var(--mut);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
+.tbl td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover td{background:var(--soft)}
+.scroll{overflow-x:auto}
+.empty{padding:40px 16px;text-align:center;color:var(--mut)}
+.muted{color:var(--mut)}
+.small{font-size:12px}
+
+/* status pills */
+.pill{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:12px;font-size:11.5px;font-weight:500;white-space:nowrap;background:#F1ECEB;color:#5b4a47}
+.pill.new{background:#FFF1DE;color:#94570F}
+.pill.wait{background:#F1ECEB;color:#7A6A67}
+.pill.paid{background:#E5F3EA;color:var(--ok)}
+.pill.ok{background:#E4EEF8;color:var(--info)}
+.pill.ship{background:#EFE7F7;color:#5D3F86}
+.pill.done{background:#DFF0E5;color:#1F5E39}
+.pill.cancel{background:#FBE9E8;color:var(--bad)}
+
+/* filters */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.tools .in{max-width:280px;height:38px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--line);background:#fff;font-size:12.5px;color:#5b4a47}
+.chips button.on{background:var(--m);border-color:var(--m);color:#fff}
+.chips button i{font-style:normal;opacity:.7;margin-right:4px}
+
+/* order cards on mobile */
+.olist{display:flex;flex-direction:column;gap:10px}
+.oc{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
+.oc:hover{border-color:#D9C6C2}
+.oc .t{font-weight:700}
+.oc .r{text-align:left}
+.oc .s{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--mut)}
+.mob{display:none}
+@media(max-width:700px){#oTbl{display:none}.olist.mob{display:flex}}
+
+/* products */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:700px){.pgrid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1150px){.pgrid{grid-template-columns:repeat(5,1fr)}}
+.pc{overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:border-color .2s}
+.pc:hover{border-color:#D9C6C2}
+.pc .im{aspect-ratio:3/4;background:var(--soft);position:relative}
+.pc .im img{width:100%;height:100%;object-fit:cover}
+.pc .im .tag{position:absolute;top:8px;right:8px}
+.pc .bd{padding:10px 12px 12px}
+.pc b{font-size:13px;font-weight:500;display:block;line-height:1.5}
+.pc .pr{font-size:12.5px;margin-top:4px}
+.pc .pr s{color:var(--mut);margin-left:6px}
+.pc .st{font-size:11.5px;color:var(--mut)}
+.pc .st.low{color:var(--bad)}
+
+/* dialogs */
+dialog{border:0;border-radius:16px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px);margin:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);color:var(--ink)}
+dialog::backdrop{background:rgba(30,10,8,.45)}
+dialog.wide{width:min(820px,calc(100vw - 24px))}
+dialog.narrow{width:min(400px,calc(100vw - 24px))}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.dh h3{font-size:15.5px;font-weight:700}
+.x{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:var(--mut)}
+.x:hover{background:var(--soft)}
+.db{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.df{display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+.df .sp{flex:1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--mut)}
+.kv dd{word-break:break-word}
+.box{background:var(--soft);border-radius:12px;padding:12px 14px}
+.items{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.items div{display:flex;justify-content:space-between;gap:10px}
+.sum{display:flex;justify-content:space-between;font-weight:700;border-top:1px dashed #DCCDC9;padding-top:8px;margin-top:4px}
+.vrow{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 34px;gap:8px;align-items:center}
+.vrow .x{width:34px;height:34px}
+.imgpick{display:flex;gap:14px;align-items:center}
+.imgpick .pv{width:84px;aspect-ratio:3/4;border-radius:10px;background:var(--soft) center/cover no-repeat;border:1px solid var(--line);flex:none}
+.line{display:grid;grid-template-columns:1fr auto auto 34px;gap:8px;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
+
+/* bars */
+.bar{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;font-size:12.5px;margin:7px 0}
+.bar .tr{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--m);border-radius:4px}
+
+/* toast */
+#toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:all .3s;z-index:100;max-width:calc(100vw - 32px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.bad{background:var(--bad)}
+.loading{padding:50px;text-align:center;color:var(--mut)}
+.radio-cards{display:grid;gap:10px}
+.radio-cards label{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.radio-cards label:has(input:checked){border-color:var(--m);background:var(--soft)}
+.radio-cards input{margin-top:5px;accent-color:var(--m)}
+.radio-cards b{display:block;font-size:13.5px}
+.radio-cards small{color:var(--mut);font-size:12px}
+.stars{color:#C8962E;letter-spacing:1px}
+.rv{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rv .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.rv p{font-size:13.5px;white-space:pre-wrap}
+.rv .acts{display:flex;gap:6px}
+</style>
+</head>
+<body>
+
+<!-- ───────── ورود ───────── -->
+<section id="login" hidden>
+  <div class="lbox">
+    <img src="assets/logo-z-maroon.png" alt="">
+    <h1>پنل مدیریت Zolaris</h1>
+    <p class="sub">فقط شماره‌هایی که مدیر فروشگاه هستند می‌تونن وارد بشن</p>
+    <div class="seg" id="lmode">
+      <button type="button" data-m="pass" class="on">با رمز عبور</button>
+      <button type="button" data-m="otp">با کد پیامکی</button>
+    </div>
+    <form id="lform" autocomplete="on">
+      <label class="f">شماره موبایل
+        <input class="in ltr" id="lphone" type="tel" inputmode="numeric" placeholder="09xxxxxxxxx" autocomplete="username" required>
+      </label>
+      <label class="f" id="lpassWrap">رمز عبور
+        <input class="in ltr" id="lpass" type="password" autocomplete="current-password">
+      </label>
+      <label class="f" id="lcodeWrap" hidden>کد پیامک‌شده
+        <input class="in ltr" id="lcode" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      </label>
+      <div class="err" id="lerr"></div>
+      <button class="btn" id="lbtn">ورود</button>
+      <button type="button" class="link" id="lback" hidden>تغییر شماره</button>
+    </form>
+  </div>
+</section>
+
+<!-- ───────── پنل ───────── -->
+<div id="app" hidden>
+  <aside>
+    <div class="side-brand">
+      <img src="assets/logo-z-white.png" alt="">
+      <div><b>Zolaris</b><small>پنل مدیریت</small></div>
+    </div>
+    <nav class="menu" id="menu">
+      <button data-v="dash" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>داشبورد</button>
+      <button data-v="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>سفارش‌ها<span class="badge" id="newBadge" hidden></span></button>
+      <button data-v="products"><svg viewBox="0 0 24 24"><path d="M20.4 7.2 12 3 3.6 7.2v9.6L12 21l8.4-4.2Z"/><path d="M3.6 7.2 12 11.4l8.4-4.2M12 11.4V21"/></svg>محصولات</button>
+      <button data-v="coupons"><svg viewBox="0 0 24 24"><path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a3 3 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a3 3 0 0 0 0-6Z"/><path d="M9 9h.01M15 15h.01M15 9l-6 6"/></svg>کد تخفیف</button>
+      <button data-v="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 9M22 21a7 7 0 0 0-4-6.3"/></svg>مشتری‌ها</button>
+      <button data-v="reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>نظرها<span class="badge" id="revBadge" hidden></span></button>
+      <button data-v="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>تنظیمات</button>
+    </nav>
+    <div class="side-foot"><span id="whoami"></span><br><button id="logout">خروج</button></div>
+  </aside>
+  <main id="view"></main>
+</div>
+
+<!-- ───────── پنجره‌ها ───────── -->
+<dialog id="dlg"></dialog>
+<dialog id="dlg2" class="narrow"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+// ───────── اتصال به Supabase (کلید publishable عمومیه و جای امنی برای نگه‌داری لازم نداره؛ امنیت با RLS سمت سروره) ─────────
+const SB_URL = 'https://avwgfmdnwibtxurlnphw.supabase.co';
+const SB_KEY = 'sb_publishable_VOh9R0tdxf-3YFN9_y3J1Q_mf9kIXf2';
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: 'zl-admin' } });
+
+// ───────── ابزارها ─────────
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fa = n => Number(n || 0).toLocaleString('fa-IR');
+const toman = n => fa(n) + ' تومان';
+const TZ = { timeZone: 'Asia/Tehran' };
+const fdate = d => d ? new Date(d).toLocaleDateString('fa-IR', TZ) : '—';
+const ftime = d => d ? new Date(d).toLocaleString('fa-IR', { ...TZ, year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+const ago = d => {
+  const s = (Date.now() - new Date(d)) / 1000;
+  if (s < 60) return 'همین الان';
+  if (s < 3600) return fa(Math.floor(s / 60)) + ' دقیقه پیش';
+  if (s < 86400) return fa(Math.floor(s / 3600)) + ' ساعت پیش';
+  if (s < 86400 * 7) return fa(Math.floor(s / 86400)) + ' روز پیش';
+  return fdate(d);
+};
+const toEn = s => String(s ?? '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const intOf = s => { const v = toEn(s).replace(/[^0-9]/g, ''); return v === '' ? null : parseInt(v, 10); };
+// 09xxxxxxxxx ← هر شکلی از شماره‌ی ایرانی
+function normPhone(p) {
+  const d = toEn(p).replace(/\D/g, '');
+  if (/^09\d{9}$/.test(d)) return d;
+  if (/^9\d{9}$/.test(d)) return '0' + d;
+  if (/^989\d{9}$/.test(d)) return '0' + d.slice(2);
+  if (/^00989\d{9}$/.test(d)) return '0' + d.slice(4);
+  return null;
+}
+const intl = p => '+98' + p.slice(1);                    // 0912… → +98912…
+const showPhone = p => p ? (String(p).startsWith('98') ? '0' + String(p).slice(2) : p) : '—';
+
+function toast(t, bad) {
+  const el = $('#toast'); el.textContent = t; el.classList.toggle('bad', !!bad); el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), bad ? 4200 : 2400);
+}
+const ERR = {
+  HG_ADMIN: 'این کار فقط برای مدیرهاست', HG_ITEMS: 'اقلام سفارش درست نیست', HG_REQUIRED: 'نام و آدرس مشتری لازمه',
+  HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_STOCK: 'موجودی کافی نیست', HG_GONE: 'این محصول دیگه وجود نداره',
+  HG_COUPON: 'کد تخفیف معتبر نیست', HG_LOGIN: 'دوباره وارد شو', HG_TOO_MANY: 'تعداد سفارش‌ها زیاده، کمی صبر کن', HG_BLOCKED: 'این مشتری مسدود شده',
+};
+function errText(e) {
+  const m = String(e?.message || e || '');
+  for (const k in ERR) if (m.includes(k)) { const extra = m.split(k + ':')[1]; return ERR[k] + (extra ? ' — ' + extra.trim() : ''); }
+  if (/JWT|session|refresh/i.test(m)) return 'نشست تموم شده؛ دوباره وارد شو';
+  if (/Failed to fetch|NetworkError/i.test(m)) return 'اتصال به سرور برقرار نشد؛ اینترنت یا فیلترشکن رو چک کن';
+  return m || 'خطای نامشخص';
+}
+const fail = e => { console.error(e); toast(errText(e), true); };
+async function q(p) { const { data, error } = await p; if (error) throw error; return data; }
+
+function openDlg(html, cls = '') {
+  const d = $('#dlg'); d.className = cls; d.innerHTML = html;
+  if (!d.open) d.showModal();
+  d.querySelectorAll('[data-x]').forEach(b => b.onclick = () => d.close());
+  return d;
+}
+// تایید یک کار مهم (به‌جای confirm مرورگر)
+function ask(msg, okText = 'بله', danger = true) {
+  return new Promise(res => {
+    const d = $('#dlg2');
+    d.innerHTML = `<div class="db"><p style="font-size:14px">${msg}</p></div>
+      <div class="df"><button class="btn ${danger ? 'danger' : ''}" data-ok>${esc(okText)}</button><button class="btn ghost" data-no>انصراف</button></div>`;
+    d.showModal();
+    d.querySelector('[data-ok]').onclick = () => { d.close(); res(true); };
+    d.querySelector('[data-no]').onclick = () => { d.close(); res(false); };
+    d.oncancel = () => res(false);
+  });
+}
+
+// ───────── وضعیت سفارش ─────────
+const ST = [
+  { k: 'جدید', c: 'new' },
+  { k: 'در انتظار پرداخت', c: 'wait' },
+  { k: 'پرداخت شده', c: 'paid' },
+  { k: 'تایید شده', c: 'ok' },
+  { k: 'ارسال شده', c: 'ship' },
+  { k: 'تحویل داده شده', c: 'done' },
+  { k: 'لغو شده', c: 'cancel' },
+];
+const pill = s => `<span class="pill ${(ST.find(x => x.k === s) || {}).c || ''}">${esc(s || '—')}</span>`;
+const PAY = { unpaid: 'پرداخت‌نشده', pending: 'در حال پرداخت', paid: 'پرداخت آنلاین', failed: 'پرداخت ناموفق', free: 'رایگان', offline: 'آفلاین' };
+const MANUAL = { card: 'کارت‌به‌کارت (پرداخت شده)', cod: 'پرداخت در محل', unpaid: 'هنوز پرداخت نشده' };
+const CANCEL = { admin: 'لغو توسط مدیر', expired: 'پرداخت نشد و منقضی شد', replaced: 'مشتری سفارش جدید ثبت کرد' };
+function payLabel(o) {
+  if (o.manual_pay) return MANUAL[o.manual_pay] || o.manual_pay;
+  if (o.payment_status === 'offline') return 'کارت‌به‌کارت / خارج از درگاه';
+  return PAY[o.payment_status] || o.payment_status;
+}
+
+// ───────── ورود ─────────
+let me = null, mode = 'pass', otpSent = false;
+$('#lmode').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.m; otpSent = false;
+  $$('#lmode button').forEach(x => x.classList.toggle('on', x === b));
+  syncLogin();
+};
+function syncLogin() {
+  $('#lpassWrap').hidden = mode !== 'pass';
+  $('#lcodeWrap').hidden = !(mode === 'otp' && otpSent);
+  $('#lphone').readOnly = mode === 'otp' && otpSent;
+  $('#lback').hidden = !(mode === 'otp' && otpSent);
+  $('#lbtn').textContent = mode === 'pass' ? 'ورود' : otpSent ? 'تایید کد و ورود' : 'ارسال کد';
+  $('#lerr').textContent = '';
+}
+$('#lback').onclick = () => { otpSent = false; syncLogin(); };
+$('#lform').onsubmit = async e => {
+  e.preventDefault();
+  const err = $('#lerr'), btn = $('#lbtn');
+  const p = normPhone($('#lphone').value);
+  if (!p) { err.textContent = 'شماره موبایل رو درست وارد کن (مثل ۰۹۱۲۳۴۵۶۷۸۹)'; return; }
+  btn.disabled = true; err.textContent = '';
+  try {
+    if (mode === 'pass') {
+      const pw = $('#lpass').value;
+      if (!pw) throw new Error('رمز عبور رو وارد کن');
+      const { error } = await sb.auth.signInWithPassword({ phone: intl(p), password: pw });
+      if (error) throw error;
+    } else if (!otpSent) {
+      const { error } = await sb.auth.signInWithOtp({ phone: intl(p), options: { shouldCreateUser: false } });
+      if (error) throw error;
+      otpSent = true; syncLogin(); $('#lcode').focus();
+      return;
+    } else {
+      const code = toEn($('#lcode').value).replace(/\D/g, '');
+      const { error } = await sb.auth.verifyOtp({ phone: intl(p), token: code, type: 'sms' });
+      if (error) throw error;
+    }
+  } catch (ex) {
+    const m = String(ex.message || ex);
+    err.textContent = /Invalid login credentials/i.test(m) ? 'شماره یا رمز اشتباهه'
+      : /Token has expired|invalid/i.test(m) && mode === 'otp' ? 'کد اشتباهه یا منقضی شده'
+      : /Signups not allowed|not found/i.test(m) ? 'این شماره حساب کاربری نداره'
+      : /Phone logins are disabled|provider is disabled/i.test(m) ? 'ورود با موبایل هنوز در Supabase فعال نشده'
+      : /sms|hook|send/i.test(m) ? 'ارسال پیامک انجام نشد؛ فعلاً با رمز عبور وارد شو'
+      : errText(ex);
+  } finally { btn.disabled = false; }
+};
+$('#logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#login').hidden = false; $('#app').hidden = true; syncLogin(); return; }
+  const phone = session.user.phone;
+  let isAdmin = false;
+  try { isAdmin = !!(await q(sb.from('admins').select('phone').eq('phone', phone).maybeSingle())); } catch (e) { fail(e); }
+  if (!isAdmin) {
+    await sb.auth.signOut();
+    $('#login').hidden = false; $('#app').hidden = true; syncLogin();
+    $('#lerr').textContent = 'این شماره دسترسی مدیریت نداره';
+    return;
+  }
+  me = { phone, id: session.user.id };
+  $('#whoami').textContent = showPhone(phone);
+  $('#login').hidden = true; $('#app').hidden = false;
+  sb.rpc('admin_heartbeat').then(() => {});
+  setInterval(() => sb.rpc('admin_heartbeat').then(() => {}), 60000);
+  go(location.hash.slice(1) || 'dash');
+  refreshBadges(); setInterval(refreshBadges, 60000);
+}
+let booted = false;
+sb.auth.onAuthStateChange((ev) => {
+  if (ev === 'SIGNED_IN' && !me && booted) boot();
+  if (ev === 'SIGNED_OUT' && me) location.reload();
+});
+boot().finally(() => booted = true);
+
+// ثبت کارهای مدیر در گزارش
+function log(action, details) {
+  if (!me) return;
+  sb.from('admin_logs').insert({ admin_phone: me.phone, action, details: details == null ? null : String(details).slice(0, 500) }).then(() => {});
+}
+
+async function refreshBadges() {
+  try {
+    const [{ count: n }, { count: r }] = await Promise.all([
+      sb.from('orders').select('id', { count: 'exact', head: true }).in('status', ['جدید', 'پرداخت شده']),
+      sb.from('reviews').select('id', { count: 'exact', head: true }).eq('approved', false),
+    ]);
+    const nb = $('#newBadge'), rb = $('#revBadge');
+    nb.hidden = !n; nb.textContent = fa(n);
+    rb.hidden = !r; rb.textContent = fa(r);
+  } catch (e) { /* بی‌صدا */ }
+}
+
+// ───────── مسیریابی ─────────
+const VIEWS = {};
+$('#menu').onclick = e => { const b = e.target.closest('button[data-v]'); if (b) go(b.dataset.v); };
+function go(v) {
+  if (!VIEWS[v]) v = 'dash';
+  $$('#menu button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  history.replaceState(null, '', '#' + v);
+  $('#view').innerHTML = '<div class="loading">در حال بارگذاری…</div>';
+  window.scrollTo(0, 0);
+  VIEWS[v]().catch(e => { fail(e); $('#view').innerHTML = `<div class="empty">بارگذاری انجام نشد: ${esc(errText(e))}</div>`; });
+}
+
+// ═════════ داشبورد ═════════
+let dashDays = 30;
+VIEWS.dash = async () => {
+  const [an, recent, low] = await Promise.all([
+    q(sb.rpc('admin_analytics', { p_days: dashDays })),
+    q(sb.from('orders').select('id,tracking_code,customer_name,total,status,created_at').order('created_at', { ascending: false }).limit(8)),
+    q(sb.from('products').select('id,name,stock').lte('stock', 2).order('stock').limit(8)),
+  ]);
+  const t = an.totals || {};
+  const conv = t.visits ? (t.orders / t.visits * 100) : 0;
+  const maxV = Math.max(1, ...(an.sources || []).map(s => s.visits));
+  const prods = (an.products || []).slice(0, 8);
+  $('#view').innerHTML = `
+    <div class="ph"><h2>داشبورد</h2>
+      <div class="chips" id="days">${[[7, '۷ روز'], [30, '۳۰ روز'], [90, '۹۰ روز'], [0, 'همه']].map(([d, l]) => `<button data-d="${d}" class="${d === dashDays ? 'on' : ''}">${l}</button>`).join('')}</div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi main"><small>فروش</small><b class="num">${toman(t.revenue)}</b></div>
+      <div class="card kpi"><small>سفارش‌ها</small><b class="num">${fa(t.orders)}</b></div>
+      <div class="card kpi"><small>بازدیدکننده</small><b class="num">${fa(t.visits)}</b></div>
+      <div class="card kpi"><small>افزودن به سبد</small><b class="num">${fa(t.carts)}</b></div>
+      <div class="card kpi"><small>نرخ تبدیل</small><b class="num">${conv.toLocaleString('fa-IR', { maximumFractionDigits: 1 })}٪</b></div>
+    </div>
+    <div class="g2">
+      <div class="card pad">
+        <h3>آخرین سفارش‌ها</h3>
+        ${recent.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>کد</th><th>مشتری</th><th>مبلغ</th><th>وضعیت</th><th>زمان</th></tr></thead><tbody>
+          ${recent.map(o => `<tr class="click" data-o="${o.id}"><td class="num">${esc(o.tracking_code)}</td><td>${esc(o.customer_name)}</td><td class="num">${toman(o.total)}</td><td>${pill(o.status)}</td><td class="muted small">${ago(o.created_at)}</td></tr>`).join('')}
+        </tbody></table></div>` : '<div class="empty">هنوز سفارشی ثبت نشده</div>'}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card pad"><h3>منبع بازدید</h3>
+          ${(an.sources || []).length ? an.sources.slice(0, 8).map(s => `<div class="bar"><span>${esc(s.source || 'مستقیم')}</span><span class="tr"><i style="width:${s.visits / maxV * 100}%"></i></span><span class="muted num">${fa(s.visits)} · ${fa(s.orders)} سفارش</span></div>`).join('') : '<div class="muted small">هنوز داده‌ای نیست</div>'}
+        </div>
+        <div class="card pad"><h3>موجودی رو به اتمام</h3>
+          ${low.length ? `<table class="tbl"><tbody>${low.map(p => `<tr><td>${esc(p.name)}</td><td class="num" style="color:${p.stock ? 'var(--warn)' : 'var(--bad)'}">${p.stock ? fa(p.stock) + ' عدد' : 'تمام شده'}</td></tr>`).join('')}</tbody></table>` : '<div class="muted small">همه‌ی محصولات موجودی دارن</div>'}
+        </div>
+      </div>
+    </div>
+    <div class="card pad" style="margin-top:16px"><h3>محصولات پربازدید</h3>
+      ${prods.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>محصول</th><th>بازدید</th><th>به سبد</th><th>فروش</th></tr></thead><tbody>
+        ${prods.map(p => `<tr><td>${esc(p.name)}</td><td class="num">${fa(p.views)}</td><td class="num">${fa(p.carts)}</td><td class="num">${fa(p.sold)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="muted small">هنوز داده‌ای نیست. وقتی سایت به بک‌اند وصل بشه، آمار بازدید اینجا میاد.</div>'}
+    </div>`;
+  $('#days').onclick = e => { const b = e.target.closest('button'); if (b) { dashDays = +b.dataset.d; go('dash'); } };
+  $$('[data-o]').forEach(r => r.onclick = () => orderDialog(+r.dataset.o));
+};
+
+// ═════════ سفارش‌ها ═════════
+let oFilter = 'open', oSearch = '', orders = [];
+VIEWS.orders = async () => {
+  orders = await q(sb.from('orders').select('*').order('created_at', { ascending: false }).limit(500));
+  renderOrders();
+};
+function renderOrders() {
+  const open = o => ['جدید', 'پرداخت شده', 'تایید شده'].includes(o.status);
+  const groups = [['open', 'در جریان', open], ['all', 'همه', () => true], ...ST.map(s => [s.k, s.k, o => o.status === s.k])];
+  const term = toEn(oSearch.trim()).toLowerCase();
+  const fn = (groups.find(g => g[0] === oFilter) || groups[0])[2];
+  const list = orders.filter(fn).filter(o => !term || [o.tracking_code, o.customer_name, o.customer_phone, o.post_tracking].some(v => toEn(v || '').toLowerCase().includes(term)));
+  $('#view').innerHTML = `
+    <div class="ph"><h2>سفارش‌ها</h2><div class="acts">
+      <button class="btn ghost" id="oRef"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5"/></svg>به‌روزرسانی</button>
+      <button class="btn" id="oNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>ثبت سفارش دستی</button></div></div>
+    <div class="tools">
+      <input class="in" id="oQ" placeholder="جستجو: کد پیگیری، نام، موبایل" value="${esc(oSearch)}">
+      <div class="chips" id="oChips">${groups.map(([k, l, f]) => { const n = orders.filter(f).length; return (n || k === 'open' || k === 'all') ? `<button data-k="${esc(k)}" class="${k === oFilter ? 'on' : ''}">${esc(l)}<i>${fa(n)}</i></button>` : ''; }).join('')}</div>
+    </div>
+    ${list.length ? `<div class="card scroll" id="oTbl"><table class="tbl"><thead><tr><th>کد</th><th>مشتری</th><th>موبایل</th><th>اقلام</th><th>مبلغ</th><th>پرداخت</th><th>وضعیت</th><th>زمان</th></tr></thead><tbody>
+      ${list.map(o => `<tr class="click" data-o="${o.id}">
+        <td class="num"><b>${esc(o.tracking_code)}</b>${o.pay_sandbox ? ' <span class="pill">تست</span>' : ''}</td>
+        <td>${esc(o.customer_name)}</td><td class="num ltr">${esc(o.customer_phone || '—')}</td>
+        <td class="num">${fa((o.items || []).reduce((a, i) => a + (+i.qty || 0), 0))}</td>
+        <td class="num">${toman(o.total)}</td><td class="small muted">${esc(payLabel(o))}</td><td>${pill(o.status)}</td>
+        <td class="muted small" title="${esc(ftime(o.created_at))}">${ago(o.created_at)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="olist mob">${list.map(o => `<div class="card oc" data-o="${o.id}">
+      <span class="t num">${esc(o.tracking_code)} · ${esc(o.customer_name)}</span><span class="r num">${toman(o.total)}</span>
+      <span class="s">${pill(o.status)}<span>${esc(payLabel(o))}</span><span>· ${ago(o.created_at)}</span></span></div>`).join('')}</div>` : `<div class="card empty">${orders.length ? 'سفارشی با این فیلتر نیست' : 'هنوز سفارشی ثبت نشده'}</div>`}`;
+  $('#oQ').oninput = e => { oSearch = e.target.value; const pos = e.target.selectionStart; renderOrders(); const i = $('#oQ'); i.focus(); i.setSelectionRange(pos, pos); };
+  $('#oChips').onclick = e => { const b = e.target.closest('button'); if (b) { oFilter = b.dataset.k; renderOrders(); } };
+  $('#oRef').onclick = () => go('orders');
+  $('#oNew').onclick = manualOrderDialog;
+  $$('[data-o]').forEach(r => r.onclick = () => orderDialog(+r.dataset.o));
+}
+
+async function orderDialog(id) {
+  let o;
+  try { o = await q(sb.from('orders').select('*').eq('id', id).single()); } catch (e) { return fail(e); }
+  const items = o.items || [];
+  const sub = items.reduce((a, i) => a + (+i.price || 0) * (+i.qty || 0), 0);
+  const pending = o.status === 'در انتظار پرداخت';
+  const d = openDlg(`
+    <div class="dh"><h3>سفارش <span class="num">${esc(o.tracking_code)}</span> ${pill(o.status)}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="db">
+      ${o.pay_sandbox ? '<div class="box small" style="color:var(--warn)">این سفارش با درگاه آزمایشی پرداخت شده و در آمار فروش حساب نمی‌شه.</div>' : ''}
+      <div class="box"><div class="items">
+        ${items.map(i => `<div><span>${esc(i.name)}${i.variant ? ` <span class="muted">(${esc(i.variant)})</span>` : ''} × ${fa(i.qty)}</span><span class="num">${toman((+i.price || 0) * (+i.qty || 0))}</span></div>`).join('')}
+        ${o.discount_amount ? `<div class="muted"><span>جمع اقلام</span><span class="num">${toman(sub)}</span></div><div style="color:var(--ok)"><span>تخفیف${o.coupon_code ? ' (' + esc(o.coupon_code) + ')' : ''}</span><span class="num">− ${toman(o.discount_amount)}</span></div>` : ''}
+        <div class="sum"><span>مبلغ نهایی</span><span class="num">${toman(o.total)}</span></div>
+      </div></div>
+      <dl class="kv">
+        <dt>مشتری</dt><dd>${esc(o.customer_name)}</dd>
+        <dt>موبایل</dt><dd class="num">${o.customer_phone ? `<a href="tel:${esc(o.customer_phone)}">${esc(o.customer_phone)}</a>` : '—'}</dd>
+        <dt>آدرس</dt><dd>${esc(o.customer_address)}</dd>
+        ${o.customer_note ? `<dt>یادداشت</dt><dd>${esc(o.customer_note)}</dd>` : ''}
+        <dt>ثبت</dt><dd>${ftime(o.created_at)}</dd>
+        <dt>پرداخت</dt><dd>${esc(payLabel(o))}${o.paid_at ? ' · ' + ftime(o.paid_at) : ''}</dd>
+        ${o.pay_ref_number ? `<dt>شماره مرجع</dt><dd class="num">${esc(o.pay_ref_number)}${o.pay_card ? ' · کارت ' + esc(o.pay_card) : ''}</dd>` : ''}
+        ${o.source ? `<dt>منبع</dt><dd>${esc(o.source)}</dd>` : ''}
+        ${o.cancel_reason ? `<dt>علت لغو</dt><dd>${esc(CANCEL[o.cancel_reason] || o.cancel_reason)}</dd>` : ''}
+      </dl>
+      <div class="row c2">
+        <label class="f">وضعیت
+          <select class="in" id="odSt">${ST.filter(s => s.k !== 'در انتظار پرداخت' || pending).map(s => `<option ${s.k === o.status ? 'selected' : ''}>${s.k}</option>`).join('')}</select>
+        </label>
+        <div></div>
+        <label class="f">شرکت پست
+          <input class="in" id="odCar" maxlength="30" list="carriers" value="${esc(o.post_carrier || '')}" placeholder="پست پیشتاز، تیپاکس…">
+          <datalist id="carriers"><option>پست پیشتاز</option><option>تیپاکس</option><option>چاپار</option><option>پیک</option></datalist>
+        </label>
+        <label class="f">کد رهگیری مرسوله
+          <input class="in ltr" id="odTr" maxlength="60" value="${esc(o.post_tracking || '')}">
+        </label>
+      </div>
+      ${pending ? '<div class="box small muted">مشتری هنوز پرداخت آنلاین رو تموم نکرده. اگه پول رو کارت‌به‌کارت گرفتی، وضعیت رو «تایید شده» کن. وگرنه سفارش خودش بعد از مدتی لغو می‌شه و موجودی برمی‌گرده.</div>' : ''}
+    </div>
+    <div class="df">
+      <button class="btn" id="odSave">ذخیره</button>
+      <button class="btn ghost" id="odPrint">چاپ برچسب</button>
+      <span class="sp"></span>
+      <button class="btn danger" id="odDel">حذف</button>
+    </div>`, 'wide');
+  $('#odSave', d).onclick = async () => {
+    const st = $('#odSt', d).value;
+    const patch = { status: st, post_carrier: $('#odCar', d).value.trim() || null, post_tracking: toEn($('#odTr', d).value.trim()) || null };
+    if (st === 'لغو شده' && o.status !== 'لغو شده' && !(await ask('سفارش لغو بشه؟ موجودی محصولات و کد تخفیفش برمی‌گرده.', 'لغو سفارش'))) return;
+    try {
+      await q(sb.from('orders').update(patch).eq('id', o.id));
+      log('order_update', `${o.tracking_code}: ${o.status} → ${st}`);
+      toast('ذخیره شد'); d.close(); refreshBadges();
+      if (location.hash === '#orders') VIEWS.orders(); else if (location.hash === '#dash') go('dash');
+    } catch (e) { fail(e); }
+  };
+  $('#odDel', d).onclick = async () => {
+    if (!(await ask('این سفارش کامل حذف بشه؟ این کار برگشت‌پذیر نیست. (اگه هنوز ارسال نشده، موجودی برمی‌گرده)', 'حذف سفارش'))) return;
+    try {
+      await q(sb.from('orders').delete().eq('id', o.id));
+      log('order_delete', o.tracking_code);
+      toast('حذف شد'); d.close(); refreshBadges();
+      if (location.hash === '#orders') VIEWS.orders(); else go('dash');
+    } catch (e) { fail(e); }
+  };
+  $('#odPrint', d).onclick = () => printLabel(o);
+}
+
+function printLabel(o) {
+  const w = window.open('', '_blank', 'width=480,height=640');
+  if (!w) return toast('پنجره‌ی چاپ باز نشد؛ اجازه‌ی پاپ‌آپ رو بده', true);
+  w.document.write(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>برچسب ${esc(o.tracking_code)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>body{font-family:Vazirmatn,sans-serif;padding:24px;font-size:15px;line-height:1.9}.b{border:2px solid #000;border-radius:10px;padding:18px}h2{font-size:17px;margin:0 0 10px}small{color:#555}hr{border:0;border-top:1px dashed #999;margin:12px 0}</style></head>
+    <body><div class="b"><small>گیرنده</small><h2>${esc(o.customer_name)}</h2><div>${esc(o.customer_address)}</div><div>موبایل: ${esc(o.customer_phone || '—')}</div>
+    <hr><small>فرستنده</small><div><b>Zolaris Lounge</b></div><div>کد سفارش: ${esc(o.tracking_code)}</div>
+    <hr>${(o.items || []).map(i => `<div>${esc(i.name)}${i.variant ? ' (' + esc(i.variant) + ')' : ''} × ${fa(i.qty)}</div>`).join('')}</div>
+    <script>document.fonts.ready.then(()=>print())<\/script></body></html>`);
+  w.document.close();
+}
+
+async function manualOrderDialog() {
+  let prods;
+  try { prods = await q(sb.from('products').select('id,name,price,sale_price,sale_starts_at,sale_ends_at,stock,variants').order('name')); } catch (e) { return fail(e); }
+  if (!prods.length) return toast('اول یه محصول اضافه کن', true);
+  const lines = [];
+  const effPrice = (p, v) => {
+    const vp = v && parseVariants(p.variants).find(x => x.name === v)?.price;
+    if (vp) return vp;
+    const now = Date.now();
+    const onSale = p.sale_price > 0 && p.sale_price < p.price && (!p.sale_starts_at || new Date(p.sale_starts_at) <= now) && (!p.sale_ends_at || new Date(p.sale_ends_at) > now);
+    return onSale ? p.sale_price : p.price;
+  };
+  const d = openDlg(`
+    <div class="dh"><h3>ثبت سفارش دستی</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="db">
+      <p class="small muted">برای سفارش‌هایی که از دایرکت اینستاگرام، تلفن یا حضوری می‌گیری. موجودی محصولات خودکار کم می‌شه.</p>
+      <div class="row" style="grid-template-columns:1fr auto auto auto;align-items:end">
+        <label class="f">محصول<select class="in" id="moP">${prods.map(p => `<option value="${p.id}">${esc(p.name)} — ${p.stock ? fa(p.stock) + ' موجود' : 'ناموجود'}</option>`).join('')}</select></label>
+        <label class="f" id="moVW">مدل/سایز<select class="in" id="moV"></select></label>
+        <label class="f">تعداد<input class="in num" id="moQ" type="number" min="1" value="1" style="width:80px"></label>
+        <button class="btn ghost" id="moAdd" type="button">افزودن</button>
+      </div>
+      <div id="moLines"></div>
+      <div class="row c2">
+        <label class="f">نام مشتری<input class="in" id="moN" maxlength="100" placeholder="خالی = «سفارش دایرکت»"></label>
+        <label class="f">موبایل<input class="in ltr" id="moPh" type="tel" inputmode="numeric" placeholder="09xxxxxxxxx (اختیاری)"></label>
+      </div>
+      <label class="f">آدرس<textarea class="in" id="moA" maxlength="600" rows="2"></textarea></label>
+      <div class="row c3">
+        <label class="f">پرداخت<select class="in" id="moPay">${Object.entries(MANUAL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+        <label class="f">تخفیف (تومان)<input class="in num" id="moD" inputmode="numeric" value="0"></label>
+        <label class="f">منبع<input class="in" id="moS" maxlength="40" list="srcs" value="اینستاگرام"><datalist id="srcs"><option>اینستاگرام</option><option>تلفنی</option><option>حضوری</option><option>واتساپ</option><option>تلگرام</option></datalist></label>
+      </div>
+      <label class="f">یادداشت<input class="in" id="moNote" maxlength="600"></label>
+      <label class="chk"><input type="checkbox" id="moSms">پیامک ثبت سفارش برای مشتری و فروشگاه فرستاده بشه</label>
+    </div>
+    <div class="df"><button class="btn" id="moGo">ثبت سفارش</button><button class="btn ghost" data-x>انصراف</button></div>`, 'wide');
+  const fillV = () => {
+    const p = prods.find(x => x.id == $('#moP', d).value);
+    const vs = parseVariants(p.variants);
+    $('#moVW', d).hidden = !vs.length;
+    $('#moV', d).innerHTML = vs.map(v => `<option value="${esc(v.name)}">${esc(v.name)}${v.qty != null ? ` (${fa(v.qty)})` : ''}</option>`).join('');
+  };
+  const draw = () => {
+    const sub = lines.reduce((a, l) => a + l.price * l.qty, 0);
+    const disc = Math.min(intOf($('#moD', d).value) || 0, sub);
+    $('#moLines', d).innerHTML = lines.length ? `<div class="box">${lines.map((l, i) => `<div class="line"><span>${esc(l.name)}${l.variant ? ` <span class="muted">(${esc(l.variant)})</span>` : ''}</span><span class="num">× ${fa(l.qty)}</span><span class="num">${toman(l.price * l.qty)}</span><button class="x" data-rm="${i}" aria-label="حذف">×</button></div>`).join('')}
+      <div class="sum"><span>جمع${disc ? ' پس از تخفیف' : ''}</span><span class="num">${toman(sub - disc)}</span></div></div>` : '<div class="muted small">هنوز محصولی اضافه نشده</div>';
+    $$('[data-rm]', d).forEach(b => b.onclick = () => { lines.splice(+b.dataset.rm, 1); draw(); });
+  };
+  $('#moP', d).onchange = fillV; fillV(); draw();
+  $('#moD', d).oninput = draw;
+  $('#moAdd', d).onclick = () => {
+    const p = prods.find(x => x.id == $('#moP', d).value);
+    const v = $('#moVW', d).hidden ? null : $('#moV', d).value;
+    const qty = Math.max(1, intOf($('#moQ', d).value) || 1);
+    const ex = lines.find(l => l.id === p.id && l.variant === v);
+    if (ex) ex.qty += qty; else lines.push({ id: p.id, name: p.name, variant: v, qty, price: effPrice(p, v) });
+    draw();
+  };
+  $('#moGo', d).onclick = async e => {
+    if (!lines.length) return toast('حداقل یه محصول اضافه کن', true);
+    const phRaw = $('#moPh', d).value.trim();
+    const ph = phRaw ? normPhone(phRaw) : '';
+    if (phRaw && !ph) return toast('شماره موبایل درست نیست', true);
+    const sms = $('#moSms', d).checked;
+    if (sms && !ph) return toast('برای پیامک، شماره موبایل لازمه', true);
+    e.target.disabled = true;
+    try {
+      const r = await q(sb.rpc('admin_place_order', {
+        p_items: lines.map(l => ({ id: l.id, qty: l.qty, variant: l.variant, name: l.name })),
+        p_name: $('#moN', d).value.trim(), p_phone: ph, p_address: $('#moA', d).value.trim(),
+        p_note: $('#moNote', d).value.trim() || null, p_pay: $('#moPay', d).value,
+        p_source: $('#moS', d).value.trim() || null, p_discount: intOf($('#moD', d).value) || 0, p_sms: sms,
+      }));
+      log('order_manual', `${r.tracking_code} · ${r.total}`);
+      if (sms) sb.functions.invoke('notify-order', { body: { trackingCode: r.tracking_code } }).then(({ data, error }) => {
+        if (error || data?.error) toast('سفارش ثبت شد ولی پیامک نرفت (تنظیمات پیامک رو چک کن)', true);
+      });
+      d.close(); toast(`سفارش ${fa(r.tracking_code).replace(/٬/g, '')} ثبت شد`); refreshBadges();
+      if (location.hash === '#orders') VIEWS.orders();
+    } catch (ex) { fail(ex); e.target.disabled = false; }
+  };
+}
+
+// ═════════ محصولات ═════════
+let pSearch = '';
+// «S:3:450000, M:ناموجود» ← [{name, qty, price}]
+function parseVariants(s) {
+  if (!s || !String(s).trim()) return [];
+  return String(s).split(/[,،]/).map(x => x.trim()).filter(Boolean).map(x => {
+    const [name, qty, price] = x.split(':').map(y => (y || '').trim());
+    return { name, qty: qty === 'ناموجود' ? 0 : (/^\d+$/.test(qty || '') ? +qty : null), price: /^\d+(\.\d+)?$/.test(price || '') && +price > 0 ? +price : null };
+  });
+}
+const joinVariants = vs => vs.filter(v => v.name).map(v => [v.name.replace(/[:,،]/g, ' '), v.qty == null ? '' : v.qty, v.price || ''].join(':').replace(/:+$/, '')).join(', ') || null;
+const onSale = p => p.sale_price > 0 && p.sale_price < p.price && (!p.sale_starts_at || new Date(p.sale_starts_at) <= Date.now()) && (!p.sale_ends_at || new Date(p.sale_ends_at) > Date.now());
+
+VIEWS.products = async () => {
+  const prods = await q(sb.from('products').select('*').order('created_at', { ascending: false }));
+  const draw = () => {
+    const term = pSearch.trim();
+    const list = prods.filter(p => !term || (p.name + ' ' + p.category_label).includes(term));
+    $('#pGrid').innerHTML = list.length ? list.map(p => `
+      <div class="card pc" data-p="${p.id}">
+        <div class="im">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ''}
+          <span class="tag">${!p.stock ? '<span class="pill cancel">ناموجود</span>' : onSale(p) ? '<span class="pill paid">حراج</span>' : p.is_new ? '<span class="pill new">جدید</span>' : ''}</span></div>
+        <div class="bd"><b>${esc(p.name)}</b><div class="muted small">${esc(p.category_label)}</div>
+          <div class="pr num">${onSale(p) ? `<s>${fa(p.price)}</s>${toman(p.sale_price)}` : toman(p.price)}</div>
+          <div class="st num ${p.stock <= 2 ? 'low' : ''}">${fa(p.stock)} عدد موجود</div></div>
+      </div>`).join('') : `<div class="card empty" style="grid-column:1/-1">${prods.length ? 'محصولی پیدا نشد' : 'هنوز محصولی اضافه نکردی'}</div>`;
+    $$('[data-p]').forEach(c => c.onclick = () => productDialog(prods.find(p => p.id == c.dataset.p), prods));
+  };
+  $('#view').innerHTML = `
+    <div class="ph"><h2>محصولات <span class="muted small num">(${fa(prods.length)})</span></h2>
+      <div class="acts"><button class="btn" id="pNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>محصول جدید</button></div></div>
+    <div class="tools"><input class="in" id="pQ" placeholder="جستجوی نام یا دسته" value="${esc(pSearch)}"></div>
+    <div class="pgrid" id="pGrid"></div>`;
+  $('#pQ').oninput = e => { pSearch = e.target.value; draw(); };
+  $('#pNew').onclick = () => productDialog(null, prods);
+  draw();
+};
+
+const toLocalInput = d => { if (!d) return ''; const t = new Date(d); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 16); };
+const fromLocalInput = v => v ? new Date(v).toISOString() : null;
+
+function productDialog(p, all) {
+  const isNew = !p;
+  p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
+  const cats = [...new Map(all.filter(x => x.category).map(x => [x.category, x.category_label])).entries()];
+  let vars = parseVariants(p.variants);
+  let imgFile = null, imgUrl = p.image_url;
+  const d = openDlg(`
+    <div class="dh"><h3>${isNew ? 'محصول جدید' : 'ویرایش محصول'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <form class="db" id="pf">
+      <div class="imgpick"><div class="pv" id="pfPv" style="${imgUrl ? `background-image:url('${esc(imgUrl)}')` : ''}"></div>
+        <div><label class="btn ghost sm" style="cursor:pointer">انتخاب عکس<input type="file" id="pfImg" accept="image/*" hidden></label>
+        <p class="small muted" style="margin-top:6px">عکس عمودی (۳ به ۴) بهتره. خودکار کوچیک و فشرده می‌شه.</p></div></div>
+      <label class="f">نام محصول<input class="in" id="pfN" required maxlength="120" value="${esc(p.name)}"></label>
+      <div class="row c2">
+        <label class="f">دسته (نمایشی)<input class="in" id="pfCL" required maxlength="60" list="catl" value="${esc(p.category_label)}" placeholder="مثلاً بافت"><datalist id="catl">${cats.map(([, l]) => `<option>${esc(l)}</option>`).join('')}</datalist></label>
+        <label class="f">شناسه‌ی دسته (انگلیسی، برای فیلتر سایت)<input class="in ltr" id="pfC" required maxlength="40" pattern="[a-z0-9\\-]+" value="${esc(p.category)}" placeholder="knit"></label>
+      </div>
+      <div class="row c3">
+        <label class="f">قیمت (تومان)<input class="in num" id="pfP" required inputmode="numeric" value="${p.price === '' ? '' : esc(p.price)}"></label>
+        <label class="f">قیمت حراج (اختیاری)<input class="in num" id="pfSP" inputmode="numeric" value="${p.sale_price ? esc(p.sale_price) : ''}"></label>
+        <label class="f">موجودی کل<input class="in num" id="pfS" inputmode="numeric" value="${esc(p.stock)}"></label>
+      </div>
+      <div class="row c2" id="pfSaleDates" ${p.sale_price ? '' : 'hidden'}>
+        <label class="f">شروع حراج (اختیاری)<input class="in ltr" id="pfSS" type="datetime-local" value="${toLocalInput(p.sale_starts_at)}"></label>
+        <label class="f">پایان حراج (اختیاری)<input class="in ltr" id="pfSE" type="datetime-local" value="${toLocalInput(p.sale_ends_at)}"></label>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="small muted" style="font-weight:500">سایز / مدل‌ها (اختیاری)</span><button type="button" class="btn ghost sm" id="pfVA">+ افزودن</button></div>
+        <div id="pfV" style="display:flex;flex-direction:column;gap:8px"></div>
+        <p class="small muted" id="pfVH" style="margin-top:6px"></p>
+      </div>
+      <label class="f">توضیحات<textarea class="in" id="pfD" rows="4" maxlength="3000">${esc(p.description || '')}</textarea></label>
+      <label class="chk"><input type="checkbox" id="pfNew" ${p.is_new ? 'checked' : ''}>نشان «جدید» روی محصول</label>
+    </form>
+    <div class="df"><button class="btn" id="pfGo">${isNew ? 'افزودن محصول' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button>
+      ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="pfDel">حذف</button>'}</div>`, 'wide');
+
+  const slug = s => s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  $('#pfCL', d).oninput = e => { const hit = cats.find(([, l]) => l === e.target.value.trim()); if (hit) $('#pfC', d).value = hit[0]; };
+  $('#pfC', d).oninput = e => { e.target.value = slug(e.target.value); };
+  $('#pfSP', d).oninput = e => { $('#pfSaleDates', d).hidden = !intOf(e.target.value); };
+  const drawV = () => {
+    $('#pfV', d).innerHTML = vars.map((v, i) => `<div class="vrow">
+      <input class="in" data-vi="${i}" data-k="name" placeholder="نام (مثلاً S یا قرمز)" value="${esc(v.name)}">
+      <input class="in num" data-vi="${i}" data-k="qty" inputmode="numeric" placeholder="تعداد" value="${v.qty ?? ''}">
+      <input class="in num" data-vi="${i}" data-k="price" inputmode="numeric" placeholder="قیمت متفاوت؟" value="${v.price ?? ''}">
+      <button type="button" class="x" data-vr="${i}" aria-label="حذف">×</button></div>`).join('');
+    syncStock();
+    $$('[data-vi]', d).forEach(inp => inp.oninput = () => {
+      const v = vars[+inp.dataset.vi], k = inp.dataset.k;
+      v[k] = k === 'name' ? inp.value : intOf(inp.value);
+      syncStock();
+    });
+    $$('[data-vr]', d).forEach(b => b.onclick = () => { vars.splice(+b.dataset.vr, 1); drawV(); });
+  };
+  // اگه همه‌ی مدل‌ها تعداد دارن، موجودی کل = جمعشون
+  const syncStock = () => {
+    const all = vars.length && vars.every(v => v.qty != null);
+    const s = $('#pfS', d);
+    s.readOnly = !!all;
+    if (all) s.value = vars.reduce((a, v) => a + v.qty, 0);
+    $('#pfVH', d).textContent = vars.length ? (all ? 'موجودی کل خودکار از جمع مدل‌ها حساب می‌شه.' : 'مدلی که تعداد نداره، فقط به موجودی کل وابسته‌ست.') : '';
+  };
+  $('#pfVA', d).onclick = () => { vars.push({ name: '', qty: null, price: null }); drawV(); $$('[data-k=name]', d).pop().focus(); };
+  drawV();
+  $('#pfImg', d).onchange = e => {
+    imgFile = e.target.files[0] || null;
+    if (imgFile) $('#pfPv', d).style.backgroundImage = `url('${URL.createObjectURL(imgFile)}')`;
+  };
+
+  $('#pfGo', d).onclick = async e => {
+    const f = $('#pf', d);
+    if (!f.reportValidity()) return;
+    const price = intOf($('#pfP', d).value), sp = intOf($('#pfSP', d).value);
+    if (!price) return toast('قیمت رو وارد کن', true);
+    if (sp && sp >= price) return toast('قیمت حراج باید کمتر از قیمت اصلی باشه', true);
+    if (vars.some(v => !v.name.trim())) return toast('نام همه‌ی مدل‌ها رو پر کن یا ردیف خالی رو حذف کن', true);
+    const names = vars.map(v => v.name.trim());
+    if (new Set(names).size !== names.length) return toast('اسم مدل‌ها نباید تکراری باشه', true);
+    e.target.disabled = true; e.target.textContent = 'در حال ذخیره…';
+    try {
+      if (imgFile) imgUrl = await uploadImage(imgFile);
+      const row = {
+        name: $('#pfN', d).value.trim(), category: $('#pfC', d).value.trim(), category_label: $('#pfCL', d).value.trim(),
+        price, sale_price: sp || null, stock: intOf($('#pfS', d).value) || 0, is_new: $('#pfNew', d).checked,
+        sale_starts_at: sp ? fromLocalInput($('#pfSS', d).value) : null, sale_ends_at: sp ? fromLocalInput($('#pfSE', d).value) : null,
+        variants: joinVariants(vars.map(v => ({ ...v, name: v.name.trim() }))), description: $('#pfD', d).value.trim() || null, image_url: imgUrl,
+      };
+      if (isNew) await q(sb.from('products').insert(row));
+      else await q(sb.from('products').update(row).eq('id', p.id));
+      log(isNew ? 'product_add' : 'product_edit', row.name);
+      toast(isNew ? 'محصول اضافه شد' : 'ذخیره شد'); d.close(); VIEWS.products();
+    } catch (ex) { fail(ex); e.target.disabled = false; e.target.textContent = isNew ? 'افزودن محصول' : 'ذخیره'; }
+  };
+  if (!isNew) $('#pfDel', d).onclick = async () => {
+    if (!(await ask(`«${esc(p.name)}» حذف بشه؟ نظرها و علاقه‌مندی‌های این محصول هم پاک می‌شن. سفارش‌های قبلی دست نمی‌خورن.`, 'حذف محصول'))) return;
+    try { await q(sb.from('products').delete().eq('id', p.id)); log('product_delete', p.name); toast('حذف شد'); d.close(); VIEWS.products(); } catch (ex) { fail(ex); }
+  };
+}
+
+// عکس رو حداکثر ۱۴۰۰px و WebP می‌کنه و در باکت image آپلود می‌کنه
+async function uploadImage(file) {
+  let blob = file, ext = (file.name.split('.').pop() || 'jpg').toLowerCase(), type = file.type || 'image/jpeg';
+  try {
+    const bmp = await createImageBitmap(file);
+    const sc = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const out = await new Promise(r => c.toBlob(r, 'image/webp', 0.86));
+    if (out && out.type === 'image/webp') { blob = out; ext = 'webp'; type = 'image/webp'; }
+  } catch (e) { /* اگه مرورگر نتونست، همون فایل اصلی آپلود می‌شه */ }
+  const path = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  await q(sb.storage.from('image').upload(path, blob, { contentType: type, cacheControl: '31536000', upsert: false }));
+  return sb.storage.from('image').getPublicUrl(path).data.publicUrl;
+}
+
+// ═════════ کد تخفیف ═════════
+VIEWS.coupons = async () => {
+  const list = await q(sb.from('coupons').select('*').order('created_at', { ascending: false }));
+  const state = c => !c.active ? ['غیرفعال', 'wait'] : c.expires_at && new Date(c.expires_at) <= Date.now() ? ['منقضی', 'cancel'] : c.max_uses != null && c.used_count >= c.max_uses ? ['تمام شده', 'cancel'] : ['فعال', 'paid'];
+  $('#view').innerHTML = `
+    <div class="ph"><h2>کدهای تخفیف</h2><div class="acts"><button class="btn" id="cNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>کد جدید</button></div></div>
+    ${list.length ? `<div class="card scroll"><table class="tbl"><thead><tr><th>کد</th><th>تخفیف</th><th>استفاده</th><th>انقضا</th><th>وضعیت</th></tr></thead><tbody>
+      ${list.map(c => { const [l, k] = state(c); return `<tr class="click" data-c="${esc(c.code)}">
+        <td class="ltr" style="text-align:right"><b>${esc(c.code)}</b>${c.one_per_customer ? ' <span class="pill">هر مشتری یک بار</span>' : ''}</td>
+        <td class="num">${c.discount_type === 'percent' ? fa(c.discount_value) + '٪' : toman(c.discount_value)}</td>
+        <td class="num">${fa(c.used_count)}${c.max_uses != null ? ' از ' + fa(c.max_uses) : ''}</td>
+        <td class="small">${c.expires_at ? fdate(c.expires_at) : 'ندارد'}</td><td><span class="pill ${k}">${l}</span></td></tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="card empty">هنوز کد تخفیفی نساختی</div>'}`;
+  $('#cNew').onclick = () => couponDialog(null);
+  $$('[data-c]').forEach(r => r.onclick = () => couponDialog(list.find(c => c.code === r.dataset.c)));
+};
+function couponDialog(c) {
+  const isNew = !c;
+  c = c || { code: '', discount_type: 'percent', discount_value: '', max_uses: null, expires_at: null, active: true, one_per_customer: false, used_count: 0 };
+  const d = openDlg(`
+    <div class="dh"><h3>${isNew ? 'کد تخفیف جدید' : 'ویرایش کد تخفیف'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <form class="db" id="cf">
+      <label class="f">کد<input class="in ltr" id="cfC" required maxlength="30" pattern="[A-Z0-9_\\-]+" value="${esc(c.code)}" ${isNew ? '' : 'readonly'} placeholder="YALDA20"></label>
+      <div class="row c2">
+        <label class="f">نوع<select class="in" id="cfT"><option value="percent" ${c.discount_type === 'percent' ? 'selected' : ''}>درصدی</option><option value="fixed" ${c.discount_type === 'fixed' ? 'selected' : ''}>مبلغ ثابت (تومان)</option></select></label>
+        <label class="f">مقدار<input class="in num" id="cfV" required inputmode="numeric" value="${esc(c.discount_value)}"></label>
+        <label class="f">حداکثر تعداد استفاده (خالی = نامحدود)<input class="in num" id="cfM" inputmode="numeric" value="${c.max_uses ?? ''}"></label>
+        <label class="f">تاریخ انقضا (اختیاری)<input class="in ltr" id="cfE" type="datetime-local" value="${toLocalInput(c.expires_at)}"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="cfO" ${c.one_per_customer ? 'checked' : ''}>هر مشتری فقط یک بار بتونه استفاده کنه</label>
+      <label class="chk"><input type="checkbox" id="cfA" ${c.active ? 'checked' : ''}>فعال</label>
+      ${isNew ? '' : `<p class="small muted">تا الان ${fa(c.used_count)} بار استفاده شده.</p>`}
+    </form>
+    <div class="df"><button class="btn" id="cfGo">${isNew ? 'ساخت کد' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button>
+      ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="cfDel">حذف</button>'}</div>`, 'narrow');
+  $('#cfC', d).oninput = e => { e.target.value = toEn(e.target.value).toUpperCase().replace(/[^A-Z0-9_-]/g, ''); };
+  $('#cfGo', d).onclick = async e => {
+    if (!$('#cf', d).reportValidity()) return;
+    const t = $('#cfT', d).value, v = intOf($('#cfV', d).value);
+    if (!v || (t === 'percent' && v > 100)) return toast(t === 'percent' ? 'درصد باید بین ۱ تا ۱۰۰ باشه' : 'مبلغ رو وارد کن', true);
+    const row = { discount_type: t, discount_value: v, max_uses: intOf($('#cfM', d).value), expires_at: fromLocalInput($('#cfE', d).value), one_per_customer: $('#cfO', d).checked, active: $('#cfA', d).checked };
+    e.target.disabled = true;
+    try {
+      if (isNew) await q(sb.from('coupons').insert({ code: $('#cfC', d).value, ...row }));
+      else await q(sb.from('coupons').update(row).eq('code', c.code));
+      log(isNew ? 'coupon_add' : 'coupon_edit', isNew ? $('#cfC', d).value : c.code);
+      toast('ذخیره شد'); d.close(); VIEWS.coupons();
+    } catch (ex) { fail(/duplicate|unique/i.test(ex.message) ? 'این کد قبلاً ساخته شده' : ex); e.target.disabled = false; }
+  };
+  if (!isNew) $('#cfDel', d).onclick = async () => {
+    if (!(await ask(`کد «${esc(c.code)}» حذف بشه؟ (اگه فقط می‌خوای دیگه کار نکنه، تیک «فعال» رو بردار)`, 'حذف'))) return;
+    try { await q(sb.from('coupons').delete().eq('code', c.code)); log('coupon_delete', c.code); toast('حذف شد'); d.close(); VIEWS.coupons(); } catch (ex) { fail(ex); }
+  };
+}
+
+// ═════════ مشتری‌ها ═════════
+let cSearch = '';
+VIEWS.customers = async () => {
+  const [profs, ords] = await Promise.all([
+    q(sb.from('profiles').select('*').order('updated_at', { ascending: false }).limit(1000)),
+    q(sb.from('orders').select('user_id,customer_phone,total,status,pay_sandbox').limit(5000)),
+  ]);
+  const stat = {};
+  for (const o of ords) {
+    if (!o.user_id || o.status === 'لغو شده' || o.status === 'در انتظار پرداخت' || o.pay_sandbox) continue;
+    const s = stat[o.user_id] ||= { n: 0, sum: 0 }; s.n++; s.sum += o.total;
+  }
+  const draw = () => {
+    const term = toEn(cSearch.trim());
+    const list = profs.filter(p => !term || toEn((p.full_name || '') + ' ' + (p.phone || '')).includes(term));
+    $('#cTbl').innerHTML = list.length ? `<table class="tbl"><thead><tr><th>نام</th><th>موبایل</th><th>سفارش</th><th>خرید کل</th><th>آخرین بازدید</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr class="click" data-u="${p.id}"><td>${esc(p.full_name || '—')}${p.blocked ? ' <span class="pill cancel">مسدود</span>' : ''}</td>
+        <td class="num ltr" style="text-align:right">${esc(showPhone(p.phone))}</td><td class="num">${fa(stat[p.id]?.n || 0)}</td>
+        <td class="num">${toman(stat[p.id]?.sum || 0)}</td><td class="small muted">${p.last_seen ? ago(p.last_seen) : '—'}</td><td class="muted">‹</td></tr>`).join('')}
+    </tbody></table>` : `<div class="empty">${profs.length ? 'مشتری‌ای پیدا نشد' : 'هنوز مشتری‌ای ثبت‌نام نکرده'}</div>`;
+    $$('[data-u]').forEach(r => r.onclick = () => customerDialog(profs.find(p => p.id === r.dataset.u)));
+  };
+  $('#view').innerHTML = `<div class="ph"><h2>مشتری‌ها <span class="muted small num">(${fa(profs.length)})</span></h2></div>
+    <div class="tools"><input class="in" id="cQ" placeholder="جستجوی نام یا موبایل" value="${esc(cSearch)}"></div>
+    <div class="card scroll" id="cTbl"></div>`;
+  $('#cQ').oninput = e => { cSearch = e.target.value; draw(); };
+  draw();
+};
+async function customerDialog(p) {
+  let ords = [];
+  try { ords = await q(sb.from('orders').select('id,tracking_code,total,status,created_at').eq('user_id', p.id).order('created_at', { ascending: false }).limit(50)); } catch (e) { fail(e); }
+  const d = openDlg(`
+    <div class="dh"><h3>${esc(p.full_name || 'مشتری')}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="db">
+      <dl class="kv"><dt>موبایل</dt><dd class="num">${esc(showPhone(p.phone))}</dd><dt>آدرس</dt><dd>${esc(p.address || '—')}</dd>
+        <dt>آخرین بازدید</dt><dd>${p.last_seen ? ftime(p.last_seen) : '—'}</dd><dt>وضعیت</dt><dd>${p.blocked ? '<span class="pill cancel">مسدود</span>' : '<span class="pill paid">فعال</span>'}</dd></dl>
+      <div><h3 style="font-size:13.5px;margin-bottom:6px">سفارش‌ها</h3>
+        ${ords.length ? `<table class="tbl"><tbody>${ords.map(o => `<tr class="click" data-o="${o.id}"><td class="num">${esc(o.tracking_code)}</td><td class="num">${toman(o.total)}</td><td>${pill(o.status)}</td><td class="small muted">${fdate(o.created_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="muted small">سفارشی نداره</div>'}</div>
+      <div id="cpw"></div>
+    </div>
+    <div class="df"><button class="btn ${p.blocked ? '' : 'danger'}" id="cuB">${p.blocked ? 'رفع مسدودی' : 'مسدود کردن'}</button>
+      <button class="btn ghost" id="cuR">ساخت رمز جدید</button></div>`);
+  $$('[data-o]', d).forEach(r => r.onclick = () => orderDialog(+r.dataset.o));
+  $('#cuB', d).onclick = async () => {
+    const to = !p.blocked;
+    if (to && !(await ask('این مشتری مسدود بشه؟ دیگه نمی‌تونه از سایت سفارش ثبت کنه.', 'مسدود کن'))) return;
+    try { await q(sb.from('profiles').update({ blocked: to }).eq('id', p.id)); p.blocked = to; log(to ? 'customer_block' : 'customer_unblock', p.phone); toast('انجام شد'); d.close(); VIEWS.customers(); } catch (e) { fail(e); }
+  };
+  $('#cuR', d).onclick = async e => {
+    if (!(await ask('یه رمز تصادفی جدید برای این مشتری ساخته بشه؟ رمز قبلیش دیگه کار نمی‌کنه.', 'ساخت رمز', false))) return;
+    e.target.disabled = true;
+    try {
+      const { data, error } = await sb.functions.invoke('admin-reset-customer-password', { body: { userId: p.id } });
+      if (error || !data?.newPassword) throw new Error(data?.error || error?.message || 'انجام نشد');
+      log('customer_reset_password', p.phone);
+      $('#cpw', d).innerHTML = `<div class="box"><div class="small muted">رمز جدید — فقط همین یه بار نشون داده می‌شه؛ برای مشتری بفرست:</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><b class="ltr" style="font-size:17px;letter-spacing:.05em">${esc(data.newPassword)}</b><button class="btn ghost sm" id="cpCopy">کپی</button></div></div>`;
+      $('#cpCopy', d).onclick = () => navigator.clipboard.writeText(data.newPassword).then(() => toast('کپی شد'));
+    } catch (ex) { fail(ex); e.target.disabled = false; }
+  };
+}
+
+// ═════════ نظرها ═════════
+let rvFilter = 'pending';
+VIEWS.reviews = async () => {
+  const list = await q(sb.from('reviews').select('*, products(name)').order('created_at', { ascending: false }).limit(300));
+  const pend = list.filter(r => !r.approved), appr = list.filter(r => r.approved);
+  const show = rvFilter === 'pending' ? pend : appr;
+  $('#view').innerHTML = `<div class="ph"><h2>نظرها</h2></div>
+    <div class="tools"><div class="chips" id="rvC"><button data-k="pending" class="${rvFilter === 'pending' ? 'on' : ''}">در انتظار تایید<i>${fa(pend.length)}</i></button><button data-k="approved" class="${rvFilter === 'approved' ? 'on' : ''}">منتشرشده<i>${fa(appr.length)}</i></button></div></div>
+    <div class="olist">${show.length ? show.map(r => `<div class="card rv">
+      <div class="hd"><span><b>${esc(r.author_name)}</b> · <span class="muted">${esc(r.products?.name || 'محصول حذف‌شده')}</span></span><span class="stars" aria-label="${r.rating} از ۵">${'★'.repeat(r.rating)}<span style="color:#E2D6D3">${'★'.repeat(5 - r.rating)}</span></span></div>
+      <p>${esc(r.comment)}</p>
+      <div class="hd"><span class="small muted">${ago(r.created_at)}</span><span class="acts">
+        ${r.approved ? `<button class="btn ghost sm" data-un="${r.id}">برداشتن از سایت</button>` : `<button class="btn sm" data-ap="${r.id}">تایید و انتشار</button>`}
+        <button class="btn danger sm" data-dl="${r.id}">حذف</button></span></div></div>`).join('') : `<div class="card empty">${rvFilter === 'pending' ? 'نظر تایید‌نشده‌ای نیست' : 'هنوز نظری منتشر نشده'}</div>`}</div>`;
+  $('#rvC').onclick = e => { const b = e.target.closest('button'); if (b) { rvFilter = b.dataset.k; VIEWS.reviews(); } };
+  const upd = async (id, approved) => { try { await q(sb.from('reviews').update({ approved }).eq('id', id)); log(approved ? 'review_approve' : 'review_unpublish', id); toast('انجام شد'); refreshBadges(); VIEWS.reviews(); } catch (e) { fail(e); } };
+  $$('[data-ap]').forEach(b => b.onclick = () => upd(+b.dataset.ap, true));
+  $$('[data-un]').forEach(b => b.onclick = () => upd(+b.dataset.un, false));
+  $$('[data-dl]').forEach(b => b.onclick = async () => {
+    if (!(await ask('این نظر حذف بشه؟', 'حذف'))) return;
+    try { await q(sb.from('reviews').delete().eq('id', +b.dataset.dl)); log('review_delete', b.dataset.dl); toast('حذف شد'); refreshBadges(); VIEWS.reviews(); } catch (e) { fail(e); }
+  });
+};
+
+// ═════════ تنظیمات ═════════
+const ACT = { order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت' };
+VIEWS.settings = async () => {
+  const [pay, admins, logs, sess] = await Promise.all([
+    q(sb.from('site_settings').select('value').eq('key', 'payment').maybeSingle()),
+    q(sb.from('admins').select('phone')),
+    q(sb.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(60)),
+    q(sb.from('admin_sessions').select('phone,ended_at').order('ended_at', { ascending: false }).limit(200)),
+  ]);
+  const modeNow = pay?.value?.mode || 'off';
+  const lastSeen = {}; for (const s of sess) lastSeen[s.phone] ||= s.ended_at;
+  $('#view').innerHTML = `<div class="ph"><h2>تنظیمات</h2></div>
+    <div class="g2">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card pad"><h3>پرداخت آنلاین (زیبال)</h3>
+          <div class="radio-cards" id="pm">
+            <label><input type="radio" name="pm" value="off" ${modeNow === 'off' ? 'checked' : ''}><span><b>خاموش — کارت‌به‌کارت</b><small>سفارش بدون درگاه ثبت می‌شه و پرداخت رو خودت پیگیری می‌کنی.</small></span></label>
+            <label><input type="radio" name="pm" value="test" ${modeNow === 'test' ? 'checked' : ''}><span><b>آزمایشی</b><small>فقط مدیرها از درگاه تست زیبال رد می‌شن؛ مشتری‌ها مثل حالت خاموش. برای امتحان قبل از روشن کردن.</small></span></label>
+            <label><input type="radio" name="pm" value="live" ${modeNow === 'live' ? 'checked' : ''}><span><b>روشن</b><small>همه‌ی مشتری‌ها قبل از ثبت نهایی از درگاه زیبال پرداخت می‌کنن. کد پذیرنده باید در Secrets ثبت شده باشه.</small></span></label>
+          </div>
+          <div style="margin-top:12px"><button class="btn" id="pmGo">ذخیره</button></div>
+        </div>
+        <div class="card pad"><h3>مدیرها</h3>
+          <table class="tbl"><tbody>${admins.map(a => `<tr><td class="num ltr" style="text-align:right">${esc(showPhone(a.phone))}${a.phone === me.phone ? ' <span class="pill">شما</span>' : ''}</td><td class="small muted">${lastSeen[a.phone] ? 'آخرین حضور: ' + ago(lastSeen[a.phone]) : ''}</td></tr>`).join('')}</tbody></table>
+          <p class="small muted" style="margin-top:8px">اضافه یا حذف کردن مدیر به دلایل امنیتی فقط از سمت دیتابیس انجام می‌شه.</p>
+        </div>
+      </div>
+      <div class="card pad"><h3>گزارش کارهای مدیرها</h3>
+        ${logs.length ? `<table class="tbl"><tbody>${logs.map(l => `<tr><td><b style="font-weight:500">${esc(ACT[l.action] || l.action)}</b>${l.details ? `<div class="small muted">${esc(l.details)}</div>` : ''}</td><td class="small muted num" style="white-space:nowrap">${esc(showPhone(l.admin_phone))}<br>${ago(l.created_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="muted small">هنوز کاری ثبت نشده</div>'}
+      </div>
+    </div>`;
+  $('#pmGo').onclick = async e => {
+    const v = $('input[name=pm]:checked').value;
+    if (v === 'live' && v !== modeNow && !(await ask('پرداخت آنلاین برای همه روشن بشه؟ قبلش با حالت آزمایشی امتحانش کن و مطمئن شو IP دیتابیس در پنل زیبال ثبت شده.', 'روشن کن', false))) return;
+    e.target.disabled = true;
+    try {
+      await q(sb.from('site_settings').upsert({ key: 'payment', value: { mode: v }, updated_at: new Date().toISOString() }));
+      log('payment_mode', `${modeNow} → ${v}`); toast('ذخیره شد'); VIEWS.settings();
+    } catch (ex) { fail(ex); e.target.disabled = false; }
+  };
+};
+</script>
+</body>
+</html>
