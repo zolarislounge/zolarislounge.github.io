@@ -95,6 +95,23 @@
     if (v) { const x = variants(p).find(y => y.name === v); if (!x) return 0; if (x.qty != null) n = Math.min(n, x.qty); }
     return Math.max(0, n);
   }
+  // همه‌ی عکس‌های محصول (اولی = عکس اصلی)
+  const imgsOf = p => (Array.isArray(p.images) && p.images.length ? p.images : (p.image_url ? [p.image_url] : [])).filter(Boolean);
+  // توضیحات: پاراگراف با خط خالی، خط‌های «-» فهرست، «عنوان: مقدار» با عنوان پررنگ
+  function descHtml(t) {
+    return String(t || '').replace(/\r/g, '').trim().split(/\n\s*\n/).map(block => {
+      let html = '', list = [], para = [];
+      const line = l => { const kv = l.match(/^([^:：]{1,24})[:：]\s*(.+)$/); return kv ? `<b>${esc(kv[1])}:</b> ${esc(kv[2])}` : esc(l); };
+      const flushL = () => { if (list.length) { html += '<ul>' + list.map(x => `<li>${line(x)}</li>`).join('') + '</ul>'; list = []; } };
+      const flushP = () => { if (para.length) { html += '<p>' + para.map(line).join('<br>') + '</p>'; para = []; } };
+      for (const l of block.split('\n').map(x => x.trim()).filter(Boolean)) {
+        const m = l.match(/^[-•*–]\s*(.+)$/);
+        if (m) { flushP(); list.push(m[1]); } else { flushL(); para.push(l); }
+      }
+      flushP(); flushL();
+      return html;
+    }).join('');
+  }
   const inCart = (id, v) => cart.filter(i => i.id === id && (v == null || i.variant === v)).reduce((a, i) => a + i.qty, 0);
 
   // ───────── محصولات ─────────
@@ -122,7 +139,7 @@
     $('#grid').innerHTML = list.length ? list.map(p => {
       const out = !p.sample && !p.stock, vs = variants(p);
       return `<article class="card">
-        <div class="media" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}
+        <div class="media" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}${imgsOf(p)[1] ? `<img class="alt" src="${esc(imgsOf(p)[1])}" alt="" loading="lazy">` : ''}
           ${p.sample ? '' : `<button class="fav${favs.has(p.id) ? ' on' : ''}" data-fav="${p.id}" aria-label="علاقه‌مندی">${heart}</button>`}
           ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : p.is_new ? '<span class="badge">جدید</span>' : ''}</div>
         <h3 class="name" data-view="${p.id}">${esc(p.name)}</h3>
@@ -172,31 +189,47 @@
     const p = products.find(x => x.id === id); if (!p || p.sample) return;
     const vs = variants(p);
     let sel = vs.length === 1 && avail(p, vs[0].name) ? vs[0].name : null, qty = 1;
-    const sh = $('#pv');
+    const sh = $('#pv'), imgs = imgsOf(p);
+    sh.querySelector('.pv-body').innerHTML = `
+      <div class="pv-gal">
+        <div class="pv-track" id="pvT">${imgs.map((u, k) => `<div class="pv-slide"><img src="${esc(u)}" alt="${esc(p.name)}" data-zoom="${k}" ${k ? 'loading="lazy"' : ''} draggable="false"></div>`).join('') || '<div class="pv-slide"></div>'}</div>
+        ${imgs.length ? '<span class="pv-zh" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4M11 8v6M8 11h6"/></svg></span>' : ''}
+        ${imgs.length > 1 ? `<button class="pv-nav prev" data-nav="-1" aria-label="عکس قبلی">‹</button><button class="pv-nav next" data-nav="1" aria-label="عکس بعدی">›</button>
+          <div class="pv-dots">${imgs.map((_, k) => `<i class="${k ? '' : 'on'}"></i>`).join('')}</div>` : ''}
+      </div>
+      ${imgs.length > 1 ? `<div class="pv-thumbs">${imgs.map((u, k) => `<button data-th="${k}" class="${k ? '' : 'on'}" aria-label="عکس ${fa(k + 1)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+      <div class="pv-info"><div id="pvMain"></div>
+        ${p.description ? `<section class="pv-desc"><h4>توضیحات</h4>${descHtml(p.description)}</section>` : ''}
+        <div class="pv-rev" id="pvRev"></div></div>`;
+    const gtrack = $('#pvT', sh);
+    const goSlide = k => { k = Math.max(0, Math.min(imgs.length - 1, k)); gtrack.scrollTo({ left: k * gtrack.clientWidth, behavior: 'smooth' }); };
+    const cur = () => Math.round(gtrack.scrollLeft / Math.max(1, gtrack.clientWidth));
+    gtrack.onscroll = () => { const k = cur(); $$('.pv-dots i', sh).forEach((d, n) => d.classList.toggle('on', n === k)); $$('.pv-thumbs button', sh).forEach((b, n) => b.classList.toggle('on', n === k)); };
+    $$('[data-nav]', sh).forEach(b => b.onclick = () => goSlide(cur() + +b.dataset.nav));
+    $$('[data-th]', sh).forEach(b => b.onclick = () => goSlide(+b.dataset.th));
+    $$('[data-zoom]', sh).forEach(im => im.onclick = () => zoom.open(imgs, +im.dataset.zoom));
     const draw = () => {
       const max = avail(p, sel) - inCart(p.id, sel);
-      sh.querySelector('.pv-body').innerHTML = `
-        <div class="pv-img">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}">` : ''}</div>
-        <div class="pv-info">
+      $('#pvMain', sh).innerHTML = `
           <div class="cat">${esc(p.category_label || '')}</div>
           <h2 class="pv-name">${esc(p.name)}</h2>
           <div class="pv-price">${sel ? (onSale(p) && !variants(p).find(v => v.name === sel)?.price ? `<s>${fa(p.price)}</s> ` : '') + toman(priceOf(p, sel)) : priceHtml(p)}</div>
           ${vs.length ? `<h5>سایز / مدل</h5><div class="chips" id="pvV">${vs.map(v => { const a = avail(p, v.name); return `<button data-v="${esc(v.name)}" class="${v.name === sel ? 'on' : ''}" ${a ? '' : 'disabled'} dir="auto">${esc(v.name)}${a ? '' : ' (ناموجود)'}</button>`; }).join('')}</div>` : ''}
           ${p.stock ? `<h5>تعداد</h5><div class="qty"><button data-q="1" aria-label="بیشتر">+</button><span>${fa(qty)}</span><button data-q="-1" aria-label="کمتر">−</button></div>
             ${sel || !vs.length ? (max <= 3 && max > 0 ? `<small class="warn">فقط ${fa(max)} عدد دیگه موجوده</small>` : max <= 0 ? '<small class="warn">همه‌ی موجودی این مورد در سبد شماست</small>' : '') : ''}` : ''}
-          <button class="btn btn-m pv-add" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? 'ناموجود' : vs.length && !sel ? 'اول سایز رو انتخاب کن' : 'افزودن به سبد خرید'}</button>
-          ${p.description ? `<div class="pv-desc">${esc(p.description)}</div>` : ''}
-          <div class="pv-rev" id="pvRev"></div>
-        </div>`;
+          ${p.description ? '<a class="link pv-more" href="#pvDesc">توضیحات محصول ↓</a>' : ''}
+          <button class="btn btn-m pv-add" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? 'ناموجود' : vs.length && !sel ? 'اول سایز رو انتخاب کن' : 'افزودن به سبد خرید'}</button>`;
       $$('#pvV button', sh).forEach(b => b.onclick = () => { sel = b.dataset.v; qty = 1; draw(); });
       $$('[data-q]', sh).forEach(b => b.onclick = () => { qty = Math.min(Math.max(1, qty + +b.dataset.q), Math.max(1, max)); draw(); });
       $('#pvAdd', sh).onclick = () => {
         if (vs.length && !sel) return toast('اول سایز رو انتخاب کن', true);
         if (addToCart(p.id, sel, qty)) closeAll();
       };
-      loadReviews(p);
+      const more = $('.pv-more', sh); if (more) more.onclick = e => { e.preventDefault(); $('.pv-desc', sh).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     };
+    loadReviews(p);
     draw();
+    sh.scrollTop = 0;
     open('pv');
     track('view', p.id);
   }
@@ -223,6 +256,91 @@
       } catch (ex) { toast(/duplicate|unique/i.test(ex.message) ? 'قبلاً برای این محصول نظر دادی' : errText(ex), true); }
     };
   }
+
+  // ───────── بزرگ‌نمایی عکس (دو انگشت، دو بار ضربه، چرخ ماوس) ─────────
+  const zoom = (() => {
+    const el = $('#zv'), stage = $('.zv-stage', el), img = $('img', stage);
+    let list = [], idx = 0, s = 1, tx = 0, ty = 0, g = null, lastTap = 0, lx = 0, ly = 0;
+    const pts = new Map();
+    const apply = anim => { img.style.transition = anim ? 'transform .28s cubic-bezier(.22,.8,.2,1)' : 'none'; img.style.transform = `translate3d(${tx}px,${ty}px,0) scale(${s})`; };
+    const box = () => {
+      const r = stage.getBoundingClientRect(), nw = img.naturalWidth || 1, nh = img.naturalHeight || 1, k = Math.min(r.width / nw, r.height / nh);
+      return { w: nw * k, h: nh * k, cx: r.left + r.width / 2, cy: r.top + r.height / 2, W: r.width, H: r.height };
+    };
+    const clamp = () => { const b = box(), mx = Math.max(0, (b.w * s - b.W) / 2), my = Math.max(0, (b.h * s - b.H) / 2); tx = Math.min(mx, Math.max(-mx, tx)); ty = Math.min(my, Math.max(-my, ty)); };
+    const zoomAt = (ns, px, py) => {
+      const b = box(); ns = Math.min(5, Math.max(1, ns));
+      const ux = (px - b.cx - tx) / s, uy = (py - b.cy - ty) / s;
+      s = ns; tx = px - b.cx - ux * s; ty = py - b.cy - uy * s;
+      if (s === 1) tx = ty = 0;
+      clamp();
+    };
+    const show = k => {
+      idx = (k + list.length) % list.length; s = 1; tx = ty = 0; apply(false);
+      img.src = list[idx];
+      $('.zv-count', el).textContent = list.length > 1 ? `${fa(idx + 1)} / ${fa(list.length)}` : '';
+      $$('.zv-nav', el).forEach(b => b.hidden = list.length < 2);
+    };
+    const open = (l, k) => { list = l; el.hidden = false; requestAnimationFrame(() => el.classList.add('on')); show(k || 0); };
+    const close = () => { el.classList.remove('on'); el.hidden = true; pts.clear(); g = null; };
+    const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
+    const startOne = (x, y) => { g = { type: s > 1 ? 'pan' : 'swipe', x0: x, y0: y, tx0: tx, ty0: ty, t: Date.now(), moved: false }; };
+    stage.addEventListener('pointerdown', e => {
+      stage.setPointerCapture(e.pointerId);
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { const m = mid(), b = box(); g = { type: 'pinch', d0: m.d, s0: s, ux: (m.x - b.cx - tx) / s, uy: (m.y - b.cy - ty) / s }; }
+      else if (pts.size === 1) startOne(e.clientX, e.clientY);
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId) || !g) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (g.type === 'pinch' && pts.size >= 2) {
+        const m = mid(), b = box();
+        s = Math.min(5, Math.max(1, g.s0 * m.d / g.d0));
+        tx = m.x - b.cx - g.ux * s; ty = m.y - b.cy - g.uy * s; clamp(); apply(false);
+        return;
+      }
+      const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) g.moved = true;
+      if (g.type === 'pan') { tx = g.tx0 + dx; ty = g.ty0 + dy; clamp(); apply(false); }
+      else if (g.type === 'swipe' && list.length > 1) { tx = dx; apply(false); }
+    });
+    const up = e => {
+      if (!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId);
+      if (!g) return;
+      if (g.type === 'pinch') {
+        if (s < 1.05) { s = 1; tx = ty = 0; apply(true); }
+        if (pts.size === 1) { const [p0] = pts.values(); startOne(p0.x, p0.y); g.moved = true; } else g = null;
+        return;
+      }
+      const dx = e.clientX - g.x0, now = Date.now();
+      if (g.type === 'swipe' && g.moved) {
+        if (Math.abs(dx) > 60 && list.length > 1) show(idx + (dx < 0 ? 1 : -1)); else { tx = 0; apply(true); }
+      } else if (!g.moved && now - g.t < 300) {
+        // دو بار ضربه: بزرگ‌نمایی روی همون نقطه / برگشت
+        if (now - lastTap < 320 && Math.hypot(e.clientX - lx, e.clientY - ly) < 40) {
+          if (s > 1) { s = 1; tx = ty = 0; } else zoomAt(2.5, e.clientX, e.clientY);
+          apply(true); lastTap = 0;
+        } else { lastTap = now; lx = e.clientX; ly = e.clientY; }
+      }
+      g = null;
+    };
+    stage.addEventListener('pointerup', up);
+    stage.addEventListener('pointercancel', up);
+    stage.addEventListener('wheel', e => { e.preventDefault(); zoomAt(s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY); apply(false); }, { passive: false });
+    $('.zv-x', el).onclick = close;
+    $('.zv-nav.prev', el).onclick = () => show(idx - 1);
+    $('.zv-nav.next', el).onclick = () => show(idx + 1);
+    addEventListener('resize', () => { if (!el.hidden) { s = 1; tx = ty = 0; apply(false); } });
+    document.addEventListener('keydown', e => {
+      if (el.hidden) return;
+      if (e.key === 'Escape') { e.stopImmediatePropagation(); close(); }
+      if (e.key === 'ArrowRight') show(idx - 1);
+      if (e.key === 'ArrowLeft') show(idx + 1);
+    }, true);
+    return { open, close };
+  })();
 
   // ───────── سبد خرید ─────────
   const saveCart = () => ls.set('zl-cart', cart);

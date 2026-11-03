@@ -189,11 +189,22 @@ dialog.narrow{width:min(400px,calc(100vw - 24px))}
 .sum{display:flex;justify-content:space-between;font-weight:700;border-top:1px dashed #DCCDC9;padding-top:8px;margin-top:4px}
 .vrow{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 34px;gap:8px;align-items:center}
 .vrow .x{width:34px;height:34px}
-.imgpick{display:flex;gap:14px;align-items:center}
-.imgpick .pv{width:108px;aspect-ratio:3/4;border-radius:10px;background:var(--soft) center/contain no-repeat;border:1px solid var(--line);flex:none;position:relative;overflow:hidden}
-.imgpick .pv.busy::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);background-size:250% 100%;animation:zl-scan 1.3s linear infinite}
+.gal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.gi{position:relative;aspect-ratio:3/4;border-radius:10px;border:1px solid var(--line);background:var(--soft) center/contain no-repeat;overflow:hidden}
+.gi.first{border-color:var(--m);box-shadow:0 0 0 1px var(--m)}
+.gi.busy::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);background-size:250% 100%;animation:zl-scan 1.3s linear infinite}
+.gi.wait{opacity:.6}
 @keyframes zl-scan{from{background-position:120% 0}to{background-position:-120% 0}}
-.imgpick .side{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}
+.gi .main{position:absolute;top:6px;right:6px;background:var(--m);color:#fff;font-size:10.5px;padding:1px 7px;border-radius:8px}
+.gi .tag2{position:absolute;top:6px;left:6px;background:rgba(255,255,255,.92);font-size:10px;padding:1px 6px;border-radius:8px;color:var(--mut)}
+.gi .ga{position:absolute;inset:auto 0 0 0;display:flex;justify-content:center;flex-wrap:wrap;gap:3px;padding:16px 4px 5px;background:linear-gradient(transparent,rgba(30,10,8,.5))}
+.gi .ga button{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.94);font-size:12px;color:var(--ink);display:grid;place-items:center;line-height:1}
+.gi .ga button:hover{background:#fff}
+.gi .ga button.d{color:var(--bad)}
+.gal .add-g{aspect-ratio:3/4;border:1.5px dashed #D8C8C4;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--mut);font-size:12px;cursor:pointer;text-align:center;padding:6px}
+.gal .add-g b{font-size:24px;font-weight:300;color:var(--m);line-height:1}
+.gal .add-g:hover{background:var(--soft)}
 .bgst{font-size:12px;color:var(--mut);min-height:18px}
 .bgst.bad{color:var(--bad)}
 .seg2{display:inline-flex;background:var(--soft);border-radius:8px;padding:3px}
@@ -786,18 +797,21 @@ function productDialog(p, all) {
   p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
   const cats = [...new Map(all.filter(x => x.category).map(x => [x.category, x.category_label])).entries()];
   let vars = parseVariants(p.variants);
-  let imgUrl = p.image_url, origFile = null, procBlob = null, useProc = false, bgBusy = false;
+  // عکس‌ها: {url} = عکس ذخیره‌شده؛ {orig} = عکس جدید؛ proc = نسخه‌ی بدون پس‌زمینه
+  const startImgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image_url ? [p.image_url] : []);
+  let gal = startImgs.map(url => ({ url })), bgQueue = [], bgRunning = false;
+  const MAX_IMGS = 12;
   const d = openDlg(`
     <div class="dh"><h3>${isNew ? 'محصول جدید' : 'ویرایش محصول'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
     <form class="db" id="pf">
-      <div class="imgpick"><div class="pv" id="pfPv" style="${imgUrl ? `background-image:url('${esc(imgUrl)}')` : ''}"></div>
-        <div class="side">
-          <div style="display:flex;gap:6px;flex-wrap:wrap"><label class="btn ghost sm" style="cursor:pointer">انتخاب عکس<input type="file" id="pfImg" accept="image/*" hidden></label>
-            ${imgUrl ? '<button type="button" class="btn ghost sm" id="pfBgCur">حذف پس‌زمینه‌ی عکس فعلی</button>' : ''}</div>
-          <label class="chk" style="font-size:12.5px"><input type="checkbox" id="pfBg">حذف خودکار پس‌زمینه (زمینه‌ی سفید)</label>
-          <div class="seg2" id="pfCmp" hidden><button type="button" data-c="1" class="on">بدون پس‌زمینه</button><button type="button" data-c="0">عکس اصلی</button></div>
-          <div class="bgst" id="pfBgSt"></div>
-        </div></div>
+      <div>
+        <div class="gal-h"><span class="small muted" style="font-weight:500">عکس‌ها <span id="pfGN"></span></span>
+          <label class="chk" style="font-size:12px"><input type="checkbox" id="pfBg">حذف خودکار پس‌زمینه‌ی عکس‌های جدید</label></div>
+        <div class="gal" id="pfGal"></div>
+        <input type="file" id="pfImg" accept="image/*" multiple hidden>
+        <div class="bgst" id="pfBgSt" style="margin-top:6px"></div>
+        <p class="small muted">اولین عکس، عکس اصلی محصوله. با ★ هر عکسی رو اصلی کن و با فلش‌ها ترتیب رو عوض کن. ✨ = حذف پس‌زمینه، ↺ = برگشت به عکس اصلی.</p>
+      </div>
       <label class="f">نام محصول<input class="in" id="pfN" required maxlength="120" value="${esc(p.name)}"></label>
       <div class="row c2">
         <label class="f">دسته (نمایشی)<input class="in" id="pfCL" required maxlength="60" list="catl" value="${esc(p.category_label)}" placeholder="مثلاً بافت"><datalist id="catl">${[...new Set([...SITE_CATS, ...cats.map(([, l]) => l)])].map(l => `<option>${esc(l)}</option>`).join('')}</datalist></label>
@@ -817,7 +831,15 @@ function productDialog(p, all) {
         <div id="pfV" style="display:flex;flex-direction:column;gap:8px"></div>
         <p class="small muted" id="pfVH" style="margin-top:6px"></p>
       </div>
-      <label class="f">توضیحات<textarea class="in" id="pfD" rows="4" maxlength="3000">${esc(p.description || '')}</textarea></label>
+      <label class="f">توضیحات محصول (در صفحه‌ی محصول، بخش «توضیحات» نمایش داده می‌شه)
+        <textarea class="in" id="pfD" rows="6" maxlength="3000" placeholder="مثلاً:
+بافت نرم و گرم با طرح آرگایل، مناسب پاییز و زمستان.
+
+جنس: ۷۰٪ پشم، ۳۰٪ اکریلیک
+- یقه گرد
+- فری‌سایز، مناسب سایز ۳۸ تا ۴۴
+- شستشو با آب سرد">${esc(p.description || '')}</textarea>
+        <span style="font-weight:400">هر خط که با «-» شروع بشه، به‌صورت فهرست نشون داده می‌شه. یه خط خالی = پاراگراف جدید.</span></label>
       <label class="chk"><input type="checkbox" id="pfNew" ${p.is_new ? 'checked' : ''}>نشان «جدید» روی محصول</label>
     </form>
     <div class="df"><button class="btn" id="pfGo">${isNew ? 'افزودن محصول' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button>
@@ -851,57 +873,74 @@ function productDialog(p, all) {
   };
   $('#pfVA', d).onclick = () => { vars.push({ name: '', qty: null, price: null }); drawV(); $$('[data-k=name]', d).pop().focus(); };
   drawV();
-  // ── عکس محصول + حذف پس‌زمینه ──
-  const pv = $('#pfPv', d), st = $('#pfBgSt', d), bgChk = $('#pfBg', d);
+  // ── عکس‌های محصول + حذف پس‌زمینه ──
+  const st = $('#pfBgSt', d), bgChk = $('#pfBg', d), galEl = $('#pfGal', d);
   let bgPref = true; try { bgPref = localStorage.getItem('zl-bg') !== '0'; } catch (e) { }
   bgChk.checked = bgPref && !!window.ZLRemoveBg;
   bgChk.disabled = !window.ZLRemoveBg;
   const urls = new Map();
   const blobUrl = b => { if (!urls.has(b)) urls.set(b, URL.createObjectURL(b)); return urls.get(b); };
-  const showPv = () => {
-    const b = useProc && procBlob ? procBlob : origFile;
-    if (b) pv.style.backgroundImage = `url('${blobUrl(b)}')`;
-    $('#pfCmp', d).hidden = !procBlob;
-    $$('#pfCmp button', d).forEach(x => x.classList.toggle('on', (x.dataset.c === '1') === useProc));
+  const srcOf = it => it.proc && it.useProc ? blobUrl(it.proc) : it.orig && !it.url ? blobUrl(it.orig) : it.url;
+  const drawGal = () => {
+    $('#pfGN', d).textContent = gal.length ? `(${fa(gal.length)})` : '';
+    galEl.innerHTML = gal.map((it, i) => `<div class="gi ${i === 0 ? 'first' : ''} ${it.busy ? 'busy' : ''} ${bgQueue.includes(it) && !it.busy ? 'wait' : ''}" style="background-image:url('${esc(srcOf(it))}')">
+      ${i === 0 ? '<span class="main">عکس اصلی</span>' : ''}
+      ${it.proc ? `<span class="tag2">${it.useProc ? 'بدون پس‌زمینه' : 'اصلی'}</span>` : ''}
+      <div class="ga">
+        ${i > 0 ? `<button type="button" data-g="main" data-i="${i}" title="عکس اصلی بشه">★</button><button type="button" data-g="up" data-i="${i}" title="جلوتر">→</button>` : ''}
+        ${i < gal.length - 1 ? `<button type="button" data-g="down" data-i="${i}" title="عقب‌تر">←</button>` : ''}
+        ${window.ZLRemoveBg && !it.busy && !bgQueue.includes(it) ? (it.proc ? `<button type="button" data-g="ver" data-i="${i}" title="${it.useProc ? 'برگشت به عکس اصلی' : 'نسخه‌ی بدون پس‌زمینه'}">${it.useProc ? '↺' : '✨'}</button>` : `<button type="button" data-g="bg" data-i="${i}" title="حذف پس‌زمینه">✨</button>`) : ''}
+        <button type="button" class="d" data-g="del" data-i="${i}" title="حذف عکس">✕</button>
+      </div></div>`).join('') + (gal.length < MAX_IMGS ? '<label class="add-g" for="pfImg"><b>+</b>افزودن عکس<br><span style="font-size:10.5px">(چندتا با هم)</span></label>' : '');
   };
-  const STAGE = { download: p => `دانلود مدل هوش مصنوعی… ${fa(Math.round((p || 0) * 100))}٪ (فقط بار اول، حدود ۴۶ مگابایت)`, init: () => 'آماده‌سازی مدل…', run: () => 'در حال حذف پس‌زمینه… (چند ثانیه)', compose: () => 'در حال چیدن روی زمینه‌ی سفید…' };
-  async function runBg() {
-    if (!origFile || bgBusy || !window.ZLRemoveBg) return;
-    bgBusy = true; procBlob = null; useProc = false; showPv();
-    pv.classList.add('busy'); st.classList.remove('bad'); st.textContent = 'شروع…';
-    $('#pfGo', d).disabled = true;
-    const t0 = performance.now();
-    try {
-      procBlob = await window.ZLRemoveBg(origFile, (stage, p) => { st.textContent = (STAGE[stage] || (() => ''))(p); });
-      useProc = true;
-      st.textContent = `پس‌زمینه حذف شد (${fa(Math.round((performance.now() - t0) / 1000))} ثانیه). اگه خوب نشده، «عکس اصلی» رو انتخاب کن.`;
-    } catch (ex) {
-      console.error(ex);
-      st.classList.add('bad');
-      st.textContent = /no_object/.test(ex.message) ? 'محصولی توی عکس تشخیص داده نشد؛ عکس اصلی استفاده می‌شه.' : 'حذف پس‌زمینه انجام نشد؛ عکس اصلی استفاده می‌شه.';
-    } finally { bgBusy = false; pv.classList.remove('busy'); $('#pfGo', d).disabled = false; showPv(); }
+  const STAGE = { download: p => `دانلود مدل هوش مصنوعی… ${fa(Math.round((p || 0) * 100))}٪ (فقط بار اول، حدود ۴۶ مگابایت)`, init: () => 'آماده‌سازی مدل…', run: () => 'در حال حذف پس‌زمینه…', compose: () => 'در حال چیدن روی زمینه‌ی سفید…' };
+  // حذف پس‌زمینه یکی‌یکی انجام می‌شه تا مرورگر سنگین نشه
+  async function pumpBg() {
+    if (bgRunning) return;
+    bgRunning = true; $('#pfGo', d).disabled = true; st.classList.remove('bad');
+    let failed = 0;
+    while (bgQueue.length) {
+      const it = bgQueue[0];
+      if (!gal.includes(it)) { bgQueue.shift(); continue; }
+      it.busy = true; drawGal();
+      const label = () => `عکس ${fa(gal.indexOf(it) + 1)}${bgQueue.length > 1 ? ` (${fa(bgQueue.length - 1)} عکس دیگه در صف)` : ''}: `;
+      try {
+        if (!it.orig) {
+          st.textContent = label() + 'دریافت عکس…';
+          const r = await fetch(it.url); if (!r.ok) throw new Error('http ' + r.status);
+          const b = await r.blob();
+          it.orig = new File([b], 'current.' + ((b.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg')), { type: b.type });
+        }
+        it.proc = await window.ZLRemoveBg(it.orig, (stage, pr) => { st.textContent = label() + (STAGE[stage] || (() => ''))(pr); });
+        it.useProc = true;
+      } catch (ex) { console.error(ex); failed++; }
+      it.busy = false; bgQueue.shift(); drawGal();
+    }
+    bgRunning = false; $('#pfGo', d).disabled = false;
+    st.classList.toggle('bad', !!failed);
+    st.textContent = failed ? `پس‌زمینه‌ی ${fa(failed)} عکس حذف نشد؛ عکس اصلی‌شون استفاده می‌شه.` : 'پس‌زمینه حذف شد. اگه عکسی خوب نشده، روی ↺ بزن تا عکس اصلی‌ش استفاده بشه.';
   }
+  const queueBg = it => { if (window.ZLRemoveBg && !bgQueue.includes(it)) { bgQueue.push(it); drawGal(); pumpBg(); } };
   $('#pfImg', d).onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    origFile = f; procBlob = null; useProc = false; st.textContent = ''; showPv();
-    if (bgChk.checked) runBg();
+    const files = [...e.target.files].slice(0, MAX_IMGS - gal.length);
+    if (e.target.files.length > files.length) toast(`حداکثر ${fa(MAX_IMGS)} عکس برای هر محصول`, true);
+    e.target.value = '';
+    for (const f of files) { const it = { orig: f }; gal.push(it); if (bgChk.checked) bgQueue.push(it); }
+    drawGal(); if (bgQueue.length) pumpBg();
   };
-  bgChk.onchange = () => {
-    try { localStorage.setItem('zl-bg', bgChk.checked ? '1' : '0'); } catch (e) { }
-    if (bgChk.checked && origFile && !procBlob) runBg();
-    else { useProc = bgChk.checked && !!procBlob; showPv(); }
+  bgChk.onchange = () => { try { localStorage.setItem('zl-bg', bgChk.checked ? '1' : '0'); } catch (e) { } };
+  galEl.onclick = e => {
+    const b = e.target.closest('button[data-g]'); if (!b) return;
+    const i = +b.dataset.i, it = gal[i], g = b.dataset.g;
+    if (g === 'main') { gal.splice(i, 1); gal.unshift(it); }
+    if (g === 'up' && i > 0) [gal[i - 1], gal[i]] = [gal[i], gal[i - 1]];
+    if (g === 'down' && i < gal.length - 1) [gal[i + 1], gal[i]] = [gal[i], gal[i + 1]];
+    if (g === 'del') { gal.splice(i, 1); bgQueue = bgQueue.filter(x => x !== it || x.busy); }
+    if (g === 'ver') it.useProc = !it.useProc;
+    if (g === 'bg') return queueBg(it);
+    drawGal();
   };
-  $('#pfCmp', d).onclick = e => { const b = e.target.closest('button'); if (b) { useProc = b.dataset.c === '1'; showPv(); } };
-  if ($('#pfBgCur', d)) $('#pfBgCur', d).onclick = async e => {
-    e.target.disabled = true; st.classList.remove('bad'); st.textContent = 'دریافت عکس فعلی…';
-    try {
-      const r = await fetch(imgUrl); if (!r.ok) throw new Error('http ' + r.status);
-      const b = await r.blob();
-      origFile = new File([b], 'current.' + ((b.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg')), { type: b.type });
-      bgChk.checked = true; await runBg();
-    } catch (ex) { st.classList.add('bad'); st.textContent = 'عکس فعلی دریافت نشد.'; }
-    e.target.disabled = false;
-  };
+  drawGal();
 
   $('#pfGo', d).onclick = async e => {
     const f = $('#pf', d);
@@ -912,16 +951,23 @@ function productDialog(p, all) {
     if (vars.some(v => !v.name.trim())) return toast('نام همه‌ی مدل‌ها رو پر کن یا ردیف خالی رو حذف کن', true);
     const names = vars.map(v => v.name.trim());
     if (new Set(names).size !== names.length) return toast('اسم مدل‌ها نباید تکراری باشه', true);
-    if (bgBusy) return toast('صبر کن حذف پس‌زمینه تموم بشه', true);
+    if (bgRunning || bgQueue.length) return toast('صبر کن حذف پس‌زمینه تموم بشه', true);
     e.target.disabled = true; e.target.textContent = 'در حال ذخیره…';
     try {
-      const imgFile = useProc && procBlob ? new File([procBlob], 'product.jpg', { type: 'image/jpeg' }) : origFile;
-      if (imgFile) imgUrl = await uploadImage(imgFile);
+      // عکس‌های جدید (یا نسخه‌ی بدون پس‌زمینه) آپلود می‌شن؛ عکس‌های قبلی همون آدرس قبلی‌شون می‌مونه
+      const images = [];
+      for (const [k, it] of gal.entries()) {
+        e.target.textContent = `آپلود عکس ${fa(k + 1)} از ${fa(gal.length)}…`;
+        if (it.proc && it.useProc) images.push(await uploadImage(new File([it.proc], 'product.jpg', { type: 'image/jpeg' })));
+        else if (it.url) images.push(it.url);
+        else images.push(await uploadImage(it.orig));
+      }
+      e.target.textContent = 'در حال ذخیره…';
       const row = {
         name: $('#pfN', d).value.trim(), category: $('#pfC', d).value.trim(), category_label: $('#pfCL', d).value.trim(),
         price, sale_price: sp || null, stock: intOf($('#pfS', d).value) || 0, is_new: $('#pfNew', d).checked,
         sale_starts_at: sp ? fromLocalInput($('#pfSS', d).value) : null, sale_ends_at: sp ? fromLocalInput($('#pfSE', d).value) : null,
-        variants: joinVariants(vars.map(v => ({ ...v, name: v.name.trim() }))), description: $('#pfD', d).value.trim() || null, image_url: imgUrl,
+        variants: joinVariants(vars.map(v => ({ ...v, name: v.name.trim() }))), description: $('#pfD', d).value.trim() || null, image_url: images[0] || null, images,
       };
       if (isNew) await q(sb.from('products').insert(row));
       else await q(sb.from('products').update(row).eq('id', p.id));
