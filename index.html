@@ -43,6 +43,18 @@ header.scrolled{box-shadow:0 1px 0 var(--line)}
 .cnt.on{background:var(--m);color:#fff}
 .brand{font-family:var(--serif);font-weight:600;color:var(--m);font-size:clamp(17px,5vw,26px);letter-spacing:.02em;direction:ltr;white-space:nowrap;line-height:1}
 .brand small{display:block;font-family:var(--sans);font-weight:300;font-size:.36em;letter-spacing:.62em;color:var(--mut);margin-top:5px;text-align:center}
+/* logo animation: letters rise in one by one, LOUNGE settles, then a soft shine every few seconds */
+.brand{display:inline-block;transition:transform .5s var(--ease);transform-origin:center}
+header.scrolled .brand{transform:scale(.9)}
+.brand .word{display:inline-block;position:relative}
+.brand .word::after{content:"";position:absolute;inset:-15% -4%;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,214,204,.85) 50%,transparent 58%);background-size:300% 100%;background-position:100% 0;mix-blend-mode:screen;animation:zl-shine 7s 2.2s ease-in-out infinite}
+.brand .lt{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(70deg);filter:blur(5px);animation:zl-in .9s var(--ease) forwards;animation-delay:calc(.15s + var(--i) * 75ms);transition:transform .45s var(--ease);transition-delay:calc(var(--i) * 35ms)}
+.brand small{opacity:0;letter-spacing:1.3em;animation:zl-lounge 1.4s .85s var(--ease) forwards}
+.brand:hover .lt{transform:translateY(-3px)}
+@keyframes zl-in{60%{filter:blur(0)}to{opacity:1;transform:none;filter:none}}
+@keyframes zl-lounge{to{opacity:1;letter-spacing:.62em}}
+@keyframes zl-shine{0%{background-position:100% 0}30%,100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.brand .lt,.brand small,.brand .word::after{animation:none!important;opacity:1;transform:none;filter:none}.brand small{letter-spacing:.62em}}
 .nav{display:none;gap:28px;font-size:14px}
 .nav a{color:#5b4a47;transition:color .2s}.nav a:hover{color:var(--m)}
 @media (min-width:1024px){.nav{display:flex}}
@@ -238,7 +250,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
       <button class="ib" aria-label="سبد خرید" data-open="cart"><svg viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1 11.5h-11z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg><span class="cnt" id="cartN">۰</span></button>
     </div>
     <nav class="nav"><a href="#">صفحه اصلی</a><a href="#shop">همه محصولات</a><a href="#contact">تماس با ما</a></nav>
-    <a href="#" class="brand" aria-label="Zolaris Lounge">ZOLARIS<small>LOUNGE</small></a>
+    <a href="#" class="brand" aria-label="Zolaris Lounge"><span class="word" aria-hidden="true"><span class="lt" style="--i:0">Z</span><span class="lt" style="--i:1">O</span><span class="lt" style="--i:2">L</span><span class="lt" style="--i:3">A</span><span class="lt" style="--i:4">R</span><span class="lt" style="--i:5">I</span><span class="lt" style="--i:6">S</span></span><small aria-hidden="true">LOUNGE</small></a>
   </div>
 </header>
 
