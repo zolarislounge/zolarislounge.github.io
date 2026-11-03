@@ -202,13 +202,22 @@ footer a:hover{color:#fff}
 /* card: second photo on hover */
 .media .alt{position:absolute;inset:0;opacity:0;transition:opacity .5s var(--ease)}
 /* ───────── account drawer (luxury) ───────── */
-#acct{width:min(92vw,420px);--gold:#C6A57A}
+/* full-screen page on phones, centered card on larger screens */
+#acct{--gold:#C6A57A;inset:0;width:auto;height:100%;height:100dvh;transform:translateY(24px);opacity:0;visibility:hidden;
+  transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s .5s;background:#fff;display:block;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#acct.on{transform:none;opacity:1;visibility:visible;transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s}
+.acct-card{min-height:100%;display:flex;flex-direction:column;background:#fff}
+#acct .ah{padding-top:max(34px,calc(env(safe-area-inset-top) + 22px))}
+@media (min-width:600px){
+  #acct{background:rgba(30,10,8,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;padding:32px 16px}
+  .acct-card{width:min(460px,100%);min-height:0;margin:auto;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+}
 .ah{position:relative;flex:none;color:#fff;text-align:center;padding:34px 22px 28px;overflow:hidden;
   background:radial-gradient(120% 95% at 80% -10%,#7A2A24 0%,#4A120F 45%,#2B0807 100%)}
 .ah::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 1px,transparent 1px 13px);pointer-events:none}
 .ah::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
 .ah > *{position:relative}
-.ah-x{position:absolute!important;top:10px;left:10px;z-index:2}
+.ah-x{position:absolute!important;top:max(10px,env(safe-area-inset-top));left:10px;z-index:2}
 .ah-x svg{stroke:#fff!important}
 .ah-x:hover{background:rgba(255,255,255,.1)!important}
 .ah-logo{height:52px;margin:0 auto;filter:drop-shadow(0 4px 14px rgba(0,0,0,.35));animation:zl-rise .7s var(--ease) both}
@@ -217,7 +226,8 @@ footer a:hover{color:#fff}
 .ah-brand{font-family:var(--serif);font-size:10.5px;letter-spacing:.42em;color:#E3C9A3;direction:ltr;margin-top:12px;opacity:.9}
 .ah-t{font-size:20px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
 .ah-s{font-size:12.5px;color:#DDC3BE;margin-top:2px;min-height:18px}
-#acctBody{padding:22px 22px 28px}
+#acctBody{padding:24px 22px 28px;width:100%;max-width:460px;margin:0 auto}
+@media (max-width:599px){#acctBody{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}
 .rise{animation:zl-rise .6s var(--ease) both}
 @keyframes zl-rise{from{opacity:0;transform:translateY(10px)}}
 @media (prefers-reduced-motion:reduce){.rise,.ah-logo,.ah-av{animation:none}}
@@ -486,7 +496,8 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   <div class="dfoot"><button class="btn btn-m" id="checkoutBtn" disabled>ادامه و ثبت سفارش</button></div>
 </aside>
 
-<aside class="drawer r" id="acct" aria-label="حساب کاربری">
+<aside class="drawer" id="acct" role="dialog" aria-modal="true" aria-label="حساب کاربری">
+ <div class="acct-card">
   <div class="ah">
     <button class="ib ah-x" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <img class="ah-logo" id="acctLogo" src="assets/logo-z-white.png" alt="">
@@ -496,6 +507,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
     <div class="ah-s" id="acctSub"></div>
   </div>
   <div id="acctBody"></div>
+ </div>
 </aside>
 
 <section class="sheet wide" id="pv" role="dialog" aria-modal="true" aria-label="جزئیات محصول">

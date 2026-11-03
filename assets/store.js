@@ -790,7 +790,7 @@
     if (t.closest('#fclear')) { sizes.clear(); drawSizes(); setCat(0); return; }
     if (t.closest('#favBtn')) { favOnly = !favOnly; render(); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.closest('#favOff')) { favOnly = false; render(); return; }
-    if (t.closest('[data-close]') || t === scrim) { closeAll(); return; }
+    if (t.closest('[data-close]') || t === scrim || t.id === 'acct') { closeAll(); return; }
     const a = t.closest('[data-add]');
     if (a) { if (addToCart(+a.dataset.add, null, 1)) { a.classList.add('done'); a.textContent = 'اضافه شد ✓'; setTimeout(() => { a.classList.remove('done'); a.textContent = 'افزودن به سبد خرید'; }, 1300); } return; }
     const cq = t.closest('[data-cq]');
