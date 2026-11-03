@@ -245,11 +245,12 @@
           <div class="pv-stock ${stock[0]}"><i></i>${stock[1]}</div>
           ${vs.length ? `<div class="pv-opt ${needPick ? 'need' : ''}" id="pvOpt">
             <div class="pv-opt-h"><span>سایز / مدل</span><b>${sel ? `<bdi>${esc(sel)}</bdi>` : needPick ? 'لطفاً یکی رو انتخاب کن' : 'انتخاب کن'}</b></div>
+            ${needPick ? `<div class="pv-alert" role="alert">${IC.alert}<span><b>سایز رو انتخاب نکردی</b>برای افزودن به سبد، یکی از سایزهای زیر رو انتخاب کن.</span></div>` : ''}
             <div class="pv-sz" id="pvV">${vs.map(v => { const a = avail(p, v.name); return `<button data-v="${esc(v.name)}" class="${v.name === sel ? 'on' : ''}" ${a ? '' : 'disabled'} aria-pressed="${v.name === sel}" dir="auto">${esc(v.name)}${a ? '' : '<small>ناموجود</small>'}</button>`; }).join('')}</div></div>` : ''}
           ${p.stock ? `<div class="pv-qrow"><span>تعداد</span><div class="cl-q"><button data-q="1" ${qty >= Math.max(1, max) ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(qty)}</span><button data-q="-1" ${qty <= 1 ? 'disabled' : ''} aria-label="کمتر">−</button></div></div>` : ''}`;
       $('#pvBar', sh).innerHTML = `
           <div class="pv-bar-p"><small>${qty > 1 ? `${fa(qty)} عدد` : 'قیمت'}</small><b>${toman(unit * qty)}</b></div>
-          <button class="lg-btn pv-add ${added ? 'done' : ''}" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? '<span>ناموجود</span>' : added ? `<span>به سبد اضافه شد</span>${IC.check}` : `<span>افزودن به سبد</span>${IC.bag}`}</button>`;
+          <button class="lg-btn pv-add ${added ? 'done' : ''}" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? '<span>ناموجود</span>' : added ? `<span>به سبد اضافه شد</span>${IC.check}` : needPick && !sel ? `<span>اول سایز رو انتخاب کن</span>${IC.up}` : `<span>افزودن به سبد</span>${IC.bag}`}</button>`;
       $$('#pvV button', sh).forEach(b => b.onclick = () => { sel = b.dataset.v; qty = 1; needPick = false; draw(); });
       $$('[data-q]', sh).forEach(b => b.onclick = () => { qty = Math.min(Math.max(1, qty + +b.dataset.q), Math.max(1, max)); draw(); });
       $('#pvAdd', sh).onclick = () => {
@@ -258,6 +259,7 @@
           needPick = true; draw();
           const o = $('#pvOpt', sh); o.scrollIntoView({ behavior: 'smooth', block: 'center' });
           o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake');
+          try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) { }
           return;
         }
         if (!addToCart(p.id, sel, qty, true)) return;
@@ -507,6 +509,8 @@
     chev: '<svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg>',
     out: '<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/></svg>',
     chat: '<svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/></svg>',
+    alert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.3"/></svg>',
+    up: '<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.8 12.5h9.4L17.5 7M10.2 10.5v6M13.8 10.5v6"/></svg>',
   };
