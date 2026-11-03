@@ -155,7 +155,7 @@
         <div class="media" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}${imgsOf(p)[1] ? `<img class="alt" src="${esc(imgsOf(p)[1])}" alt="" loading="lazy">` : ''}
           ${p.sample ? '' : `<button class="fav${favs.has(p.id) ? ' on' : ''}" data-fav="${p.id}" aria-label="علاقه‌مندی">${heart}</button>`}
           ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : p.is_new ? '<span class="badge">جدید</span>' : ''}</div>
-        <h3 class="name" data-view="${p.id}">${esc(p.name)}</h3>
+        <h3 class="name" data-view="${p.id}" ${p.sample ? '' : 'role="button" tabindex="0"'}>${esc(p.name)}</h3>
         <div class="cat">${esc(p.category_label || '')}</div>
         <div class="price">${priceHtml(p)}</div>
         ${p.sample ? '' : out ? '<button class="add out" disabled>ناموجود</button>'
@@ -296,8 +296,8 @@
       $('.zv-count', el).textContent = list.length > 1 ? `${fa(idx + 1)} / ${fa(list.length)}` : '';
       $$('.zv-nav', el).forEach(b => b.hidden = list.length < 2);
     };
-    const open = (l, k) => { list = l; el.hidden = false; requestAnimationFrame(() => el.classList.add('on')); show(k || 0); };
-    const close = () => { el.classList.remove('on'); el.hidden = true; pts.clear(); g = null; };
+    const open = (l, k) => { list = l; el.hidden = false; root.classList.add('zfull'); requestAnimationFrame(() => el.classList.add('on')); show(k || 0); };
+    const close = () => { el.classList.remove('on'); el.hidden = true; root.classList.remove('zfull'); pts.clear(); g = null; };
     const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
     const startOne = (x, y) => { g = { type: s > 1 ? 'pan' : 'swipe', x0: x, y0: y, tx0: tx, ty0: ty, t: Date.now(), moved: false }; };
     stage.addEventListener('pointerdown', e => {
@@ -830,21 +830,30 @@
 
   // ───────── کشوها ─────────
   const scrim = $('#scrim');
+  const root = document.documentElement;
+  const isPhone = () => matchMedia('(max-width:599px)').matches;
+  function setOvl(on, full) {
+    root.classList.toggle('ovl', on);
+    root.classList.toggle('full', !!(on && full));
+    if (on) root.style.setProperty('--doc-h', Math.max(root.scrollHeight, document.body.scrollHeight, innerHeight) + 'px');
+  }
   const locked = () => $('#acct').classList.contains('locked') && $('#acct').classList.contains('on');
   function closeAll() {
-    if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); return; }
+    if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); setOvl(true, isPhone()); return; }
+    setOvl(false);
     $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); document.body.style.overflow = ''; }
   function open(id) {
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
-    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; return; }
-    closeAll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
+    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; setOvl(true, root.classList.contains('full')); return; }
+    closeAll();
+    setOvl(true, id === 'acct' && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
 
   document.addEventListener('click', e => {
     const t = e.target;
     const o = t.closest('[data-open]');
     if (o) { if (o.dataset.open === 'acct') drawAcct(); open(o.dataset.open); return; }
     if (t.closest('[data-open-acct]')) { afterLogin = null; drawAcct(); open('acct'); return; }
-    if (t.closest('[data-search]')) { closeAll(); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
+    if (t.closest('[data-search]')) { closeAll(); setOvl(true); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
     const pv = t.closest('[data-pay]'); if (pv) { pay(pv.dataset.pay); return; }
     const fv = t.closest('[data-fav]'); if (fv) { e.stopPropagation(); toggleFav(+fv.dataset.fav, fv); return; }
     const vw = t.closest('[data-view]'); if (vw) { openProduct(+vw.dataset.view); return; }
@@ -863,7 +872,11 @@
     if (r) { const l = cartLines()[+r.dataset.rm]; cart = cart.filter(x => !(x.id === l.id && x.variant === l.variant)); saveCart(); renderCart(); return; }
     if (t.closest('#checkoutBtn')) { checkout(); }
   });
-  document.addEventListener('keydown', e => e.key === 'Escape' && closeAll());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') return closeAll();
+    const v = e.target.closest && e.target.closest('[data-view][role="button"]');
+    if (v && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openProduct(+v.dataset.view); }
+  });
   $('#search input').addEventListener('input', e => { query = e.target.value; render(); });
   $('#search form').addEventListener('submit', e => { e.preventDefault(); closeAll(); $('#shop').scrollIntoView({ behavior: 'smooth' }); });
   $('#sort').onchange = render;

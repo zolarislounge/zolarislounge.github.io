@@ -17,7 +17,7 @@
 <script src="assets/bg/removebg.js"></script>
 <style>
 :root{
-  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#8C7C79; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
+  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
   --ok:#2E7D4F; --warn:#B5762E; --bad:#B3261E; --info:#2F5D8A;
   --fa:'Vazirmatn',system-ui,sans-serif; --serif:'Bodoni Moda',Didot,Georgia,serif;
 }
@@ -46,6 +46,9 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--
 textarea.in{height:auto;min-height:84px;padding:10px 12px;resize:vertical;line-height:1.7}
 .in:focus{border-color:var(--m);box-shadow:0 0 0 3px rgba(61,13,11,.08)}
 .ltr{direction:ltr;text-align:left}
+@media (max-width:700px){.in,select.in,textarea.in,.tools .in{font-size:16px}}
+::selection{background:#EADCD7;color:var(--ink)}
+:focus-visible{outline:2px solid var(--m);outline-offset:2px}
 .chk{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
 .chk input{width:18px;height:18px;accent-color:var(--m)}
 .row{display:grid;gap:12px}

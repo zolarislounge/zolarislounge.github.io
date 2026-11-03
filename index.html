@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@300;400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --ink:#1E1413; --mut:#9A8A87; --line:#EFE7E5; --bg:#FFFFFF;
+  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#FFFFFF;
   --fa:'Vazirmatn',system-ui,sans-serif; --serif:'Bodoni Moda',Didot,Georgia,serif; --sans:'Jost',system-ui,sans-serif;
   --ease:cubic-bezier(.22,.8,.2,1);
 }
@@ -36,11 +36,12 @@ header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdro
 header.scrolled{box-shadow:0 1px 0 var(--line)}
 .hdr{display:flex;align-items:center;justify-content:space-between;height:76px;gap:8px}
 .icons{display:flex;align-items:center;gap:2px}
-.ib{width:42px;height:42px;display:grid;place-items:center;position:relative;border-radius:50%;transition:background .2s}
+.ib{width:44px;height:44px;display:grid;place-items:center;position:relative;border-radius:50%;transition:background .2s}
 .ib:hover{background:#F6F0EF}
 .ib svg{width:23px;height:23px;stroke:var(--ink);fill:none;stroke-width:1.5}
 .cnt{position:absolute;top:3px;left:2px;width:17px;height:17px;border-radius:50%;background:#DDD3D1;color:var(--ink);font-size:9.5px;display:grid;place-items:center;font-family:var(--sans)}
 .cnt.on{background:var(--m);color:#fff}
+.cnt:not(.on){display:none}
 .brand{font-family:var(--serif);font-weight:600;color:var(--m);font-size:clamp(17px,5vw,26px);letter-spacing:.02em;direction:ltr;white-space:nowrap;line-height:1}
 .brand small{display:block;font-family:var(--sans);font-weight:300;font-size:.36em;letter-spacing:.62em;color:var(--mut);margin-top:5px;text-align:center}
 /* logo animation: letters rise in one by one, LOUNGE settles, then a soft shine every few seconds */
@@ -61,9 +62,9 @@ header.scrolled .brand{transform:scale(.9)}
 
 /* toolbar */
 .bar{display:flex;align-items:center;justify-content:space-between;padding:10px 0 18px}
-.fbtn{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:17px;direction:ltr}
+.fbtn{display:flex;align-items:center;gap:8px;min-height:44px;font-family:var(--sans);font-size:17px;direction:ltr}
 .fbtn svg{width:24px;height:24px;stroke:var(--ink);fill:none;stroke-width:1.4}
-.sort{font:inherit;font-size:13px;border:0;background:none;color:#5b4a47;cursor:pointer}
+.sort{font:inherit;font-size:16px;min-height:44px;border:0;background:none;color:#5b4a47;cursor:pointer}
 
 /* product grid — 2 cols on mobile like reference */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:34px 14px;padding-bottom:28px}
@@ -97,7 +98,7 @@ header.scrolled .brand{transform:scale(.9)}
 .feat small{color:var(--mut);font-size:12px;font-weight:400}
 footer{background:var(--m);color:#E3CFCB;font-size:13.5px}
 footer .wrap{display:grid;gap:30px;padding-top:44px;padding-bottom:28px}
-@media (min-width:768px){footer .wrap{grid-template-columns:1.2fr 1fr 1.6fr}}
+@media (min-width:768px){footer .wrap{grid-template-columns:1fr 1.4fr}}
 footer h4{color:#fff;font-weight:500;font-size:14px;margin-bottom:10px}
 footer li{list-style:none;margin:6px 0}
 footer a:hover{color:#fff}
@@ -120,7 +121,7 @@ footer a:hover{color:#fff}
 .fg{padding:16px 20px;border-bottom:1px solid var(--line)}
 .fg h5{font-size:13.5px;font-weight:500;margin-bottom:10px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips button{min-width:44px;height:36px;padding:0 12px;border:1px solid var(--line);font-size:12.5px}
+.chips button{min-width:44px;height:44px;padding:0 12px;border:1px solid var(--line);font-size:12.5px}
 .chips button.on{background:var(--m);border-color:var(--m);color:#fff}
 .sw{display:flex;gap:10px}
 .sw span{width:28px;height:28px;border-radius:50%;border:1px solid #ddd;cursor:pointer}
@@ -128,7 +129,7 @@ footer a:hover{color:#fff}
 .ci img{aspect-ratio:3/4;object-fit:cover}
 .ci b{font-family:var(--sans);font-weight:400;display:block;direction:ltr;text-align:right}
 .ci small{color:var(--mut)}
-.ci button{font-size:12px;color:var(--mut)}
+.ci button{font-size:12px;color:var(--mut);min-height:44px;min-width:44px;padding:0 6px}
 .empty{padding:44px 20px;text-align:center;color:var(--mut)}
 .dfoot{margin-top:auto;padding:16px 18px;display:flex;gap:10px;position:sticky;bottom:0;background:#fff}
 .btn{flex:1;height:48px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
@@ -136,8 +137,8 @@ footer a:hover{color:#fff}
 .search{position:fixed;inset:0 0 auto 0;background:#fff;z-index:60;padding:16px;transform:translateY(-100%);transition:transform .4s var(--ease);box-shadow:0 10px 30px rgba(0,0,0,.08)}
 .search.on{transform:none}
 .search form{display:flex;gap:8px;max-width:720px;margin:0 auto}
-.search input{flex:1;height:50px;border:1px solid var(--line);padding:0 16px;font:inherit;font-size:15px}
-.toast{position:fixed;bottom:92px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:#fff;font-size:13px;padding:10px 18px;opacity:0;transition:all .35s var(--ease);z-index:70;pointer-events:none;white-space:nowrap}
+.search input{flex:1;height:50px;border:1px solid var(--line);padding:0 16px;font:inherit;font-size:16px}
+.toast{position:fixed;bottom:92px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:#fff;font-size:13px;padding:10px 18px;opacity:0;transition:all .35s var(--ease);z-index:95;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;line-height:1.8}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast.bad{background:#B3261E;white-space:normal;text-align:center;max-width:calc(100vw - 32px)}
 
@@ -203,7 +204,7 @@ footer a:hover{color:#fff}
 .media .alt{position:absolute;inset:0;opacity:0;transition:opacity .5s var(--ease)}
 /* ───────── account drawer (luxury) ───────── */
 /* full-screen page on phones, centered card on larger screens */
-#acct{--gold:#C6A57A;top:0;left:0;right:0;bottom:auto;width:auto;height:100vh;height:100lvh;transform:translateY(24px);opacity:0;visibility:hidden;
+#acct{--gold:#C6A57A;top:0;left:0;right:0;bottom:0;width:auto;height:auto;transform:translateY(24px);opacity:0;visibility:hidden;
   transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s .5s;background:#fff;display:block;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #acct.on{transform:none;opacity:1;visibility:visible;transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s}
 .acct-card{min-height:100%;display:flex;flex-direction:column;background:#fff}
@@ -227,7 +228,7 @@ footer a:hover{color:#fff}
 .ah-t{font-size:20px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
 .ah-s{font-size:12.5px;color:#DDC3BE;margin-top:2px;min-height:18px}
 #acctBody{padding:24px 22px 28px;width:100%;max-width:460px;margin:0 auto}
-@media (max-width:599px){#acctBody{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}
+@media (max-width:599px){#acctBody{padding-bottom:calc(32px + env(safe-area-inset-bottom))}}
 .rise{animation:zl-rise .6s var(--ease) both}
 @keyframes zl-rise{from{opacity:0;transform:translateY(10px)}}
 @media (prefers-reduced-motion:reduce){.rise,.ah-logo,.ah-av{animation:none}}
@@ -255,7 +256,7 @@ footer a:hover{color:#fff}
 .lg-in input,.lg-in textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);height:50px;padding:0}
 .lg-in textarea{height:auto;padding:12px 0;resize:vertical;line-height:1.9;font-size:14.5px}
 .lg-in input[dir="ltr"]{letter-spacing:.06em}
-.lg-in input::placeholder{color:#C9BAB6}
+.lg-in input::placeholder{color:#9C8A86}
 .lg-eye{width:36px;height:36px;display:grid;place-items:center;color:#A8928E}
 .lg-eye svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
 .lg-eye.on{color:var(--m)}
@@ -287,7 +288,7 @@ footer a:hover{color:#fff}
 .lg-perks svg{width:38px;height:38px;padding:9px;flex:none;border-radius:50%;background:#FAF4F2;color:var(--m);border:1px solid #F0E4E1}
 .lg-perks span{display:flex;flex-direction:column;font-size:12px;color:var(--mut);line-height:1.8}
 .lg-perks b{font-size:13.5px;color:var(--ink);font-weight:500}
-.lg-safe{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:#A8928E;margin-top:4px}
+.lg-safe{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:var(--mut);margin-top:4px}
 .lg-safe svg{width:15px;height:15px}
 
 /* signed in */
@@ -322,7 +323,7 @@ footer a:hover{color:#fff}
 .ac-out svg{width:18px;height:18px}
 /* login / sign-up tabs */
 .lg-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #EEE4E1;margin:-6px 0 2px}
-.lg-tabs button{height:50px;font-size:15px;color:#9A8A87;transition:color .35s}
+.lg-tabs button{height:50px;font-size:15px;color:var(--mut);transition:color .35s}
 .lg-tabs button[aria-selected="true"]{color:var(--ink);font-weight:700}
 .lg-tabs i{position:absolute;bottom:-1px;right:0;width:50%;height:2px;background:var(--m);transition:transform .45s var(--ease)}
 .lg-tabs i::after{content:"";position:absolute;left:50%;bottom:-3px;width:6px;height:6px;margin-left:-3px;background:var(--gold);transform:rotate(45deg)}
@@ -346,6 +347,18 @@ footer a:hover{color:#fff}
 .lg-in.bad{border-bottom-color:#B3261E}
 .lg-in.bad > svg{color:#B3261E}
 .lg-out{align-self:center;color:var(--mut)!important}
+/* iOS 26 Safari toolbar: what shows under the floating bar is the page itself */
+html.ovl .scrim{position:absolute;bottom:auto;height:var(--doc-h,100%)}
+@media (max-width:599px){html.full body > :not(#acct):not(.toast){visibility:hidden}}
+html.zfull body > :not(#zv):not(.toast){visibility:hidden}
+html.full,html.full body,html.zfull,html.zfull body{background:#fff}
+
+/* browser surfaces */
+::selection{background:#EADCD7;color:var(--ink)}
+:focus-visible{outline:2px solid var(--m);outline-offset:2px}
+.lg-in :focus-visible,.otp:focus-visible,.fld:focus-visible,.search input:focus-visible{outline:none}
+input,textarea{caret-color:var(--m)}
+[data-view][role="button"]{cursor:pointer}
 /* loading skeleton (instead of showing sample products before the real ones arrive) */
 .card.sk{pointer-events:none}
 .card.sk .media,.card.sk i{background:linear-gradient(100deg,#F4EEED 30%,#FBF8F7 50%,#F4EEED 70%);background-size:300% 100%;animation:zl-sk 1.4s ease-in-out infinite}
@@ -393,10 +406,10 @@ footer a:hover{color:#fff}
 .rate label{font-size:24px;color:#E2D6D3;cursor:pointer;line-height:1}
 .rate label:hover,.rate label:hover~label,.rate input:checked~label{color:#C8962E}
 .qty{display:inline-flex;align-items:center;border:1px solid var(--line);width:max-content}
-.qty button{width:40px;height:40px;font-size:18px}
+.qty button{width:44px;height:44px;font-size:18px}
 .qty button:disabled{opacity:.3;cursor:default}
 .qty span{min-width:30px;text-align:center}
-.qty.sm{margin-top:6px}.qty.sm button{width:30px;height:30px;font-size:15px}
+.qty.sm{margin-top:6px}.qty.sm button{width:38px;height:38px;font-size:15px}
 .warn{color:#B3261E;font-size:12px}
 .ctot{display:flex;justify-content:space-between;padding:16px 18px;font-size:14px}
 .muted{color:var(--mut);font-size:12.5px}
@@ -406,7 +419,7 @@ footer a:hover{color:#fff}
 /* forms */
 .form{display:flex;flex-direction:column;gap:12px;padding:18px}
 .form label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#5b4a47}
-.fld{width:100%;height:46px;border:1px solid #E4D9D6;padding:0 12px;font:inherit;font-size:15px;background:#fff;color:var(--ink);outline:none;border-radius:0}
+.fld{width:100%;height:46px;border:1px solid #E4D9D6;padding:0 12px;font:inherit;font-size:16px;background:#fff;color:var(--ink);outline:none;border-radius:0}
 textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 .fld:focus{border-color:var(--m)}
 .ltr{direction:ltr;text-align:left}
@@ -466,21 +479,19 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 <section class="feat">
   <div class="wrap">
     <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg>ارسال سفارشات<small>هر هفته دو مرتبه</small></div>
-    <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg>امکان تعویض<small class="ph">[شرایط تعویض]</small></div>
-    <div><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>پرداخت امن<small class="ph">[درگاه پرداخت]</small></div>
-    <div><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>پشتیبانی واتس‌اپ و بله<small class="ph">[ساعات پاسخگویی]</small></div>
+    <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg>امکان تعویض</div>
+    <div><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>پرداخت امن</div>
+    <div><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>پشتیبانی واتس‌اپ و بله<small dir="ltr">۰۹۱۲۱۸۱۶۷۶۲</small></div>
   </div>
 </section>
 
 <footer id="contact">
   <div class="wrap">
     <div class="f-brand"><img src="assets/logo-full-white.png" alt="Zolaris Lounge"><p>طراحی شده برای زنانی که الهام‌بخش هستند</p></div>
-    <div><h4>راهنما</h4><ul><li><a href="#">راهنمای سایز</a></li><li><a href="#">شرایط ارسال</a></li><li><a href="#">تعویض و مرجوعی</a></li><li><a href="#">درباره ما</a></li></ul></div>
     <div><h4>تماس با ما</h4><ul>
       <li>تلفن و واتس‌اپ/بله: <a href="tel:09121816762" dir="ltr">۰۹۱۲۱۸۱۶۷۶۲</a></li>
       <li>قزوین، فلسطین، روبه‌روی مخابرات، بین کافه سور و هایپرمارکت، پلاک ۳۸۰، طبقه ۳، واحد زولاریس</li>
       <li>اینستاگرام: <a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" dir="ltr">@zolaris.lounge</a></li>
-      <li class="ph">[جای نماد اعتماد (اینماد)]</li>
     </ul></div>
   </div>
   <div class="copy">© Zolaris Lounge — تمام حقوق محفوظ است</div>
