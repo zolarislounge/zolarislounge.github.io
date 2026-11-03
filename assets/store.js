@@ -950,7 +950,13 @@
   $('#search input').addEventListener('input', e => { query = e.target.value; render(); });
   $('#search form').addEventListener('submit', e => { e.preventDefault(); closeAll(); $('#shop').scrollIntoView({ behavior: 'smooth' }); });
   $('#sort').onchange = render;
-  addEventListener('scroll', () => $('header').classList.toggle('scrolled', scrollY > 10), { passive: true });
+  const ann = $('.announce');
+  const onScroll = () => {
+    $('header').classList.toggle('scrolled', scrollY > 10);
+    // top strip matches what's under Safari's address bar: the maroon announcement, then the white header
+    document.documentElement.classList.toggle('at-top', !!ann && scrollY < ann.offsetHeight - 2);
+  };
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
   // سبد خرید بین تب‌ها هماهنگ می‌مونه
   addEventListener('storage', e => { if (e.key === 'zl-cart') { cart = ls.get('zl-cart', []); renderCart(); } });
 
