@@ -377,16 +377,48 @@
     const lines = live ? cartLines() : [];
     const n = cart.reduce((a, i) => a + i.qty, 0);
     count('#cartN', n);
+    const body = $('#cartBody'), foot = $('#cartFoot');
+    $('#cartSub').textContent = lines.length ? `${fa(lines.reduce((a, l) => a + l.qty, 0))} قلم در سبد شما` : 'هنوز چیزی انتخاب نکردی';
+    if (!lines.length) {
+      const picks = products.filter(p => !p.sample && p.stock).slice(0, 4);
+      body.innerHTML = `<div class="ce">
+          <div class="ce-ic">${IC.bag}</div>
+          <h4>سبد خرید شما خالی است</h4>
+          <p>قطعه‌ی مورد علاقه‌ت رو پیدا کن و به سبد اضافه کن.</p>
+          <button class="lg-btn sm" data-shop><span>مشاهده‌ی محصولات</span>${IC.arrow}</button>
+        </div>
+        ${picks.length ? `<section class="cs"><h5>شاید بپسندی</h5><div class="cs-row">${picks.map(p => `
+          <button class="cs-i" data-view="${p.id}"><span class="cs-im">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ''}</span>
+            <span class="cs-n">${esc(p.name)}</span><b>${toman(priceOf(p))}</b></button>`).join('')}</div></section>` : ''}`;
+      foot.hidden = true; foot.innerHTML = '';
+      return;
+    }
     const sub = lines.reduce((a, l) => a + priceOf(l.p, l.variant) * l.qty, 0);
-    $('#cartBody').innerHTML = lines.length ? lines.map((l, k) => {
-      const max = avail(l.p, l.variant);
-      return `<div class="ci"><img src="${esc(l.p.image_url || '')}" alt=""><div><b>${esc(l.p.name)}</b>
-        <small>${l.variant ? '<bdi>' + esc(l.variant) + '</bdi> · ' : ''}${toman(priceOf(l.p, l.variant))}</small>
-        <div class="qty sm"><button data-cq="${k}" data-d="1" ${l.qty >= max ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(l.qty)}</span><button data-cq="${k}" data-d="-1" aria-label="کمتر">−</button></div>
-        ${l.qty > max ? `<small class="warn">${max ? 'فقط ' + fa(max) + ' عدد موجوده' : 'ناموجود شده'}</small>` : ''}</div>
-        <button data-rm="${k}">حذف</button></div>`;
-    }).join('') + `<div class="ctot"><span>جمع سبد</span><b>${toman(sub)}</b></div>` : '<p class="empty">سبد خرید شما خالی است</p>';
-    $('#checkoutBtn').disabled = !lines.length;
+    const full = lines.reduce((a, l) => a + Math.max(priceOf(l.p, l.variant), (variants(l.p).find(v => v.name === l.variant)?.price) || l.p.price) * l.qty, 0);
+    const saving = Math.max(0, full - sub);
+    body.innerHTML = lines.map((l, k) => {
+      const max = avail(l.p, l.variant), unit = priceOf(l.p, l.variant);
+      const was = onSale(l.p) && !(variants(l.p).find(v => v.name === l.variant)?.price) ? l.p.price : 0;
+      return `<article class="cl" style="animation-delay:${60 + k * 50}ms">
+        <button class="cl-im" data-view="${l.p.id}" aria-label="${esc(l.p.name)}">${l.p.image_url ? `<img src="${esc(l.p.image_url)}" alt="" loading="lazy">` : ''}</button>
+        <div class="cl-b">
+          <div class="cl-h"><b class="cl-n" dir="auto">${esc(l.p.name)}</b>
+            <button class="cl-x" data-rm="${k}" aria-label="حذف ${esc(l.p.name)} از سبد">${IC.trash}</button></div>
+          <div class="cl-m">${l.p.category_label ? `<span>${esc(l.p.category_label)}</span>` : ''}${l.variant ? `<span class="cl-v">سایز <bdi>${esc(l.variant)}</bdi></span>` : ''}</div>
+          <div class="cl-f">
+            <div class="cl-q"><button data-cq="${k}" data-d="1" ${l.qty >= max ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(l.qty)}</span><button data-cq="${k}" data-d="-1" aria-label="${l.qty > 1 ? 'کمتر' : 'حذف'}">${l.qty > 1 ? '−' : IC.trash}</button></div>
+            <div class="cl-p">${was ? `<s>${fa(was * l.qty)}</s>` : ''}<b>${toman(unit * l.qty)}</b></div>
+          </div>
+          ${l.qty > max ? `<small class="warn">${max ? 'فقط ' + fa(max) + ' عدد موجوده؛ تعداد رو کم کن' : 'این مورد ناموجود شده'}</small>` : l.qty >= max && max <= 3 ? `<small class="cl-low">آخرین موجودی</small>` : ''}
+        </div></article>`;
+    }).join('');
+    foot.hidden = false;
+    foot.innerHTML = `
+      <div class="cf-row"><span>جمع سبد</span><b>${toman(sub)}</b></div>
+      ${saving ? `<div class="cf-row cf-save"><span>سود شما از تخفیف</span><span>${toman(saving)}</span></div>` : ''}
+      <p class="cf-note">کد تخفیف رو در مرحله‌ی بعد می‌تونی وارد کنی.</p>
+      <button class="lg-btn" id="checkoutBtn"><span>ادامه و ثبت سفارش</span>${IC.arrow}</button>
+      <button class="cf-back" data-close>ادامه‌ی خرید</button>`;
   }
   function count(id, n) { const el = $(id); el.textContent = fa(n); el.classList.toggle('on', n > 0); }
 
@@ -449,6 +481,7 @@
     user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
     chev: '<svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg>',
     out: '<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.8 12.5h9.4L17.5 7M10.2 10.5v6M13.8 10.5v6"/></svg>',
   };
   const maskPhone = p => p ? `${p.slice(0, 4)} ••• ${p.slice(7)}` : '';
   function setHero(title, sub, initial) {
@@ -846,7 +879,7 @@
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
     if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; setOvl(true, root.classList.contains('full')); return; }
     closeAll();
-    setOvl(true, id === 'acct' && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
+    setOvl(true, (id === 'acct' || id === 'cart') && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
 
   document.addEventListener('click', e => {
     const t = e.target;
@@ -863,13 +896,19 @@
     if (t.closest('#fclear')) { sizes.clear(); drawSizes(); setCat(0); return; }
     if (t.closest('#favBtn')) { favOnly = !favOnly; render(); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.closest('#favOff')) { favOnly = false; render(); return; }
+    if (t.closest('[data-shop]')) { closeAll(); setCat(0); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.closest('[data-close]') || t === scrim || t.id === 'acct') { closeAll(); return; }
     const a = t.closest('[data-add]');
     if (a) { if (addToCart(+a.dataset.add, null, 1)) { a.classList.add('done'); a.textContent = 'اضافه شد ✓'; setTimeout(() => { a.classList.remove('done'); a.textContent = 'افزودن به سبد خرید'; }, 1300); } return; }
     const cq = t.closest('[data-cq]');
     if (cq) { const l = cartLines()[+cq.dataset.cq]; const i = cart.find(x => x.id === l.id && x.variant === l.variant); i.qty += +cq.dataset.d; if (i.qty <= 0) cart.splice(cart.indexOf(i), 1); saveCart(); renderCart(); return; }
     const r = t.closest('[data-rm]');
-    if (r) { const l = cartLines()[+r.dataset.rm]; cart = cart.filter(x => !(x.id === l.id && x.variant === l.variant)); saveCart(); renderCart(); return; }
+    if (r) {
+      const l = cartLines()[+r.dataset.rm], art = r.closest('.cl');
+      const done = () => { cart = cart.filter(x => !(x.id === l.id && x.variant === l.variant)); saveCart(); renderCart(); };
+      if (art && !matchMedia('(prefers-reduced-motion: reduce)').matches) { art.classList.add('out'); setTimeout(done, 280); } else done();
+      return;
+    }
     if (t.closest('#checkoutBtn')) { checkout(); }
   });
   document.addEventListener('keydown', e => {

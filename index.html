@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@300;400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#FFFFFF;
+  --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --gold:#C6A57A; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#FFFFFF;
   --fa:'Vazirmatn',system-ui,sans-serif; --serif:'Bodoni Moda',Didot,Georgia,serif; --sans:'Jost',system-ui,sans-serif;
   --ease:cubic-bezier(.22,.8,.2,1);
 }
@@ -321,6 +321,63 @@ footer a:hover{color:#fff}
 .ac-out{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:1px solid #EEE4E1;font-size:13px;color:#8A6F6B;transition:all .3s;margin-top:4px}
 .ac-out:hover{color:#B3261E;border-color:#F0D3D1;background:#FFFAF9}
 .ac-out svg{width:18px;height:18px}
+/* ───────── cart (luxury) ───────── */
+#cart{width:min(440px,100%);overflow:hidden}
+@media (max-width:599px){#cart{width:100%}}
+.ch{text-align:right;padding:max(22px,calc(env(safe-area-inset-top) + 14px)) 22px 20px}
+.ch .ah-brand{margin:0;text-align:right}
+.ch .ah-x{left:12px;top:max(14px,env(safe-area-inset-top))}
+.ch-t{font-size:22px;font-weight:700;margin-top:4px}
+.ch .ah-s{text-align:right;margin-top:0}
+.cb{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 20px 10px}
+.cl{display:grid;grid-template-columns:86px 1fr;gap:16px;padding:18px 0;border-bottom:1px solid #F1E9E7;animation:zl-rise .55s var(--ease) both;transition:opacity .28s,transform .28s var(--ease)}
+.cl:last-child{border-bottom:0}
+.cl.out{opacity:0;transform:translateX(-24px)}
+.cl-im{display:block;aspect-ratio:3/4;background:#FAF7F6;overflow:hidden;padding:0}
+.cl-im img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.cl-im:hover img{transform:scale(1.05)}
+.cl-b{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cl-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cl-n{font-family:var(--sans);font-weight:400;font-size:17px;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
+.cl-x{width:36px;height:36px;margin:-6px -8px 0 0;flex:none;display:grid;place-items:center;color:#A3908C;transition:color .25s}
+.cl-x:hover{color:#B3261E}
+.cl-x svg,.cl-q svg,.ce-ic svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.cl-x svg{width:19px;height:19px}
+.cl-m{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--mut)}
+.cl-v{border:1px solid #EADFDC;padding:0 8px;line-height:22px;color:var(--ink)}
+.cl-f{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:6px}
+.cl-q{display:inline-flex;align-items:center;border:1px solid #E6DBD8}
+.cl-q button{width:38px;height:38px;display:grid;place-items:center;font-size:17px;color:var(--ink)}
+.cl-q button:disabled{opacity:.3;cursor:default}
+.cl-q button svg{width:16px;height:16px;color:#A3908C}
+.cl-q span{min-width:26px;text-align:center;font-size:14px}
+.cl-p{display:flex;flex-direction:column;align-items:flex-end;line-height:1.5}
+.cl-p s{font-size:11.5px;color:var(--mut)}
+.cl-p b{font-size:14.5px;font-weight:700;white-space:nowrap}
+.cl-low{font-size:11.5px;color:#B08A5E}
+.cf{flex:none;border-top:1px solid #EEE4E1;padding:16px 20px calc(14px + env(safe-area-inset-bottom));background:#fff;display:flex;flex-direction:column;gap:8px;box-shadow:0 -12px 30px rgba(61,13,11,.05)}
+.cf-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;color:#5b4a47}
+.cf-row b{font-size:19px;color:var(--ink)}
+.cf-save{color:#2E7D4F;font-size:12.5px}
+.cf-note{font-size:11.5px;color:var(--mut);margin-bottom:4px}
+.cf-back{height:40px;font-size:13px;color:var(--m)}
+.cf-back:hover{text-decoration:underline;text-underline-offset:4px}
+.ce{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:44px 12px 28px;animation:zl-rise .6s var(--ease) both}
+.ce-ic{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;color:var(--m);background:#FAF4F2;border:1px solid #EFE2DE;box-shadow:0 0 0 8px rgba(198,165,122,.08);margin-bottom:10px}
+.ce-ic svg{width:34px;height:34px}
+.ce h4{font-size:17px;font-weight:700}
+.ce p{font-size:13px;color:var(--mut);max-width:300px;margin-bottom:12px;text-wrap:balance}
+.ce .lg-btn{width:auto;padding:0 28px}
+.cs{border-top:1px solid #F1E9E7;padding:22px 0 8px;animation:zl-rise .6s .12s var(--ease) both}
+.cs h5{font-size:12px;color:var(--mut);font-weight:500;margin-bottom:12px}
+.cs-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.cs-i{display:flex;flex-direction:column;gap:4px;text-align:right;padding:0}
+.cs-im{display:block;aspect-ratio:3/4;background:#FAF7F6;overflow:hidden}
+.cs-im img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.cs-i:hover .cs-im img{transform:scale(1.05)}
+.cs-n{font-family:var(--sans);font-size:14px;font-weight:300;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-i b{font-size:12.5px}
+@media (prefers-reduced-motion:reduce){.cl,.ce,.cs{animation:none}}
 /* login / sign-up tabs */
 .lg-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #EEE4E1;margin:-6px 0 2px}
 .lg-tabs button{height:50px;font-size:15px;color:var(--mut);transition:color .35s}
@@ -349,7 +406,7 @@ footer a:hover{color:#fff}
 .lg-out{align-self:center;color:var(--mut)!important}
 /* iOS 26 Safari toolbar: what shows under the floating bar is the page itself */
 html.ovl .scrim{position:absolute;bottom:auto;height:var(--doc-h,100%)}
-@media (max-width:599px){html.full body > :not(#acct):not(.toast){visibility:hidden}}
+@media (max-width:599px){html.full body > :not(.drawer.on):not(.toast){visibility:hidden}}
 html.zfull body > :not(#zv):not(.toast){visibility:hidden}
 html.full,html.full body,html.zfull,html.zfull body{background:#fff}
 
@@ -513,10 +570,15 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   <div class="dfoot"><button class="btn btn-m" data-close>اعمال فیلتر</button><button class="btn btn-o" id="fclear">حذف فیلترها</button></div>
 </aside>
 
-<aside class="drawer l" id="cart">
-  <div class="dh">سبد خرید<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <div id="cartBody"></div>
-  <div class="dfoot"><button class="btn btn-m" id="checkoutBtn" disabled>ادامه و ثبت سفارش</button></div>
+<aside class="drawer l" id="cart" role="dialog" aria-modal="true" aria-label="سبد خرید">
+  <div class="ah ch">
+    <button class="ib ah-x" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="ah-brand">ZOLARIS LOUNGE</div>
+    <div class="ch-t">سبد خرید</div>
+    <div class="ah-s" id="cartSub"></div>
+  </div>
+  <div id="cartBody" class="cb" aria-live="polite"></div>
+  <div class="cf" id="cartFoot" hidden></div>
 </aside>
 
 <aside class="drawer" id="acct" role="dialog" aria-modal="true" aria-label="حساب کاربری">
