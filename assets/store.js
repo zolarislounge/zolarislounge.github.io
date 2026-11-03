@@ -214,8 +214,14 @@
       </div>
       ${imgs.length > 1 ? `<div class="pv-thumbs">${imgs.map((u, k) => `<button data-th="${k}" class="${k ? '' : 'on'}" aria-label="عکس ${fa(k + 1)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
       <div class="pv-info"><div id="pvMain"></div>
-        ${p.description ? `<section class="pv-desc"><h4>توضیحات</h4>${descHtml(p.description)}</section>` : ''}
-        <div class="pv-rev" id="pvRev"></div></div>`;
+        <ul class="pv-trust">
+          <li>${IC.truck}<span>ارسال<br>هفته‌ای دو بار</span></li>
+          <li>${IC.shield}<span>پرداخت<br>امن</span></li>
+          <li>${IC.chat}<span>پشتیبانی<br>واتس‌اپ و بله</span></li></ul>
+        ${p.description ? `<details class="pv-acc" open><summary>توضیحات محصول${IC.chev}</summary><div class="pv-desc">${descHtml(p.description)}</div></details>` : ''}
+        <details class="pv-acc" id="pvRevAcc"><summary>نظر مشتری‌ها <span id="pvRevN"></span>${IC.chev}</summary><div class="pv-rev" id="pvRev"></div></details>
+        <a class="pv-ask" href="https://wa.me/989121816762?text=${encodeURIComponent('سلام، درباره‌ی محصول «' + p.name + '» سوال داشتم.')}" target="_blank" rel="noopener">${IC.chat}<span>سوالی درباره‌ی این محصول داری؟ <b>در واتس‌اپ بپرس</b></span></a>
+        <div class="pv-bar" id="pvBar"></div></div>`;
     const gtrack = $('#pvT', sh);
     const goSlide = k => { k = Math.max(0, Math.min(imgs.length - 1, k)); gtrack.scrollTo({ left: k * gtrack.clientWidth, behavior: 'smooth' }); };
     const cur = () => Math.round(gtrack.scrollLeft / Math.max(1, gtrack.clientWidth));
@@ -223,24 +229,42 @@
     $$('[data-nav]', sh).forEach(b => b.onclick = () => goSlide(cur() + +b.dataset.nav));
     $$('[data-th]', sh).forEach(b => b.onclick = () => goSlide(+b.dataset.th));
     $$('[data-zoom]', sh).forEach(im => im.onclick = () => zoom.open(imgs, +im.dataset.zoom));
+    let added = false, needPick = false;
     const draw = () => {
       const max = avail(p, sel) - inCart(p.id, sel);
+      const vPrice = sel ? variants(p).find(v => v.name === sel)?.price : null;
+      const unit = priceOf(p, sel), was = onSale(p) && !vPrice ? p.price : 0;
+      const off = was ? Math.round((1 - unit / was) * 100) : 0;
+      const stock = !p.stock ? ['out', 'ناموجود']
+        : (sel || !vs.length) ? (max <= 0 ? ['low', 'همه‌ی موجودی این مورد در سبد شماست'] : max <= 3 ? ['low', `فقط ${fa(max)} عدد باقی مانده`] : ['ok', 'موجود و آماده‌ی ارسال'])
+        : ['ok', 'موجود'];
       $('#pvMain', sh).innerHTML = `
-          <div class="cat">${esc(p.category_label || '')}</div>
-          <h2 class="pv-name">${esc(p.name)}</h2>
-          <div class="pv-price">${sel ? (onSale(p) && !variants(p).find(v => v.name === sel)?.price ? `<s>${fa(p.price)}</s> ` : '') + toman(priceOf(p, sel)) : priceHtml(p)}</div>
-          ${vs.length ? `<h5>سایز / مدل</h5><div class="chips" id="pvV">${vs.map(v => { const a = avail(p, v.name); return `<button data-v="${esc(v.name)}" class="${v.name === sel ? 'on' : ''}" ${a ? '' : 'disabled'} dir="auto">${esc(v.name)}${a ? '' : ' (ناموجود)'}</button>`; }).join('')}</div>` : ''}
-          ${p.stock ? `<h5>تعداد</h5><div class="qty"><button data-q="1" aria-label="بیشتر">+</button><span>${fa(qty)}</span><button data-q="-1" aria-label="کمتر">−</button></div>
-            ${sel || !vs.length ? (max <= 3 && max > 0 ? `<small class="warn">فقط ${fa(max)} عدد دیگه موجوده</small>` : max <= 0 ? '<small class="warn">همه‌ی موجودی این مورد در سبد شماست</small>' : '') : ''}` : ''}
-          ${p.description ? '<a class="link pv-more" href="#pvDesc">توضیحات محصول ↓</a>' : ''}
-          <button class="btn btn-m pv-add" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? 'ناموجود' : vs.length && !sel ? 'اول سایز رو انتخاب کن' : 'افزودن به سبد خرید'}</button>`;
-      $$('#pvV button', sh).forEach(b => b.onclick = () => { sel = b.dataset.v; qty = 1; draw(); });
+          <div class="pv-meta"><span>${esc(p.category_label || '')}</span>${off ? `<b class="pv-off">${fa(off)}٪ تخفیف</b>` : p.is_new ? '<b class="pv-new">جدید</b>' : ''}</div>
+          <h2 class="pv-name" dir="auto">${esc(p.name)}</h2>
+          <div class="pv-price">${sel || !vs.some(v => v.price) ? `${was ? `<s>${toman(was)}</s>` : ''}<b>${toman(unit)}</b>` : priceHtml(p)}</div>
+          <div class="pv-stock ${stock[0]}"><i></i>${stock[1]}</div>
+          ${vs.length ? `<div class="pv-opt ${needPick ? 'need' : ''}" id="pvOpt">
+            <div class="pv-opt-h"><span>سایز / مدل</span><b>${sel ? `<bdi>${esc(sel)}</bdi>` : needPick ? 'لطفاً یکی رو انتخاب کن' : 'انتخاب کن'}</b></div>
+            <div class="pv-sz" id="pvV">${vs.map(v => { const a = avail(p, v.name); return `<button data-v="${esc(v.name)}" class="${v.name === sel ? 'on' : ''}" ${a ? '' : 'disabled'} aria-pressed="${v.name === sel}" dir="auto">${esc(v.name)}${a ? '' : '<small>ناموجود</small>'}</button>`; }).join('')}</div></div>` : ''}
+          ${p.stock ? `<div class="pv-qrow"><span>تعداد</span><div class="cl-q"><button data-q="1" ${qty >= Math.max(1, max) ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(qty)}</span><button data-q="-1" ${qty <= 1 ? 'disabled' : ''} aria-label="کمتر">−</button></div></div>` : ''}`;
+      $('#pvBar', sh).innerHTML = `
+          <div class="pv-bar-p"><small>${qty > 1 ? `${fa(qty)} عدد` : 'قیمت'}</small><b>${toman(unit * qty)}</b></div>
+          <button class="lg-btn pv-add ${added ? 'done' : ''}" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? '<span>ناموجود</span>' : added ? `<span>به سبد اضافه شد</span>${IC.check}` : `<span>افزودن به سبد</span>${IC.bag}`}</button>`;
+      $$('#pvV button', sh).forEach(b => b.onclick = () => { sel = b.dataset.v; qty = 1; needPick = false; draw(); });
       $$('[data-q]', sh).forEach(b => b.onclick = () => { qty = Math.min(Math.max(1, qty + +b.dataset.q), Math.max(1, max)); draw(); });
       $('#pvAdd', sh).onclick = () => {
-        if (vs.length && !sel) return toast('اول سایز رو انتخاب کن', true);
-        if (addToCart(p.id, sel, qty)) closeAll();
+        if (added) return;
+        if (vs.length && !sel) {
+          needPick = true; draw();
+          const o = $('#pvOpt', sh); o.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake');
+          return;
+        }
+        if (!addToCart(p.id, sel, qty, true)) return;
+        added = true; draw();
+        // a short confirmation, then the cart opens so the customer sees it landed
+        setTimeout(() => { if ($('#pv').classList.contains('on')) { renderCart(); open('cart'); } }, 850);
       };
-      const more = $('.pv-more', sh); if (more) more.onclick = e => { e.preventDefault(); $('.pv-desc', sh).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     };
     loadReviews(p);
     draw();
@@ -254,7 +278,8 @@
     try { rows = await q(sb.from('reviews').select('author_name,rating,comment,created_at').eq('product_id', p.id).eq('approved', true).order('created_at', { ascending: false }).limit(30)); } catch (e) { }
     if (!$('#pvRev')) return;
     const stars = n => '★'.repeat(n) + '<span style="opacity:.25">' + '★'.repeat(5 - n) + '</span>';
-    box.innerHTML = `<h5>نظر مشتری‌ها${rows.length ? ' (' + fa(rows.length) + ')' : ''}</h5>
+    const rn = $('#pvRevN'); if (rn) rn.textContent = rows.length ? `(${fa(rows.length)})` : '';
+    box.innerHTML = `
       ${rows.map(r => `<div class="rv"><div><b>${esc(r.author_name)}</b><span class="stars">${stars(r.rating)}</span></div><p>${esc(r.comment)}</p></div>`).join('') || '<p class="muted">هنوز نظری ثبت نشده.</p>'}
       ${user ? `<form id="rvF" class="rvf"><div class="rate" id="rvR">${[5, 4, 3, 2, 1].map(n => `<input type="radio" name="r" id="r${n}" value="${n}"><label for="r${n}" title="${fa(n)}">★</label>`).join('')}</div>
         <textarea class="fld" name="c" rows="3" maxlength="1000" placeholder="نظرت درباره‌ی این محصول…" required></textarea>
@@ -359,14 +384,14 @@
 
   // ───────── سبد خرید ─────────
   const saveCart = () => ls.set('zl-cart', cart);
-  function addToCart(id, variant, qty = 1) {
+  function addToCart(id, variant, qty = 1, quiet = false) {
     const p = products.find(x => x.id === id); if (!p || p.sample) return false;
     const max = avail(p, variant) - inCart(id, variant);
     if (max <= 0) { toast('بیشتر از این موجودی نداریم', true); return false; }
     qty = Math.min(qty, max);
     const ex = cart.find(i => i.id === id && i.variant === (variant || null));
     if (ex) ex.qty += qty; else cart.push({ id, variant: variant || null, qty });
-    saveCart(); renderCart(); toast('به سبد خرید اضافه شد'); track('cart', id);
+    saveCart(); renderCart(); if (!quiet) toast('به سبد خرید اضافه شد'); track('cart', id);
     return true;
   }
   function cartLines() {
@@ -481,6 +506,8 @@
     user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
     chev: '<svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg>',
     out: '<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/></svg>',
+    chat: '<svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.8 12.5h9.4L17.5 7M10.2 10.5v6M13.8 10.5v6"/></svg>',
   };
   const maskPhone = p => p ? `${p.slice(0, 4)} ••• ${p.slice(7)}` : '';
@@ -879,7 +906,7 @@
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
     if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; setOvl(true, root.classList.contains('full')); return; }
     closeAll();
-    setOvl(true, (id === 'acct' || id === 'cart') && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
+    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv') && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
 
   document.addEventListener('click', e => {
     const t = e.target;
