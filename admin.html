@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,600&display=swap" rel="stylesheet">
+<!-- جلوگیری از نمایش پنل داخل سایت دیگه (clickjacking)؛ GitHub Pages هدر امنیتی نمی‌فرسته -->
+<style id="noframe">body{display:none!important}</style>
+<script>if (window.top === window.self) document.getElementById('noframe').remove(); else window.top.location = window.self.location.href;</script>
 <script src="assets/vendor/supabase.js"></script>
 <style>
 :root{
