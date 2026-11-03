@@ -418,14 +418,20 @@
     if (!sb) return;
     const { data: { session } } = await sb.auth.getSession();
     user = session?.user || null;
-    profile = null;
+    profile = null; profileOk = false;
     if (user) {
-      try { profile = await q(sb.from('profiles').select('*').eq('id', user.id).maybeSingle()); } catch (e) { }
+      try { profile = await q(sb.from('profiles').select('*').eq('id', user.id).maybeSingle()); profileOk = true; } catch (e) { }
       sb.from('profiles').upsert({ id: user.id, phone: profile?.phone || normPhone(user.phone), last_seen: new Date().toISOString() }).then(() => { }, () => { });
       syncFavs();
     }
     $('#acctBtn').classList.toggle('in', !!user);
+    syncLock();
   }
+  // نام و نام خانوادگی اجباریه: تا وارد نشه، پنل حساب بسته نمی‌شه و بقیه‌ی بخش‌ها باز نمی‌شن
+  let profileOk = false;
+  const needsName = () => !!user && profileOk && !(profile?.full_name || '').trim();
+  const syncLock = () => $('#acct').classList.toggle('locked', needsName());
+  const NAME_RE = /^[\p{L}\p{M}\u200c' -]{2,}$/u;
   // ───────── حساب کاربری (طراحی لوکس) ─────────
   let otpPhone = null, typedPhone = '', loginMode = 'otp', resendAt = 0, resendTimer = null;
   const IC = {
@@ -551,12 +557,45 @@
       };
       return;
     }
+    syncLock();
+    if (needsName()) {
+      setHero('یک قدم تا پایان', 'برای ادامه، نام و نام خانوادگیت رو وارد کن');
+      b.innerHTML = `<form class="lg" id="nmF" novalidate>
+        <div class="lg-steps rise"><span class="done">ورود</span><i></i><span class="on">تکمیل اطلاعات</span></div>
+        <p class="lg-lead rise">این نام روی سفارش‌ها و برای ارسال مرسوله استفاده می‌شه.</p>
+        <label class="lg-f rise"><span>نام <em>*</em></span><div class="lg-in">${IC.user}<input id="nmFirst" autocomplete="given-name" maxlength="40" required></div></label>
+        <label class="lg-f rise"><span>نام خانوادگی <em>*</em></span><div class="lg-in">${IC.user}<input id="nmLast" autocomplete="family-name" maxlength="50" required></div></label>
+        <p class="err" id="nmE" role="alert"></p>
+        <button class="lg-btn rise" id="nmGo"><span>ذخیره و ادامه</span>${IC.arrow}</button>
+        <button type="button" class="lg-link lg-out rise" id="nmOut">${IC.out}خروج از حساب</button>
+      </form>`;
+      stagger(b);
+      setTimeout(() => { const f = $('#nmFirst'); if (f && !('ontouchstart' in window)) f.focus(); }, 300);
+      $('#nmF').onsubmit = async e => {
+        e.preventDefault();
+        const first = $('#nmFirst').value.replace(/\s+/g, ' ').trim(), last = $('#nmLast').value.replace(/\s+/g, ' ').trim();
+        const er = $('#nmE'); er.textContent = '';
+        $$('#nmF .lg-in').forEach(x => x.classList.remove('bad'));
+        const bad = (el, msg) => { el.closest('.lg-in').classList.add('bad'); el.focus(); er.textContent = msg; };
+        if (!NAME_RE.test(first)) return bad($('#nmFirst'), first ? 'نام فقط باید شامل حروف باشه' : 'نام رو وارد کن');
+        if (!NAME_RE.test(last)) return bad($('#nmLast'), last ? 'نام خانوادگی فقط باید شامل حروف باشه' : 'نام خانوادگی رو وارد کن');
+        const btn = $('#nmGo'); busy(btn, true);
+        try {
+          await saveProfile(`${first} ${last}`, null);
+          syncLock();
+          toast(`خوش اومدی ${first}`);
+          if (afterLogin) { const f = afterLogin; afterLogin = null; closeAll(); f(); } else drawAcct();
+        } catch (ex) { er.textContent = errText(ex); busy(btn, false); }
+      };
+      $('#nmOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; afterLogin = null; syncLock(); $('#acctBtn').classList.remove('in'); drawAcct(); toast('از حساب خارج شدی'); };
+      return;
+    }
     const name = (profile?.full_name || '').trim();
     setHero(name ? `سلام، ${name}` : 'خوش برگشتی', faDigits(normPhone(user.phone) || ''), (name || 'Z').charAt(0).toUpperCase());
     b.innerHTML = `<div class="ac">
       <section class="ac-sec rise"><h5>سفارش‌های من</h5><div id="myOrders"><div class="mo sk"></div><div class="mo sk"></div></div></section>
       <details class="ac-acc rise"><summary>${IC.user}<span>اطلاعات من<small>نام و آدرس برای ارسال سفارش</small></span>${IC.chev}</summary>
-        <form id="pfF" class="ac-form"><label class="lg-f"><span>نام و نام خانوادگی</span><div class="lg-in"><input name="n" maxlength="100" autocomplete="name" value="${esc(profile?.full_name || '')}"></div></label>
+        <form id="pfF" class="ac-form"><label class="lg-f"><span>نام و نام خانوادگی</span><div class="lg-in"><input name="n" maxlength="100" autocomplete="name" required value="${esc(profile?.full_name || '')}"></div></label>
         <label class="lg-f"><span>آدرس کامل پستی</span><div class="lg-in"><textarea name="a" rows="3" maxlength="600" autocomplete="street-address">${esc(profile?.address || '')}</textarea></div></label>
         <button class="lg-btn sm"><span>ذخیره‌ی اطلاعات</span></button></form></details>
       <details class="ac-acc rise"><summary>${IC.lock}<span>رمز عبور<small>ورود سریع بدون نیاز به پیامک</small></span>${IC.chev}</summary>
@@ -565,8 +604,11 @@
       <button class="ac-out rise" id="lgOut">${IC.out}خروج از حساب</button></div>`;
     stagger(b);
     $('#pfF').onsubmit = async e => {
-      e.preventDefault(); const btn = e.target.querySelector('.lg-btn'); busy(btn, true);
-      try { await saveProfile(e.target.n.value.trim(), e.target.a.value.trim()); toast('ذخیره شد'); const nm = e.target.n.value.trim(); if (nm) setHero(`سلام، ${nm}`, faDigits(normPhone(user.phone) || ''), nm.charAt(0).toUpperCase()); } catch (ex) { toast(errText(ex), true); }
+      e.preventDefault();
+      const nm0 = e.target.n.value.replace(/\s+/g, ' ').trim();
+      if (!NAME_RE.test(nm0) || nm0.split(' ').length < 2) return toast('نام و نام خانوادگی رو کامل وارد کن', true);
+      const btn = e.target.querySelector('.lg-btn'); busy(btn, true);
+      try { await saveProfile(nm0, e.target.a.value.trim()); toast('ذخیره شد'); const nm = e.target.n.value.trim(); if (nm) setHero(`سلام، ${nm}`, faDigits(normPhone(user.phone) || ''), nm.charAt(0).toUpperCase()); } catch (ex) { toast(errText(ex), true); }
       busy(btn, false);
     };
     $('#pwF').onsubmit = async e => {
@@ -576,7 +618,7 @@
       if (error) return toast(/weak|short|least/i.test(error.message) ? 'رمز ضعیفه؛ طولانی‌ترش کن' : errText(error), true);
       e.target.reset(); toast('رمز عبور ثبت شد');
     };
-    $('#lgOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; $('#acctBtn').classList.remove('in'); drawAcct(); toast('از حساب خارج شدی'); };
+    $('#lgOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; syncLock(); $('#acctBtn').classList.remove('in'); drawAcct(); toast('از حساب خارج شدی'); };
     loadMyOrders();
   }
   async function saveProfile(name, address) {
@@ -601,6 +643,7 @@
   }
   async function onSignedIn() {
     await loadUser();
+    if (needsName()) { drawAcct(); open('acct'); return; }
     if (afterLogin) { const f = afterLogin; afterLogin = null; f(); } else drawAcct();
     toast('خوش اومدی');
   }
@@ -723,8 +766,14 @@
 
   // ───────── کشوها ─────────
   const scrim = $('#scrim');
-  function closeAll() { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); document.body.style.overflow = ''; }
-  function open(id) { closeAll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
+  const locked = () => $('#acct').classList.contains('locked') && $('#acct').classList.contains('on');
+  function closeAll() {
+    if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); return; }
+    $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); document.body.style.overflow = ''; }
+  function open(id) {
+    if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
+    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; return; }
+    closeAll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
 
   document.addEventListener('click', e => {
     const t = e.target;
@@ -762,6 +811,6 @@
   drawCats(); render(); count('#favN', favs.size); renderCart();
   if (!sb) { toast('اتصال به فروشگاه برقرار نشد؛ صفحه رو تازه کن', true); return; }
   sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { user = profile = null; $('#acctBtn').classList.remove('in'); } });
-  Promise.all([loadProducts(), loadUser()]).then(handleReturn);
+  Promise.all([loadProducts(), loadUser()]).then(() => { if (needsName()) { drawAcct(); open('acct'); } return handleReturn(); });
   track('visit');
 })();

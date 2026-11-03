@@ -310,6 +310,20 @@ footer a:hover{color:#fff}
 .ac-out{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:1px solid #EEE4E1;font-size:13px;color:#8A6F6B;transition:all .3s;margin-top:4px}
 .ac-out:hover{color:#B3261E;border-color:#F0D3D1;background:#FFFAF9}
 .ac-out svg{width:18px;height:18px}
+/* required name step */
+#acct.locked .ah-x{display:none}
+.lg-steps{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--mut)}
+.lg-steps span{display:flex;align-items:center;gap:6px}
+.lg-steps span::before{content:"";width:18px;height:18px;border-radius:50%;border:1px solid #D9C9C5;display:grid;place-items:center;font-size:10px}
+.lg-steps span.done{color:#2E7D4F}
+.lg-steps span.done::before{content:"✓";background:#2E7D4F;border-color:#2E7D4F;color:#fff}
+.lg-steps span.on{color:var(--m);font-weight:500}
+.lg-steps span.on::before{border:5px solid var(--m)}
+.lg-steps i{flex:1;height:1px;background:linear-gradient(90deg,#D9C9C5,#2E7D4F)}
+.lg-f em{color:#B08A5E;font-style:normal}
+.lg-in.bad{border-bottom-color:#B3261E}
+.lg-in.bad > svg{color:#B3261E}
+.lg-out{align-self:center;color:var(--mut)!important}
 /* loading skeleton (instead of showing sample products before the real ones arrive) */
 .card.sk{pointer-events:none}
 .card.sk .media,.card.sk i{background:linear-gradient(100deg,#F4EEED 30%,#FBF8F7 50%,#F4EEED 70%);background-size:300% 100%;animation:zl-sk 1.4s ease-in-out infinite}
