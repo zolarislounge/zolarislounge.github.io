@@ -203,7 +203,7 @@ footer a:hover{color:#fff}
 .media .alt{position:absolute;inset:0;opacity:0;transition:opacity .5s var(--ease)}
 /* ───────── account drawer (luxury) ───────── */
 /* full-screen page on phones, centered card on larger screens */
-#acct{--gold:#C6A57A;inset:0;width:auto;height:100%;height:100dvh;transform:translateY(24px);opacity:0;visibility:hidden;
+#acct{--gold:#C6A57A;top:0;left:0;right:0;bottom:auto;width:auto;height:100vh;height:100lvh;transform:translateY(24px);opacity:0;visibility:hidden;
   transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s .5s;background:#fff;display:block;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #acct.on{transform:none;opacity:1;visibility:visible;transition:transform .5s var(--ease),opacity .4s var(--ease),visibility 0s}
 .acct-card{min-height:100%;display:flex;flex-direction:column;background:#fff}
@@ -241,7 +241,7 @@ footer a:hover{color:#fff}
 
 .lg-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid #E9DEDB;padding:4px;background:#fff}
 .lg-seg i{position:absolute;top:4px;bottom:4px;right:4px;width:calc(50% - 4px);background:var(--m);transition:transform .45s var(--ease)}
-.lg-seg.pass i{transform:translateX(-100%)}
+.lg-seg.second i{transform:translateX(-100%)}
 .lg-seg button{position:relative;z-index:1;height:40px;font-size:13px;color:#7A6A67;transition:color .35s}
 .lg-seg button[aria-selected="true"]{color:#fff;font-weight:500}
 
@@ -320,6 +320,18 @@ footer a:hover{color:#fff}
 .ac-out{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:1px solid #EEE4E1;font-size:13px;color:#8A6F6B;transition:all .3s;margin-top:4px}
 .ac-out:hover{color:#B3261E;border-color:#F0D3D1;background:#FFFAF9}
 .ac-out svg{width:18px;height:18px}
+/* login / sign-up tabs */
+.lg-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #EEE4E1;margin:-6px 0 2px}
+.lg-tabs button{height:50px;font-size:15px;color:#9A8A87;transition:color .35s}
+.lg-tabs button[aria-selected="true"]{color:var(--ink);font-weight:700}
+.lg-tabs i{position:absolute;bottom:-1px;right:0;width:50%;height:2px;background:var(--m);transition:transform .45s var(--ease)}
+.lg-tabs i::after{content:"";position:absolute;left:50%;bottom:-3px;width:6px;height:6px;margin-left:-3px;background:var(--gold);transform:rotate(45deg)}
+.lg-tabs.second i{transform:translateX(-100%)}
+.lg-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lg-forgot{align-self:flex-start;margin-top:-8px;font-size:12px}
+.lg-switch{text-align:center;font-size:13px;color:var(--mut)}
+.lg-switch .lg-link{display:inline;padding:0;font-weight:500;text-decoration:underline;text-underline-offset:4px}
+.lg .err .lg-link{display:inline;padding:0;font-weight:500;text-decoration:underline;text-underline-offset:3px}
 /* required name step */
 #acct.locked .ah-x{display:none}
 .lg-steps{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--mut)}

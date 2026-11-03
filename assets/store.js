@@ -433,7 +433,8 @@
   const syncLock = () => $('#acct').classList.toggle('locked', needsName());
   const NAME_RE = /^[\p{L}\p{M}\u200c' -]{2,}$/u;
   // ───────── حساب کاربری (طراحی لوکس) ─────────
-  let otpPhone = null, typedPhone = '', loginMode = 'otp', resendAt = 0, resendTimer = null;
+  let otpPhone = null, otpPurpose = 'login', typedPhone = '', authTab = 'login', loginMode = 'pass', resendAt = 0, resendTimer = null;
+  let su = { first: '', last: '', full: '' };   // اطلاعات فرم ثبت‌نام تا تأیید کد
   const IC = {
     arrow: '<svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
     phone: '<svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg>',
@@ -468,67 +469,105 @@
     b.disabled = left > 0;
     b.textContent = left > 0 ? `ارسال دوباره تا ${fa(left)} ثانیه` : 'ارسال دوباره‌ی کد';
   }
-  async function sendOtp(p) {
-    const { error } = await sb.auth.signInWithOtp({ phone: intl(p) });
+  // ارسال کد: ورود (فقط برای حساب‌های موجود) یا تأیید شماره‌ی ثبت‌نام
+  async function sendOtp(p, purpose) {
+    const { error } = purpose === 'signup'
+      ? await sb.auth.resend({ type: 'sms', phone: intl(p) })
+      : await sb.auth.signInWithOtp({ phone: intl(p), options: { shouldCreateUser: false } });
     if (error) throw error;
     resendAt = Date.now() + 60000;
   }
   const loginErr = (ex, otp) => {
     const m = String(ex.message || ex);
     return /expired|invalid/i.test(m) && otp ? 'کد اشتباهه یا منقضی شده'
-      : /Invalid login/i.test(m) ? 'شماره یا رمز اشتباهه'
+      : /Invalid login/i.test(m) ? 'شماره یا رمز عبور اشتباهه'
+      : /Signups not allowed|not allowed for otp|user not found/i.test(m) ? 'NOACCOUNT'
+      : /already registered|already exists|already been registered/i.test(m) ? 'EXISTS'
+      : /password.*(short|least|characters)|weak/i.test(m) ? 'رمز عبور باید حداقل ۶ کاراکتر باشه'
       : /rate|seconds|after/i.test(m) ? 'چند لحظه صبر کن و دوباره امتحان کن'
-      : /sms|hook|send|provider/i.test(m) ? 'ارسال پیامک الان ممکن نیست؛ کمی بعد امتحان کن یا با رمز عبور وارد شو'
-      : /شماره/.test(m) ? m : errText(ex);
+      : /sms|hook|send|provider/i.test(m) ? 'ارسال پیامک الان ممکن نیست؛ کمی بعد دوباره امتحان کن'
+      : /شماره|نام|رمز|کد/.test(m) ? m : errText(ex);
   };
 
   function drawAcct(note) {
     const b = $('#acctBody');
     clearInterval(resendTimer);
     if (!user) {
-      const otpStep = loginMode === 'otp' && !!otpPhone;
-      setHero(otpStep ? 'کد تأیید' : 'خوش آمدید', otpStep ? 'یک قدم تا ورود به حساب' : 'به دنیای Zolaris Lounge');
-      b.innerHTML = `<form class="lg" id="lgF" novalidate>
-        ${note ? `<div class="lg-note rise">${IC.bag}<span>${esc(note)}</span></div>` : ''}
-        ${otpStep ? `
-          <p class="lg-lead rise">کد ۶ رقمی‌ای که به <b dir="ltr">${esc(faDigits(maskPhone(otpPhone)))}</b> پیامک شد رو وارد کن.</p>
+      const otpStep = !!otpPhone;
+      const signup = authTab === 'signup';
+      if (otpStep) setHero('کد تأیید', otpPurpose === 'signup' ? 'آخرین قدم ساخت حساب' : 'یک قدم تا ورود به حساب');
+      else if (signup) setHero('عضویت در Zolaris', 'ساخت حساب کاربری در کمتر از یک دقیقه');
+      else setHero('خوش آمدید', 'به حساب کاربری‌ات وارد شو');
+      const eye = '<button type="button" class="lg-eye" data-eye aria-label="نمایش رمز">' + IC.eye + '</button>';
+      let form;
+      if (otpStep) {
+        form = `
+          <p class="lg-lead rise">کد ۶ رقمی‌ای که به <b dir="ltr">${esc(faDigits(maskPhone(otpPhone)))}</b> پیامک شد رو وارد کن${otpPurpose === 'signup' ? ' تا شماره‌ت تأیید و حسابت ساخته بشه' : ''}.</p>
           <label class="lg-f rise"><span>کد تأیید</span><input id="lgC" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="••••••" required></label>
-          <button class="lg-btn rise" id="lgGo"><span>تأیید و ورود</span>${IC.arrow}</button>
-          <div class="lg-row rise"><button type="button" class="lg-link" id="lgBack">${IC.edit}ویرایش شماره</button><button type="button" class="lg-link" id="lgResend" disabled></button></div>`
-        : `
-          <div class="lg-seg rise ${loginMode === 'pass' ? 'pass' : ''}" role="tablist"><i aria-hidden="true"></i>
-            <button type="button" role="tab" data-m="otp" aria-selected="${loginMode === 'otp'}">کد یک‌بار مصرف</button>
-            <button type="button" role="tab" data-m="pass" aria-selected="${loginMode === 'pass'}">رمز عبور</button></div>
+          <button class="lg-btn rise" id="lgGo"><span>${otpPurpose === 'signup' ? 'تأیید و ساخت حساب' : 'تأیید و ورود'}</span>${IC.arrow}</button>
+          <div class="lg-row rise"><button type="button" class="lg-link" id="lgBack">${IC.edit}ویرایش شماره</button><button type="button" class="lg-link" id="lgResend" disabled></button></div>`;
+      } else if (signup) {
+        form = `
+          <div class="lg-2 rise">
+            <label class="lg-f"><span>نام <em>*</em></span><div class="lg-in"><input id="suFirst" autocomplete="given-name" maxlength="40" value="${esc(su.first)}" required></div></label>
+            <label class="lg-f"><span>نام خانوادگی <em>*</em></span><div class="lg-in"><input id="suLast" autocomplete="family-name" maxlength="50" value="${esc(su.last)}" required></div></label></div>
+          <label class="lg-f rise"><span>شماره موبایل <em>*</em></span><div class="lg-in">${IC.phone}<input id="lgP" type="tel" inputmode="numeric" autocomplete="tel" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" value="${esc(typedPhone)}" required></div></label>
+          <label class="lg-f rise"><span>رمز عبور <em>*</em></span><div class="lg-in">${IC.lock}<input id="lgPass" type="password" autocomplete="new-password" dir="ltr" placeholder="حداقل ۶ کاراکتر" required>${eye}</div></label>
+          <button class="lg-btn rise" id="lgGo"><span>ثبت‌نام و دریافت کد تأیید</span>${IC.arrow}</button>
+          <p class="lg-hint rise">برای تأیید شماره، یه کد پیامکی برات ارسال می‌شه.</p>`;
+      } else {
+        form = `
+          <div class="lg-seg rise ${loginMode === 'otp' ? 'second' : ''}" role="tablist" aria-label="روش ورود"><i aria-hidden="true"></i>
+            <button type="button" role="tab" data-m="pass" aria-selected="${loginMode === 'pass'}">ورود با رمز عبور</button>
+            <button type="button" role="tab" data-m="otp" aria-selected="${loginMode === 'otp'}">رمز یک‌بار مصرف</button></div>
           <label class="lg-f rise"><span>شماره موبایل</span><div class="lg-in">${IC.phone}<input id="lgP" type="tel" inputmode="numeric" autocomplete="tel" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" value="${esc(typedPhone)}" required></div></label>
-          ${loginMode === 'pass' ? `<label class="lg-f rise"><span>رمز عبور</span><div class="lg-in">${IC.lock}<input id="lgPass" type="password" autocomplete="current-password" dir="ltr" required><button type="button" class="lg-eye" id="lgEye" aria-label="نمایش رمز">${IC.eye}</button></div></label>` : ''}
-          <button class="lg-btn rise" id="lgGo"><span>${loginMode === 'otp' ? 'دریافت کد ورود' : 'ورود به حساب'}</span>${IC.arrow}</button>
-          <p class="lg-hint rise">${loginMode === 'otp' ? 'اگه حساب نداری، با همین شماره خودکار ساخته می‌شه.' : 'رمز عبور رو بعد از اولین ورود با کد، از همین بخش تعیین کن.'}</p>`}
-        <p class="err" id="lgE" role="alert"></p>
-        ${otpStep ? '' : `<ul class="lg-perks rise">
+          ${loginMode === 'pass' ? `<label class="lg-f rise"><span>رمز عبور</span><div class="lg-in">${IC.lock}<input id="lgPass" type="password" autocomplete="current-password" dir="ltr" required>${eye}</div></label>
+            <button type="button" class="lg-link lg-forgot rise" data-m="otp">رمز رو فراموش کردی؟ با رمز یک‌بار مصرف وارد شو</button>` : ''}
+          <button class="lg-btn rise" id="lgGo"><span>${loginMode === 'otp' ? 'ارسال رمز یک‌بار مصرف' : 'ورود به حساب'}</span>${IC.arrow}</button>
+          ${loginMode === 'otp' ? '<p class="lg-hint rise">یه کد ۶ رقمی به شماره‌ت پیامک می‌شه.</p>' : ''}`;
+      }
+      b.innerHTML = `<form class="lg" id="lgF" novalidate>
+        ${otpStep ? '' : `<div class="lg-tabs rise ${signup ? 'second' : ''}" role="tablist"><i aria-hidden="true"></i>
+          <button type="button" role="tab" data-t="login" aria-selected="${!signup}">ورود</button>
+          <button type="button" role="tab" data-t="signup" aria-selected="${signup}">ثبت‌نام</button></div>`}
+        ${note ? `<div class="lg-note rise">${IC.bag}<span>${esc(note)}</span></div>` : ''}
+        ${form}
+        <div class="err" id="lgE" role="alert"></div>
+        ${signup && !otpStep ? `<ul class="lg-perks rise">
           <li>${IC.truck}<span><b>پیگیری سفارش‌ها</b>وضعیت و کد رهگیری مرسوله در یک نگاه</span></li>
           <li>${IC.heart}<span><b>علاقه‌مندی‌ها</b>روی همه‌ی دستگاه‌هات ذخیره می‌مونه</span></li>
-          <li>${IC.bolt}<span><b>خرید سریع‌تر</b>نام و آدرست برای سفارش بعدی آماده‌ست</span></li></ul>`}
+          <li>${IC.bolt}<span><b>خرید سریع‌تر</b>نام و آدرست برای سفارش بعدی آماده‌ست</span></li></ul>` : ''}
+        ${otpStep ? '' : `<p class="lg-switch rise">${signup ? 'قبلاً ثبت‌نام کردی؟ <button type="button" class="lg-link" data-t="login">وارد شو</button>' : 'حساب کاربری نداری؟ <button type="button" class="lg-link" data-t="signup">ثبت‌نام کن</button>'}</p>`}
         <p class="lg-safe rise">${IC.shield}اطلاعات شما نزد Zolaris محفوظ است</p>
       </form>`;
       stagger(b);
-      const err = t => { $('#lgE').textContent = t || ''; };
-      $$('.lg-seg button', b).forEach(x => x.onclick = () => { typedPhone = $('#lgP').value; loginMode = x.dataset.m; drawAcct(note); setTimeout(() => ($('#lgPass') || $('#lgP')).focus(), 50); });
-      if ($('#lgEye')) $('#lgEye').onclick = () => { const i = $('#lgPass'); i.type = i.type === 'password' ? 'text' : 'password'; $('#lgEye').classList.toggle('on', i.type === 'text'); };
+      const err = (t, html) => { const e = $('#lgE'); if (html) e.innerHTML = t; else e.textContent = t || ''; };
+      const keep = () => {
+        if ($('#lgP')) typedPhone = $('#lgP').value;
+        if ($('#suFirst')) { su.first = $('#suFirst').value; su.last = $('#suLast').value; }
+      };
+      $$('[data-t]', b).forEach(x => x.onclick = () => { keep(); authTab = x.dataset.t; drawAcct(note); });
+      $$('[data-m]', b).forEach(x => x.onclick = () => { keep(); loginMode = x.dataset.m; drawAcct(note); setTimeout(() => ($('#lgPass') || $('#lgP')).focus(), 50); });
+      $$('[data-eye]', b).forEach(x => x.onclick = () => { const i = x.parentElement.querySelector('input'); i.type = i.type === 'password' ? 'text' : 'password'; x.classList.toggle('on', i.type === 'text'); });
       if ($('#lgBack')) $('#lgBack').onclick = () => { typedPhone = otpPhone; otpPhone = null; drawAcct(note); };
       if ($('#lgResend')) {
         tickResend(); resendTimer = setInterval(tickResend, 1000);
         $('#lgResend').onclick = async () => {
           err();
-          try { await sendOtp(otpPhone); tickResend(); toast('کد دوباره ارسال شد'); } catch (ex) { err(loginErr(ex)); }
+          try { await sendOtp(otpPhone, otpPurpose); tickResend(); toast('کد دوباره ارسال شد'); } catch (ex) { err(loginErr(ex)); }
         };
       }
       const c = $('#lgC');
       if (c) c.oninput = () => { c.value = toEn(c.value).replace(/\D/g, '').slice(0, 6); if (c.value.length === 6) $('#lgF').requestSubmit(); };
+      const noAccount = () => err('این شماره هنوز ثبت‌نام نکرده. <button type="button" class="lg-link" id="goSu">ثبت‌نام کن</button>', true);
+      const exists = () => err('این شماره قبلاً ثبت‌نام کرده. <button type="button" class="lg-link" id="goLi">وارد شو</button>', true);
       $('#lgF').onsubmit = async e => {
         e.preventDefault(); err();
+        $$('.lg-in.bad', b).forEach(x => x.classList.remove('bad'));
         const btn = $('#lgGo');
         if (btn.disabled) return;
         const label = btn.querySelector('span').textContent;
+        const bad = (el, msg) => { el.closest('.lg-in').classList.add('bad'); el.focus(); throw new Error(msg); };
         busy(btn, true);
         try {
           if (otpStep) {
@@ -536,23 +575,48 @@
             if (code.length !== 6) throw new Error('کد ۶ رقمی رو کامل وارد کن');
             const { error } = await sb.auth.verifyOtp({ phone: intl(otpPhone), token: code, type: 'sms' });
             if (error) throw error;
-            otpPhone = null; typedPhone = ''; await onSignedIn();
+            if (otpPurpose === 'signup' && su.full) { await loadUser(); try { await saveProfile(su.full, null); } catch (x) { } }
+            otpPhone = null; typedPhone = ''; su = { first: '', last: '', full: '' };
+            await onSignedIn();
+            return;
+          }
+          if (signup) {
+            const first = $('#suFirst').value.replace(/\s+/g, ' ').trim(), last = $('#suLast').value.replace(/\s+/g, ' ').trim();
+            if (!NAME_RE.test(first)) bad($('#suFirst'), first ? 'نام فقط باید شامل حروف باشه' : 'نام رو وارد کن');
+            if (!NAME_RE.test(last)) bad($('#suLast'), last ? 'نام خانوادگی فقط باید شامل حروف باشه' : 'نام خانوادگی رو وارد کن');
+            const p = normPhone($('#lgP').value);
+            if (!p) bad($('#lgP'), 'شماره موبایل رو درست وارد کن (مثل ۰۹۱۲۳۴۵۶۷۸۹)');
+            const pw = $('#lgPass').value;
+            if (pw.length < 6) bad($('#lgPass'), 'رمز عبور باید حداقل ۶ کاراکتر باشه');
+            const { data, error } = await sb.auth.signUp({ phone: intl(p), password: pw, options: { data: { full_name: `${first} ${last}` } } });
+            if (error) throw error;
+            // شماره‌ای که قبلاً تأیید شده، دوباره ثبت‌نام نمی‌شه
+            if (data?.user && Array.isArray(data.user.identities) && !data.user.identities.length) throw new Error('already registered');
+            su = { first, last, full: `${first} ${last}` };
+            if (data?.session) { await loadUser(); try { await saveProfile(su.full, null); } catch (x) { } su = { first: '', last: '', full: '' }; typedPhone = ''; await onSignedIn(); return; }
+            resendAt = Date.now() + 60000; otpPurpose = 'signup'; otpPhone = p; drawAcct(note);
+            setTimeout(() => $('#lgC') && $('#lgC').focus(), 80);
             return;
           }
           const p = normPhone($('#lgP').value);
-          if (!p) throw new Error('شماره موبایل رو درست وارد کن (مثل ۰۹۱۲۳۴۵۶۷۸۹)');
+          if (!p) bad($('#lgP'), 'شماره موبایل رو درست وارد کن (مثل ۰۹۱۲۳۴۵۶۷۸۹)');
           if (loginMode === 'otp') {
-            await sendOtp(p);
-            otpPhone = p; drawAcct(note); setTimeout(() => $('#lgC') && $('#lgC').focus(), 80);
+            await sendOtp(p, 'login');
+            otpPurpose = 'login'; otpPhone = p; drawAcct(note); setTimeout(() => $('#lgC') && $('#lgC').focus(), 80);
             return;
           }
+          if (!$('#lgPass').value) bad($('#lgPass'), 'رمز عبور رو وارد کن');
           const { error } = await sb.auth.signInWithPassword({ phone: intl(p), password: $('#lgPass').value });
           if (error) throw error;
           typedPhone = ''; await onSignedIn();
         } catch (ex) {
-          err(/کد ۶ رقمی/.test(ex.message) ? ex.message : loginErr(ex, otpStep));
+          const m = loginErr(ex, otpStep);
+          if (m === 'NOACCOUNT') noAccount(); else if (m === 'EXISTS') exists(); else err(m);
+          const g1 = $('#goSu'), g2 = $('#goLi');
+          if (g1) g1.onclick = () => { keep(); authTab = 'signup'; drawAcct(note); };
+          if (g2) g2.onclick = () => { keep(); authTab = 'login'; loginMode = 'pass'; drawAcct(note); };
           if ($('#lgGo')) busy($('#lgGo'), false, label);
-          if (otpStep && $('#lgC')) { $('#lgC').select(); }
+          if (otpStep && $('#lgC')) $('#lgC').select();
         }
       };
       return;
