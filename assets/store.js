@@ -57,7 +57,8 @@
   async function q(p) { const { data, error } = await p; if (error) throw error; return data; }
 
   // ───────── وضعیت ─────────
-  let products = [], live = false, cat = 0, query = '', sizes = new Set(), favOnly = false;
+  // state: 'loading' تا جواب دیتابیس بیاد (اسکلت نمایش داده می‌شه)، 'ready' یا 'error'
+  let products = [], live = false, state = 'loading', cat = 0, query = '', sizes = new Set(), favOnly = false;
   let cart = ls.get('zl-cart', []).filter(i => i && i.id > 0 && i.qty > 0);
   let favs = new Set(ls.get('zl-favs', []));
   let user = null, profile = null, payMode = 'off', afterLogin = null;
@@ -124,6 +125,18 @@
     return (from != null && from < priceOf(p) ? 'از ' + toman(from) : toman(priceOf(p)));
   }
   function render() {
+    if (state === 'loading') {
+      $('#favBar').hidden = true;
+      $('#grid').innerHTML = Array.from({ length: 4 }, () => '<article class="card sk in" aria-hidden="true"><div class="media"></div><i class="l1"></i><i class="l2"></i><i class="l3"></i></article>').join('');
+      $('#grid').setAttribute('aria-busy', 'true');
+      return;
+    }
+    $('#grid').removeAttribute('aria-busy');
+    if (state === 'error') {
+      $('#grid').innerHTML = '<div class="empty" style="grid-column:1/-1">بارگذاری محصولات انجام نشد.<br><button class="more" id="retryLoad" style="margin:14px auto 0">تلاش دوباره</button></div>';
+      $('#retryLoad').onclick = () => { state = 'loading'; render(); loadProducts(); };
+      return;
+    }
     const term = toEn(query.trim()).toLowerCase();
     let list = products.filter(p => (!cat || p.category_label === CATS[cat] || p.category === CATS[cat])
       && (!term || toEn(p.name + ' ' + (p.category_label || '')).toLowerCase().includes(term))
@@ -158,12 +171,14 @@
     cards.forEach((c, i) => { c.style.transitionDelay = (i % 2) * .08 + 's'; io.observe(c); });
   }
   async function loadProducts() {
-    if (!sb) { products = SAMPLE; render(); return; }
+    if (!sb) { state = 'error'; render(); return; }
     try {
       const rows = await q(sb.from('products').select('*').order('created_at', { ascending: false }));
       live = rows.length > 0;
+      // نمونه‌ها فقط وقتی که دیتابیس واقعاً هیچ محصولی نداره
       products = live ? rows : SAMPLE;
-    } catch (e) { console.error(e); products = SAMPLE; toast('بارگذاری محصولات انجام نشد؛ صفحه رو تازه کن', true); }
+      state = 'ready';
+    } catch (e) { console.error(e); if (!live) { products = []; state = 'error'; } }
     // دسته‌هایی که در پنل تعریف شدن ولی در لیست ثابت نیستن هم به منو اضافه می‌شن
     for (const p of products) if (p.category_label && !CATS.includes(p.category_label)) CATS.push(p.category_label);
     drawCats(); drawSizes(); render(); renderCart();
@@ -662,7 +677,7 @@
   addEventListener('storage', e => { if (e.key === 'zl-cart') { cart = ls.get('zl-cart', []); renderCart(); } });
 
   // ───────── شروع ─────────
-  drawCats(); products = SAMPLE; render(); count('#favN', favs.size); renderCart();
+  drawCats(); render(); count('#favN', favs.size); renderCart();
   if (!sb) { toast('اتصال به فروشگاه برقرار نشد؛ صفحه رو تازه کن', true); return; }
   sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { user = profile = null; $('#acctBtn').classList.remove('in'); } });
   Promise.all([loadProducts(), loadUser()]).then(handleReturn);

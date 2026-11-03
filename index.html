@@ -201,6 +201,14 @@ footer a:hover{color:#fff}
 
 /* card: second photo on hover */
 .media .alt{position:absolute;inset:0;opacity:0;transition:opacity .5s var(--ease)}
+/* loading skeleton (instead of showing sample products before the real ones arrive) */
+.card.sk{pointer-events:none}
+.card.sk .media,.card.sk i{background:linear-gradient(100deg,#F4EEED 30%,#FBF8F7 50%,#F4EEED 70%);background-size:300% 100%;animation:zl-sk 1.4s ease-in-out infinite}
+.card.sk i{display:block;height:12px;margin-top:12px;width:60%}
+.card.sk i.l2{width:35%;margin-top:8px}
+.card.sk i.l3{width:150px;height:46px;margin-top:14px}
+@keyframes zl-sk{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.card.sk .media,.card.sk i{animation:none}}
 @media (hover:hover){.card:hover .media .alt{opacity:1}}
 
 /* zoom viewer */
