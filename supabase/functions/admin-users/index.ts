@@ -84,8 +84,8 @@ Deno.serve(async (req) => {
       const { data: existing } = await db.from('admins').select('role').eq('phone', phone).maybeSingle();
       // مالک‌ها همیشه دسترسی کامل دارن؛ فقط اسمشون قابل تغییره
       if (existing?.role === 'owner') {
-        await db.from('admins').update({ name }).eq('phone', phone);
         if (password) return json({ error: 'owner_password' }, 400);
+        await db.from('admins').update({ name }).eq('phone', phone);
         await log('admin_edit', `${phone} (مالک): نام`);
         return json({ ok: true });
       }

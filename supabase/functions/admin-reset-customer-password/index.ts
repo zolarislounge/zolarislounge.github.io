@@ -40,6 +40,19 @@ Deno.serve(async (req) => {
     }
     const { userId } = await req.json();
     if (!userId) return new Response(JSON.stringify({ error: 'شناسه‌ی مشتری ارسال نشده' }), { status: 400, headers: corsHeaders });
+    // امنیت: رمز حساب مدیرها (به‌خصوص مالک‌ها) از این مسیر عوض نمی‌شه؛ وگرنه مدیری با دسترسی «مشتری‌ها»
+    // می‌تونست رمز مالک رو عوض کنه و با حساب او وارد بشه. رمز مدیرها فقط از بخش «مدیرها» و توسط مالک.
+    const { data: target, error: tErr } = await adminClient.auth.admin.getUserById(String(userId));
+    if (tErr || !target?.user) return new Response(JSON.stringify({ error: 'مشتری پیدا نشد' }), { status: 404, headers: corsHeaders });
+    if (target.user.phone) {
+      const { data: targetAdmin } = await adminClient.from('admins').select('phone').eq('phone', target.user.phone).maybeSingle();
+      if (targetAdmin) {
+        return new Response(JSON.stringify({ error: 'این حساب مربوط به یکی از مدیرهاست؛ رمزش فقط از بخش «مدیرها» توسط مالک عوض می‌شه' }), { status: 403, headers: corsHeaders });
+      }
+    }
+    if (target.user.id === callerData.user.id) {
+      return new Response(JSON.stringify({ error: 'رمز حساب خودت رو از این بخش نمی‌شه عوض کرد' }), { status: 403, headers: corsHeaders });
+    }
     const newPassword = randomPassword();
     const { error: updateErr } = await adminClient.auth.admin.updateUserById(userId, { password: newPassword });
     if (updateErr) return new Response(JSON.stringify({ error: updateErr.message }), { status: 500, headers: corsHeaders });
