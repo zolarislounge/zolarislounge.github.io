@@ -483,11 +483,44 @@
     on ? favs.add(id) : favs.delete(id);
     ls.set('zl-favs', [...favs]); count('#favN', favs.size);
     if (btn) btn.classList.toggle('on', on);
-    if (favOnly) render();
+    // همه‌ی قلب‌های همین محصول (کارت و صفحه‌ی محصول) هماهنگ می‌شن
+    $$(`.card [data-fav="${id}"]`).forEach(b => b.classList.toggle('on', on));
+    if ($('#favs').classList.contains('on')) renderFavs();
     if (user && sb) {
       const r = on ? sb.from('wishlists').insert({ user_id: user.id, product_id: id }) : sb.from('wishlists').delete().eq('user_id', user.id).eq('product_id', id);
       r.then(() => { }, () => { });
     }
+  }
+  // صفحه‌ی علاقه‌مندی‌ها
+  function renderFavs() {
+    const list = [...favs].map(id => products.find(p => p.id === id)).filter(p => p && !p.sample);
+    $('#favSub').textContent = list.length ? `${fa(list.length)} محصول ذخیره‌شده` : 'فهرست دلخواه تو';
+    const body = $('#favBody');
+    if (!list.length) {
+      body.innerHTML = `<div class="ce">
+          <div class="ce-ic">${IC.heart}</div>
+          <h4>هنوز چیزی به علاقه‌مندی‌ها اضافه نکردی</h4>
+          <p>روی قلبِ هر محصولی که دوست داری بزن تا اینجا برات نگهش داریم.</p>
+          <button class="lg-btn sm" data-shop><span>مشاهده‌ی محصولات</span>${IC.arrow}</button>
+        </div>`;
+      return;
+    }
+    body.innerHTML = `${!user ? `<button class="fv-login" data-open="acct">${IC.user}<span>وارد حسابت شو تا علاقه‌مندی‌هات روی همه‌ی دستگاه‌ها بمونه</span>${IC.arrow}</button>` : ''}
+      <div class="fv-grid">${list.map((p, k) => {
+        const out = !p.stock, o = optsOf(p), needPick = o && ((o.sizes.length > 1) || (o.colors.length > 1));
+        const cs = o?.colors || [];
+        return `<article class="fv" style="animation-delay:${60 + k * 45}ms">
+          <div class="fv-im" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}
+            <button class="fv-x" data-unfav="${p.id}" aria-label="حذف ${esc(p.name)} از علاقه‌مندی‌ها">${IC.heart}</button>
+            ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : ''}</div>
+          <b class="fv-n" dir="auto" data-view="${p.id}">${esc(p.name)}</b>
+          ${cs.length ? `<div class="dots">${cs.slice(0, 5).map(c => `<i style="background:${esc(c.hex || '#999')}" title="${esc(c.name)}"></i>`).join('')}</div>` : ''}
+          <div class="fv-p">${priceHtml(p)}</div>
+          ${out ? '<button class="fv-btn" disabled>ناموجود</button>'
+            : needPick ? `<button class="fv-btn" data-view="${p.id}">انتخاب ${o.colors.length > 1 && o.sizes.length > 1 ? 'سایز و رنگ' : o.colors.length > 1 ? 'رنگ' : 'سایز'}</button>`
+            : `<button class="fv-btn on" data-fadd="${p.id}">${IC.bag}<span>افزودن به سبد</span></button>`}
+        </article>`;
+      }).join('')}</div>`;
   }
   async function syncFavs() {
     if (!user || !sb) return;
@@ -953,7 +986,7 @@
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
     if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); lockScroll(); setOvl(true, root.classList.contains('full')); return; }
     closeAll();
-    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv') && isPhone()); lockScroll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); }
+    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv' || id === 'favs') && isPhone()); lockScroll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); }
 
   document.addEventListener('click', e => {
     const t = e.target;
@@ -963,13 +996,29 @@
     if (t.closest('[data-search]')) { closeAll(); setOvl(true); lockScroll(); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
     const pv = t.closest('[data-pay]'); if (pv) { pay(pv.dataset.pay); return; }
     const fv = t.closest('[data-fav]'); if (fv) { e.stopPropagation(); toggleFav(+fv.dataset.fav, fv); return; }
+    if (t.closest('#favBtn')) { renderFavs(); open('favs'); return; }
+    const uf = t.closest('[data-unfav]');
+    if (uf) {
+      const card = uf.closest('.fv'), id = +uf.dataset.unfav;
+      const done = () => { toggleFav(id); toast('از علاقه‌مندی‌ها حذف شد'); };
+      if (card && !matchMedia('(prefers-reduced-motion: reduce)').matches) { card.classList.add('out'); setTimeout(done, 260); } else done();
+      return;
+    }
+    const fa_ = t.closest('[data-fadd]');
+    if (fa_) {
+      const p = products.find(x => x.id === +fa_.dataset.fadd), o = p && optsOf(p);
+      // محصولی که فقط یک سایز/رنگ داره، همون انتخاب می‌شه
+      const v = o ? [o.sizes.length ? o.sizes[0] : null, o.colors.length ? o.colors[0].name : null].filter(Boolean).join(SEP) || null : null;
+      if (p && addToCart(p.id, v, 1, true)) { fa_.classList.add('done'); fa_.innerHTML = `${IC.check}<span>به سبد اضافه شد</span>`; setTimeout(() => { if (fa_.isConnected) { fa_.classList.remove('done'); fa_.innerHTML = `${IC.bag}<span>افزودن به سبد</span>`; } }, 1600); }
+      return;
+    }
     const vw = t.closest('[data-view]'); if (vw) { openProduct(+vw.dataset.view); return; }
     const mc = t.closest('[data-cat]'); if (mc) { if (+mc.dataset.cat < CATS.length) setCat(+mc.dataset.cat); closeAll(); return; }
     const fc = t.closest('[data-fc]'); if (fc) { setCat(+fc.dataset.fc); return; }
     const sz = t.closest('[data-sz]'); if (sz) { const s = sz.dataset.sz; sizes.has(s) ? sizes.delete(s) : sizes.add(s); sz.classList.toggle('on'); render(); return; }
     const fcl = t.closest('[data-fcl]'); if (fcl) { const n = fcl.dataset.fcl; colorsF.has(n) ? colorsF.delete(n) : colorsF.add(n); fcl.classList.toggle('on'); render(); return; }
     if (t.closest('#fclear')) { sizes.clear(); colorsF.clear(); drawSizes(); setCat(0); return; }
-    if (t.closest('#favBtn')) { favOnly = !favOnly; render(); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
+
     if (t.closest('#favOff')) { favOnly = false; render(); return; }
     if (t.closest('[data-shop]')) { closeAll(); setCat(0); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.closest('[data-close]') || t === scrim || t.id === 'acct') { closeAll(); return; }
