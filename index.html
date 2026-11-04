@@ -48,13 +48,14 @@ header.scrolled{box-shadow:0 1px 0 var(--line)}
 .brand{display:inline-block;transition:transform .5s var(--ease);transform-origin:center}
 header.scrolled .brand{transform:scale(.9)}
 .brand .word{display:inline-block;position:relative}
-.brand .word::after{content:"";position:absolute;inset:-15% -4%;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,214,204,.85) 50%,transparent 58%);background-size:300% 100%;background-position:100% 0;mix-blend-mode:screen;animation:zl-shine 7s 2.2s ease-in-out infinite}
+/* the shine moves with transform (GPU) instead of repainting the header every frame */
+.brand .word::after{content:"";position:absolute;top:-15%;bottom:-15%;left:0;width:100%;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,214,204,.85) 50%,transparent 70%);mix-blend-mode:screen;transform:translateX(110%);animation:zl-shine 7s 2.2s ease-in-out infinite}
 .brand .lt{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(70deg);filter:blur(5px);animation:zl-in .9s var(--ease) forwards;animation-delay:calc(.15s + var(--i) * 75ms);transition:transform .45s var(--ease);transition-delay:calc(var(--i) * 35ms)}
 .brand small{opacity:0;letter-spacing:1.3em;animation:zl-lounge 1.4s .85s var(--ease) forwards}
 .brand:hover .lt{transform:translateY(-3px)}
 @keyframes zl-in{60%{filter:blur(0)}to{opacity:1;transform:none;filter:none}}
 @keyframes zl-lounge{to{opacity:1;letter-spacing:.62em}}
-@keyframes zl-shine{0%{background-position:100% 0}30%,100%{background-position:0 0}}
+@keyframes zl-shine{0%{transform:translateX(110%)}30%,100%{transform:translateX(-110%)}}
 @media (prefers-reduced-motion:reduce){.brand .lt,.brand small,.brand .word::after{animation:none!important;opacity:1;transform:none;filter:none}.brand small{letter-spacing:.62em}}
 .nav{display:none;gap:28px;font-size:14px}
 .nav a{color:#5b4a47;transition:color .2s}.nav a:hover{color:var(--m)}
@@ -120,11 +121,16 @@ footer a:hover{color:#fff}
 .edge-t{top:0}.edge-b{bottom:0}
 html.at-top .edge-t{background:var(--m)}
 html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
-.drawer{position:fixed;top:0;bottom:0;width:min(84vw,360px);background:#fff;z-index:60;transition:transform .45s var(--ease);display:flex;flex-direction:column;overflow-y:auto}
+.drawer{position:fixed;top:0;bottom:0;width:min(84vw,360px);background:#fff;z-index:60;transition:transform .45s var(--ease);display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+/* menu: header stays put, only the list scrolls */
+#menu{overflow:hidden}
+#menu .dl{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom)}
 .drawer.r{right:0;transform:translateX(100%)}.drawer.l{left:0;transform:translateX(-100%)}.drawer.on{transform:none}
-.dh{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line);font-weight:500;position:sticky;top:0;background:#fff}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid var(--line);font-weight:500;position:sticky;top:0;background:#fff;flex:none;z-index:2}
 .dl a{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid var(--line);font-size:14.5px}
-.dl a.on{color:#B5762E}
+.dl a{transition:background .2s,color .2s}
+.dl a:active{background:#FAF6F5}
+.dl a.on{color:var(--m);font-weight:700}
 .dl a span{color:var(--mut)}
 .fg{padding:16px 20px;border-bottom:1px solid var(--line)}
 .fg h5{font-size:13.5px;font-weight:500;margin-bottom:10px}
@@ -163,7 +169,7 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
 .favbar button{color:var(--m);text-decoration:underline;text-underline-offset:3px;font-size:13px}
 
 /* sheets (product, checkout, result) */
-.sheet{position:fixed;z-index:60;background:#fff;left:50%;top:50%;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;transform:translate(-50%,-46%);opacity:0;pointer-events:none;transition:all .35s var(--ease);box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.sheet{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:fixed;z-index:60;background:#fff;left:50%;top:50%;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;transform:translate(-50%,-46%);opacity:0;pointer-events:none;transition:all .35s var(--ease);box-shadow:0 30px 80px rgba(0,0,0,.25)}
 .sheet.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
 .sheet{visibility:hidden;transition:transform .35s var(--ease),opacity .35s var(--ease),visibility 0s .35s}
 .sheet.on{visibility:visible;transition:transform .35s var(--ease),opacity .35s var(--ease),visibility 0s}

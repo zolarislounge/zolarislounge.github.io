@@ -929,23 +929,38 @@
     root.classList.toggle('full', !!(on && full));
     if (on) root.style.setProperty('--doc-h', Math.max(root.scrollHeight, document.body.scrollHeight, innerHeight) + 'px');
   }
+  // قفل صفحه‌ی پشت پنل‌ها. overflow:hidden روی body در سافاری iOS جلوی اسکرول با انگشت رو نمی‌گیره؛
+  // اسکرول پنل به صفحه‌ی پشت سرریز می‌کرد، نوارهای سافاری جمع/باز می‌شدن و پنل جابه‌جا می‌شد.
+  // پس body ثابت می‌شه و بعد از بستن دقیقاً به همون نقطه‌ی اسکرول برمی‌گرده.
+  let lockY = 0, scrollLocked = false;
+  function lockScroll() {
+    if (scrollLocked) return;
+    scrollLocked = true; lockY = window.scrollY;
+    Object.assign(document.body.style, { position: 'fixed', top: `-${lockY}px`, left: '0', right: '0', width: '100%', overflow: 'hidden' });
+  }
+  function unlockScroll() {
+    if (!scrollLocked) return;
+    scrollLocked = false;
+    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '', overflow: '' });
+    window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
+  }
   const locked = () => $('#acct').classList.contains('locked') && $('#acct').classList.contains('on');
   function closeAll() {
     if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); setOvl(true, isPhone()); return; }
     setOvl(false);
-    $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); document.body.style.overflow = ''; }
+    $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); unlockScroll(); }
   function open(id) {
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
-    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; setOvl(true, root.classList.contains('full')); return; }
+    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); lockScroll(); setOvl(true, root.classList.contains('full')); return; }
     closeAll();
-    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv') && isPhone()); $('#' + id).classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden'; }
+    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv') && isPhone()); lockScroll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); }
 
   document.addEventListener('click', e => {
     const t = e.target;
     const o = t.closest('[data-open]');
     if (o) { if (o.dataset.open === 'acct') drawAcct(); open(o.dataset.open); return; }
     if (t.closest('[data-open-acct]')) { afterLogin = null; drawAcct(); open('acct'); return; }
-    if (t.closest('[data-search]')) { closeAll(); setOvl(true); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
+    if (t.closest('[data-search]')) { closeAll(); setOvl(true); lockScroll(); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
     const pv = t.closest('[data-pay]'); if (pv) { pay(pv.dataset.pay); return; }
     const fv = t.closest('[data-fav]'); if (fv) { e.stopPropagation(); toggleFav(+fv.dataset.fav, fv); return; }
     const vw = t.closest('[data-view]'); if (vw) { openProduct(+vw.dataset.view); return; }
@@ -981,6 +996,7 @@
   $('#sort').onchange = render;
   const ann = $('.announce');
   const onScroll = () => {
+    if (scrollLocked) return;
     $('header').classList.toggle('scrolled', scrollY > 10);
     // top strip matches what's under Safari's address bar: the maroon announcement, then the white header
     document.documentElement.classList.toggle('at-top', !!ann && scrollY < ann.offsetHeight - 2);

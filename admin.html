@@ -179,7 +179,7 @@ main{flex:1;min-width:0;padding:26px 30px 60px}
 .pc .st.low{color:var(--bad)}
 
 /* dialogs */
-dialog{border:0;border-radius:16px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);color:var(--ink)}
+dialog{overscroll-behavior:contain;border:0;border-radius:16px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);color:var(--ink)}
 dialog::backdrop{background:rgba(30,10,8,.45)}
 dialog.wide{width:min(820px,calc(100vw - 24px))}
 dialog.narrow{width:min(400px,calc(100vw - 24px))}
@@ -470,9 +470,23 @@ function errText(e) {
 const fail = e => { console.error(e); toast(errText(e), true); };
 async function q(p) { const { data, error } = await p; if (error) throw error; return data; }
 
+// قفل صفحه‌ی پشت پنجره‌ها در سافاری iOS (مثل سایت)
+let lockY = 0, scrollLocked = false;
+function lockScroll() {
+  if (scrollLocked) return;
+  scrollLocked = true; lockY = window.scrollY;
+  Object.assign(document.body.style, { position: 'fixed', top: `-${lockY}px`, left: '0', right: '0', width: '100%', overflow: 'hidden' });
+}
+function unlockScroll() {
+  if (!scrollLocked || document.querySelector('dialog[open]')) return;
+  scrollLocked = false;
+  Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '', overflow: '' });
+  window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
+}
+['dlg', 'dlg2'].forEach(id => document.getElementById(id).addEventListener('close', unlockScroll));
 function openDlg(html, cls = '') {
   const d = $('#dlg'); d.className = cls; d.innerHTML = html;
-  if (!d.open) d.showModal();
+  if (!d.open) { lockScroll(); d.showModal(); }
   d.querySelectorAll('[data-x]').forEach(b => b.onclick = () => d.close());
   return d;
 }
@@ -482,7 +496,7 @@ function ask(msg, okText = 'بله', danger = true) {
     const d = $('#dlg2');
     d.innerHTML = `<div class="db"><p style="font-size:14px">${msg}</p></div>
       <div class="df"><button class="btn ${danger ? 'danger' : ''}" data-ok>${esc(okText)}</button><button class="btn ghost" data-no>انصراف</button></div>`;
-    d.showModal();
+    lockScroll(); d.showModal();
     d.querySelector('[data-ok]').onclick = () => { d.close(); res(true); };
     d.querySelector('[data-no]').onclick = () => { d.close(); res(false); };
     d.oncancel = () => res(false);
