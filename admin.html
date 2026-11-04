@@ -46,6 +46,13 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--
 textarea.in{height:auto;min-height:84px;padding:10px 12px;resize:vertical;line-height:1.7}
 .in:focus{border-color:var(--m);box-shadow:0 0 0 3px rgba(61,13,11,.08)}
 .ltr{direction:ltr;text-align:left}
+.in.money{font-size:16px;letter-spacing:.02em;text-align:left}
+.money-hint{font-size:12px;font-weight:400;color:var(--mut);margin-top:5px;line-height:1.8;display:flex;flex-direction:column;gap:4px}
+.money-hint:empty{display:none}
+.money-hint.compact{font-size:11px;margin-top:3px}
+.money-hint .mw{color:#8A5A12;background:#FFF6E6;border:1px solid #F1DDB4;border-radius:8px;padding:6px 10px}
+.money-hint .mw button{color:var(--m);font-weight:700;text-decoration:underline;text-underline-offset:3px;margin-right:4px}
+.mcell{display:flex;flex-direction:column;min-width:0}
 @media (max-width:700px){.in,select.in,textarea.in,.tools .in{font-size:16px}}
 ::selection{background:#EADCD7;color:var(--ink)}
 :focus-visible{outline:2px solid var(--m);outline-offset:2px}
@@ -368,6 +375,70 @@ const ago = d => {
 };
 const toEn = s => String(s ?? '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const intOf = s => { const v = toEn(s).replace(/[^0-9]/g, ''); return v === '' ? null : parseInt(v, 10); };
+
+// ───────── فیلدهای مبلغ: جداکننده‌ی سه‌رقمی موقع تایپ + مبلغ به حروف + هشدار صفر کم/زیاد ─────────
+const W1 = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
+const W10 = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
+const W20 = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+const W100 = ['', 'صد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+const SCALE = ['', 'هزار', 'میلیون', 'میلیارد', 'هزار میلیارد'];
+function words3(n) {
+  const out = [], h = Math.floor(n / 100), r = n % 100;
+  if (h) out.push(W100[h]);
+  if (r >= 20) { out.push(W20[Math.floor(r / 10)]); if (r % 10) out.push(W1[r % 10]); }
+  else if (r >= 10) out.push(W10[r - 10]);
+  else if (r) out.push(W1[r]);
+  return out.join(' و ');
+}
+function numWords(n) {
+  if (!n) return 'صفر';
+  const parts = [];
+  for (let i = 0; n > 0 && i < SCALE.length; i++, n = Math.floor(n / 1000)) {
+    const g = n % 1000; if (!g) continue;
+    parts.unshift(g === 1 && i === 1 ? 'هزار' : (words3(g) + (SCALE[i] ? ' ' + SCALE[i] : '')));
+  }
+  return parts.join(' و ');
+}
+const fmtMoney = n => n == null ? '' : Number(n).toLocaleString('en-US');
+// اگه قیمت کمتر از این باشه، احتمالاً صفرها جا افتادن (تومان)
+const MONEY_LOW = 10000, MONEY_HIGH = 2000000000;
+function wireMoney(input, { compact = false, enabled = () => true } = {}) {
+  if (!input || input._money) return; input._money = true;
+  input.setAttribute('inputmode', 'numeric'); input.setAttribute('dir', 'ltr'); input.classList.add('money');
+  const hint = document.createElement('div'); hint.className = 'money-hint' + (compact ? ' compact' : '');
+  input.insertAdjacentElement('afterend', hint);
+  const show = () => {
+    const n = intOf(input.value);
+    hint.classList.remove('warn');
+    if (!enabled() || n == null) { hint.innerHTML = ''; return; }
+    let html = `<span>${esc(numWords(n))} تومان</span>`;
+    if (n > 0 && n < MONEY_LOW && !compact) {
+      hint.classList.add('warn');
+      html += `<span class="mw">خیلی کمه! منظورت <b>${fa(n * 1000)} تومان</b> بوده؟ <button type="button" data-fix="1000">درستش کن</button></span>`;
+    } else if (n >= MONEY_HIGH && !compact) {
+      hint.classList.add('warn');
+      html += `<span class="mw">خیلی زیاده! شاید یه صفر اضافه گذاشتی. <button type="button" data-fix="0.1">یه صفر کم کن</button></span>`;
+    }
+    hint.innerHTML = html;
+    const fx = hint.querySelector('[data-fix]');
+    if (fx) fx.onclick = () => { input.value = fmtMoney(Math.round(intOf(input.value) * +fx.dataset.fix)); input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); };
+  };
+  const format = () => {
+    if (!enabled()) { show(); return; }
+    // جای مکان‌نما رو بر اساس تعداد رقم‌های قبلش نگه می‌داره
+    const pos = input.selectionStart ?? input.value.length;
+    const digitsBefore = toEn(input.value.slice(0, pos)).replace(/\D/g, '').length;
+    const n = intOf(input.value);
+    input.value = fmtMoney(n);
+    let i = 0, seen = 0;
+    while (i < input.value.length && seen < digitsBefore) { if (/\d/.test(input.value[i])) seen++; i++; }
+    try { input.setSelectionRange(i, i); } catch (e) { }
+    show();
+  };
+  input.addEventListener('input', format);
+  input._moneyRefresh = () => { if (enabled() && intOf(input.value) != null) input.value = fmtMoney(intOf(input.value)); show(); };
+  input._moneyRefresh();
+}
 // 09xxxxxxxxx ← هر شکلی از شماره‌ی ایرانی
 function normPhone(p) {
   const d = toEn(p).replace(/\D/g, '');
@@ -788,6 +859,7 @@ async function manualOrderDialog() {
   };
   $('#moP', d).onchange = fillV; fillV(); draw();
   $('#moD', d).oninput = draw;
+  wireMoney($('#moD', d));
   $('#moAdd', d).onclick = () => {
     const p = prods.find(x => x.id == $('#moP', d).value);
     const v = $('#moVW', d).hidden ? null : $('#moV', d).value;
@@ -903,7 +975,7 @@ function productDialog(p, all) {
         <label class="f">شناسه‌ی دسته (انگلیسی، برای فیلتر سایت)<input class="in ltr" id="pfC" required maxlength="40" pattern="[a-z0-9\\-]+" value="${esc(p.category)}" placeholder="knit"></label>
       </div>
       <div class="row c3">
-        <label class="f">قیمت (تومان)<input class="in num" id="pfP" required inputmode="numeric" value="${p.price === '' ? '' : esc(p.price)}"></label>
+        <label class="f">قیمت (تومان)<input class="in num" id="pfP" required inputmode="numeric" placeholder="مثلاً 1,850,000" value="${p.price === '' ? '' : esc(p.price)}"></label>
         <label class="f">قیمت حراج (اختیاری)<input class="in num" id="pfSP" inputmode="numeric" value="${p.sale_price ? esc(p.sale_price) : ''}"></label>
         <label class="f">موجودی کل<input class="in num" id="pfS" inputmode="numeric" value="${esc(p.stock)}"></label>
       </div>
@@ -977,7 +1049,8 @@ function productDialog(p, all) {
       const sw = parts.map(x => hexOf(x)).filter(Boolean)[0];
       return `<div class="vrow2"><span class="vn">${sw ? `<i style="background:${esc(sw)}"></i>` : ''}<bdi>${esc(n)}</bdi></span>
         <input class="in num" data-vq="${esc(n)}" inputmode="numeric" placeholder="تعداد" value="${st.qty ?? ''}">
-        <input class="in num" data-vp="${esc(n)}" inputmode="numeric" placeholder="قیمت متفاوت؟" value="${st.price ?? ''}"></div>`; }).join('');
+        <div class="mcell"><input class="in num" data-vp="${esc(n)}" inputmode="numeric" placeholder="قیمت متفاوت؟" value="${st.price ?? ''}"></div></div>`; }).join('');
+    $$('[data-vp]', d).forEach(inp => wireMoney(inp, { compact: true }));
     $$('[data-vq]', d).forEach(inp => inp.oninput = () => { const o = stockOf.get(inp.dataset.vq) || {}; o.qty = intOf(inp.value); stockOf.set(inp.dataset.vq, o); syncStock(); });
     $$('[data-vp]', d).forEach(inp => inp.oninput = () => { const o = stockOf.get(inp.dataset.vp) || {}; o.price = intOf(inp.value); stockOf.set(inp.dataset.vp, o); });
     syncStock();
@@ -992,6 +1065,7 @@ function productDialog(p, all) {
     $('#pfVH', d).textContent = list.length ? (all ? 'موجودی کل خودکار از جمع ترکیب‌ها حساب می‌شه.' : 'ترکیبی که تعداد نداره، فقط به موجودی کل وابسته‌ست.') : '';
   };
   drawSz(); drawCl(); drawV();
+  wireMoney($('#pfP', d)); wireMoney($('#pfSP', d));
   // ── عکس‌های محصول + حذف پس‌زمینه ──
   const st = $('#pfBgSt', d), bgChk = $('#pfBg', d), galEl = $('#pfGal', d);
   let bgPref = true; try { bgPref = localStorage.getItem('zl-bg') !== '0'; } catch (e) { }
@@ -1155,6 +1229,8 @@ function couponDialog(c) {
     <div class="df"><button class="btn" id="cfGo">${isNew ? 'ساخت کد' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button>
       ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="cfDel">حذف</button>'}</div>`, 'narrow');
   $('#cfC', d).oninput = e => { e.target.value = toEn(e.target.value).toUpperCase().replace(/[^A-Z0-9_-]/g, ''); };
+  wireMoney($('#cfV', d), { enabled: () => $('#cfT', d).value === 'fixed' });
+  $('#cfT', d).addEventListener('change', () => { const v = $('#cfV', d); v.value = intOf(v.value) ?? ''; v._moneyRefresh(); });
   $('#cfGo', d).onclick = async e => {
     if (!$('#cf', d).reportValidity()) return;
     const t = $('#cfT', d).value, v = intOf($('#cfV', d).value);
