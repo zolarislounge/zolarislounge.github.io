@@ -249,6 +249,20 @@ html:has(#dlg[open]) .edge{background:#fff}
 .rv .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px}
 .rv p{font-size:13.5px;white-space:pre-wrap}
 .rv .acts{display:flex;gap:6px}
+.ad-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px}
+.ad-av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--m);font-weight:700;border:1px solid var(--line)}
+.ad-b{min-width:0;display:flex;flex-direction:column;gap:3px}
+.ad-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ad-p{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ad-a{display:flex;gap:6px}
+@media(max-width:600px){.ad-row{grid-template-columns:auto 1fr}.ad-a{grid-column:1/-1;justify-content:flex-end}}
+.perm-grid{display:grid;gap:8px}
+@media(min-width:640px){.perm-grid{grid-template-columns:1fr 1fr}}
+.perm{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;transition:border-color .2s,background .2s}
+.perm:has(input:checked){border-color:var(--m);background:var(--soft)}
+.perm input{width:18px;height:18px;margin-top:3px;accent-color:var(--m);flex:none}
+.perm b{display:block;font-size:13.5px;font-weight:500}
+.perm small{color:var(--mut);font-size:12px}
 </style>
 </head>
 <body>
@@ -295,6 +309,7 @@ html:has(#dlg[open]) .edge{background:#fff}
       <button data-v="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 9M22 21a7 7 0 0 0-4-6.3"/></svg>مشتری‌ها</button>
       <button data-v="reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>نظرها<span class="badge" id="revBadge" hidden></span></button>
       <button data-v="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>تنظیمات</button>
+      <button data-v="admins" hidden><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.4 3 8 7 9.5 4-1.5 7-5.1 7-9.5V6z"/><circle cx="12" cy="10" r="2.5"/><path d="M8 16.5c.8-1.6 2.3-2.5 4-2.5s3.2.9 4 2.5"/></svg>مدیرها</button>
     </nav>
     <div class="side-foot"><span id="whoami"></span><br><button id="logout">خروج</button></div>
   </aside>
@@ -458,22 +473,38 @@ async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('#login').hidden = false; $('#app').hidden = true; syncLogin(); return; }
   const phone = session.user.phone;
-  let isAdmin = false;
-  try { isAdmin = !!(await q(sb.from('admins').select('phone').eq('phone', phone).maybeSingle())); } catch (e) { fail(e); }
-  if (!isAdmin) {
+  let row = null;
+  try { row = await q(sb.from('admins').select('phone, role, perms, name').eq('phone', phone).maybeSingle()); } catch (e) { fail(e); }
+  if (!row) {
     await sb.auth.signOut();
     $('#login').hidden = false; $('#app').hidden = true; syncLogin();
     $('#lerr').textContent = 'این شماره دسترسی مدیریت نداره';
     return;
   }
-  me = { phone, id: session.user.id };
-  $('#whoami').textContent = showPhone(phone);
+  me = { phone, id: session.user.id, role: row.role || 'admin', perms: row.perms || [], name: row.name || '' };
+  $('#whoami').textContent = (me.name ? me.name + ' · ' : '') + showPhone(phone) + (me.role === 'owner' ? ' · مالک' : '');
+  // فقط بخش‌هایی که این مدیر بهشون دسترسی داره (سمت دیتابیس هم همین محدودیت اعمال می‌شه)
+  $$('#menu button[data-v]').forEach(b => { b.hidden = !canView(b.dataset.v); });
   $('#login').hidden = true; $('#app').hidden = false;
   sb.rpc('admin_heartbeat').then(() => {});
   setInterval(() => sb.rpc('admin_heartbeat').then(() => {}), 60000);
-  go(location.hash.slice(1) || 'dash');
+  go(location.hash.slice(1) || firstView());
   refreshBadges(); setInterval(refreshBadges, 60000);
 }
+// ───────── دسترسی‌ها ─────────
+const PERMS = [
+  ['dash', 'داشبورد و آمار', 'فروش، بازدید و محصولات پربازدید'],
+  ['orders', 'سفارش‌ها', 'دیدن، تغییر وضعیت، حذف و ثبت سفارش دستی'],
+  ['products', 'محصولات', 'افزودن، ویرایش و حذف محصول و عکس'],
+  ['coupons', 'کد تخفیف', 'ساخت و ویرایش کدهای تخفیف'],
+  ['customers', 'مشتری‌ها', 'اطلاعات مشتری، مسدود کردن و ساخت رمز جدید'],
+  ['reviews', 'نظرها', 'تایید و حذف نظر مشتری‌ها'],
+  ['settings', 'تنظیمات و گزارش', 'حالت پرداخت آنلاین و گزارش کارهای مدیرها'],
+];
+const VIEW_PERM = { dash: 'dash', orders: 'orders', products: 'products', coupons: 'coupons', customers: 'customers', reviews: 'reviews', settings: 'settings', admins: 'owner' };
+const can = p => !!me && (me.role === 'owner' || (p !== 'owner' && me.perms.includes(p)));
+const canView = v => can(VIEW_PERM[v] || 'owner');
+const firstView = () => Object.keys(VIEW_PERM).find(canView) || 'none';
 let booted = false;
 sb.auth.onAuthStateChange((ev) => {
   if (ev === 'SIGNED_IN' && !me && booted) boot();
@@ -489,9 +520,10 @@ function log(action, details) {
 
 async function refreshBadges() {
   try {
+    const none = Promise.resolve({ count: 0 });
     const [{ count: n }, { count: r }] = await Promise.all([
-      sb.from('orders').select('id', { count: 'exact', head: true }).in('status', ['جدید', 'پرداخت شده']),
-      sb.from('reviews').select('id', { count: 'exact', head: true }).eq('approved', false),
+      can('orders') ? sb.from('orders').select('id', { count: 'exact', head: true }).in('status', ['جدید', 'پرداخت شده']) : none,
+      can('reviews') ? sb.from('reviews').select('id', { count: 'exact', head: true }).eq('approved', false) : none,
     ]);
     const nb = $('#newBadge'), rb = $('#revBadge');
     nb.hidden = !n; nb.textContent = fa(n);
@@ -503,7 +535,11 @@ async function refreshBadges() {
 const VIEWS = {};
 $('#menu').onclick = e => { const b = e.target.closest('button[data-v]'); if (b) go(b.dataset.v); };
 function go(v) {
-  if (!VIEWS[v]) v = 'dash';
+  if (!VIEWS[v] || !canView(v)) v = firstView();
+  if (v === 'none') {
+    $('#view').innerHTML = '<div class="card empty" style="margin-top:20px">هنوز دسترسی‌ای برای شما تعریف نشده.<br>از مالک فروشگاه بخواید بخش‌های لازم رو براتون فعال کنه.</div>';
+    return;
+  }
   $$('#menu button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   history.replaceState(null, '', '#' + v);
   $('#view').innerHTML = '<div class="loading">در حال بارگذاری…</div>';
@@ -516,7 +552,7 @@ let dashDays = 30;
 VIEWS.dash = async () => {
   const [an, recent, low] = await Promise.all([
     q(sb.rpc('admin_analytics', { p_days: dashDays })),
-    q(sb.from('orders').select('id,tracking_code,customer_name,total,status,created_at').order('created_at', { ascending: false }).limit(8)),
+    can('orders') ? q(sb.from('orders').select('id,tracking_code,customer_name,total,status,created_at').order('created_at', { ascending: false }).limit(8)) : [],
     q(sb.from('products').select('id,name,stock').lte('stock', 2).order('stock').limit(8)),
   ]);
   const t = an.totals || {};
@@ -539,7 +575,7 @@ VIEWS.dash = async () => {
         <h3>آخرین سفارش‌ها</h3>
         ${recent.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>کد</th><th>مشتری</th><th>مبلغ</th><th>وضعیت</th><th>زمان</th></tr></thead><tbody>
           ${recent.map(o => `<tr class="click" data-o="${o.id}"><td class="num">${esc(o.tracking_code)}</td><td>${esc(o.customer_name)}</td><td class="num">${toman(o.total)}</td><td>${pill(o.status)}</td><td class="muted small">${ago(o.created_at)}</td></tr>`).join('')}
-        </tbody></table></div>` : '<div class="empty">هنوز سفارشی ثبت نشده</div>'}
+        </tbody></table></div>` : `<div class="empty">${can('orders') ? 'هنوز سفارشی ثبت نشده' : 'دسترسی به سفارش‌ها برای شما فعال نیست'}</div>`}
       </div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="card pad"><h3>منبع بازدید</h3>
@@ -1157,16 +1193,85 @@ VIEWS.reviews = async () => {
 };
 
 // ═════════ تنظیمات ═════════
-const ACT = { order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت' };
+const ACT = { order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
+// ═════════ مدیرها (فقط مالک‌ها) ═════════
+async function adminFn(body) {
+  const { data, error } = await sb.functions.invoke('admin-users', { body });
+  let err = data?.error;
+  if (error && !err) { try { err = (await error.context.json()).error; } catch (e) { err = error.message; } }
+  if (err) throw new Error(err);
+  return data;
+}
+const ADMIN_ERR = { bad_phone: 'شماره موبایل درست نیست', short_password: 'رمز عبور باید حداقل ۶ کاراکتر باشه', need_password: 'این شماره هنوز حساب نداره؛ یه رمز عبور براش بذار تا بتونه وارد بشه', owner_password: 'رمز مالک‌ها از این بخش عوض نمی‌شه', owner_locked: 'مالک فروشگاه حذف نمی‌شه', owner_only: 'این بخش فقط برای مالک‌هاست', not_found: 'این مدیر پیدا نشد', create_failed: 'ساخت حساب انجام نشد' };
+const adminErr = e => ADMIN_ERR[e.message] || errText(e);
+VIEWS.admins = async () => {
+  const { admins } = await adminFn({ action: 'list' });
+  const permChips = a => a.role === 'owner' ? '<span class="pill ok">دسترسی کامل + مدیریت مدیرها</span>'
+    : a.perms.length ? a.perms.map(k => `<span class="pill">${esc((PERMS.find(x => x[0] === k) || [k, k])[1])}</span>`).join(' ')
+    : '<span class="pill cancel">بدون دسترسی</span>';
+  $('#view').innerHTML = `
+    <div class="ph"><h2>مدیرها <span class="muted small num">(${fa(admins.length)})</span></h2>
+      <div class="acts"><button class="btn" id="adNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>افزودن مدیر</button></div></div>
+    <p class="small muted" style="margin:-6px 0 14px">مالک‌ها همه‌ی بخش‌ها رو می‌بینن و مدیرها رو اضافه یا حذف می‌کنن. هر مدیر فقط بخش‌هایی رو می‌بینه که براش فعال کردی؛ این محدودیت سمت سرور هم اعمال می‌شه.</p>
+    <div class="olist">${admins.map(a => `<div class="card ad-row">
+      <div class="ad-av">${esc((a.name || 'Z').trim().charAt(0))}</div>
+      <div class="ad-b"><div class="ad-h"><b>${esc(a.name || 'بدون نام')}</b>${a.role === 'owner' ? '<span class="pill new">مالک</span>' : '<span class="pill">مدیر</span>'}${a.phone === me.phone ? '<span class="pill">شما</span>' : ''}</div>
+        <div class="small muted num ltr" style="text-align:right">${esc(showPhone(a.phone))} · ${a.last_sign_in_at ? 'آخرین ورود ' + ago(a.last_sign_in_at) : a.has_account ? 'هنوز وارد نشده' : 'حساب ساخته نشده'}</div>
+        <div class="ad-p">${permChips(a)}</div></div>
+      <div class="ad-a"><button class="btn ghost sm" data-ed="${esc(a.phone)}">ویرایش</button>${a.role === 'owner' ? '' : `<button class="btn danger sm" data-rmv="${esc(a.phone)}">حذف</button>`}</div>
+    </div>`).join('')}</div>`;
+  $('#adNew').onclick = () => adminDialog(null);
+  $$('[data-ed]').forEach(b => b.onclick = () => adminDialog(admins.find(a => a.phone === b.dataset.ed)));
+  $$('[data-rmv]').forEach(b => b.onclick = async () => {
+    const a = admins.find(x => x.phone === b.dataset.rmv);
+    if (!(await ask(`دسترسی مدیریت «${esc(a.name || showPhone(a.phone))}» برداشته بشه؟ حساب کاربری‌ش به‌عنوان مشتری باقی می‌مونه.`, 'حذف دسترسی'))) return;
+    try { await adminFn({ action: 'remove', phone: a.phone }); toast('دسترسی برداشته شد'); VIEWS.admins(); } catch (e) { toast(adminErr(e), true); }
+  });
+};
+function adminDialog(a) {
+  const isNew = !a, owner = a?.role === 'owner';
+  a = a || { phone: '', name: '', perms: ['products'], role: 'admin', has_account: false };
+  const d = openDlg(`
+    <div class="dh"><h3>${isNew ? 'افزودن مدیر' : owner ? 'ویرایش مالک' : 'دسترسی‌های مدیر'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <form class="db" id="adF">
+      <div class="row c2">
+        <label class="f">شماره موبایل<input class="in ltr" id="adP" type="tel" inputmode="numeric" placeholder="09xxxxxxxxx" value="${esc(a.phone ? showPhone(a.phone) : '')}" ${isNew ? 'required' : 'readonly'}></label>
+        <label class="f">نام (برای شناسایی در پنل)<input class="in" id="adN" maxlength="80" value="${esc(a.name || '')}" placeholder="مثلاً سارا — انبار"></label>
+      </div>
+      ${owner ? '<div class="box small">مالک‌ها همیشه دسترسی کامل دارن و فقط نامشون از اینجا تغییر می‌کنه.</div>' : `
+      <label class="f">${isNew ? 'رمز عبور اولیه' : 'رمز عبور جدید (اختیاری)'}
+        <input class="in ltr" id="adPw" type="text" autocomplete="new-password" minlength="6" placeholder="${isNew ? 'حداقل ۶ کاراکتر' : 'خالی بذار تا عوض نشه'}">
+        <span style="font-weight:400">${isNew ? 'اگه این شماره قبلاً روی سایت حساب ساخته، می‌تونی خالی بذاری.' : 'فقط اگه بخوای رمز این مدیر رو عوض کنی پر کن.'}</span></label>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="small muted" style="font-weight:500">بخش‌هایی که می‌بینه</span>
+          <span><button type="button" class="btn ghost sm" id="adAll">همه</button> <button type="button" class="btn ghost sm" id="adNone">هیچ‌کدوم</button></span></div>
+        <div class="perm-grid">${PERMS.map(([k, l, h]) => `<label class="perm"><input type="checkbox" value="${k}" ${a.perms.includes(k) ? 'checked' : ''}><span><b>${l}</b><small>${h}</small></span></label>`).join('')}</div>
+      </div>`}
+    </form>
+    <div class="df"><button class="btn" id="adGo">${isNew ? 'افزودن مدیر' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button></div>`, 'wide');
+  const boxes = () => $$('.perm input', d);
+  if ($('#adAll', d)) { $('#adAll', d).onclick = () => boxes().forEach(c => c.checked = true); $('#adNone', d).onclick = () => boxes().forEach(c => c.checked = false); }
+  $('#adGo', d).onclick = async e => {
+    const phone = isNew ? normPhone($('#adP', d).value) : a.phone;
+    if (!phone) return toast('شماره موبایل رو درست وارد کن', true);
+    const pw = $('#adPw', d) ? $('#adPw', d).value.trim() : '';
+    if (pw && pw.length < 6) return toast('رمز عبور باید حداقل ۶ کاراکتر باشه', true);
+    const perms = owner ? [] : boxes().filter(c => c.checked).map(c => c.value);
+    if (!owner && !perms.length && !(await ask('هیچ بخشی انتخاب نشده؛ این مدیر بعد از ورود هیچ‌چیز نمی‌بینه. ادامه می‌دی؟', 'ادامه', false))) return;
+    e.target.disabled = true;
+    try {
+      const r = await adminFn({ action: 'save', phone, name: $('#adN', d).value, perms, password: pw || undefined });
+      d.close(); toast(r.created ? 'مدیر اضافه شد و حسابش ساخته شد' : 'ذخیره شد'); VIEWS.admins();
+    } catch (ex) { toast(adminErr(ex), true); e.target.disabled = false; }
+  };
+}
+
 VIEWS.settings = async () => {
-  const [pay, admins, logs, sess] = await Promise.all([
+  const [pay, logs] = await Promise.all([
     q(sb.from('site_settings').select('value').eq('key', 'payment').maybeSingle()),
-    q(sb.from('admins').select('phone')),
     q(sb.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(60)),
-    q(sb.from('admin_sessions').select('phone,ended_at').order('ended_at', { ascending: false }).limit(200)),
   ]);
   const modeNow = pay?.value?.mode || 'off';
-  const lastSeen = {}; for (const s of sess) lastSeen[s.phone] ||= s.ended_at;
   $('#view').innerHTML = `<div class="ph"><h2>تنظیمات</h2></div>
     <div class="g2">
       <div style="display:flex;flex-direction:column;gap:16px">
@@ -1177,10 +1282,6 @@ VIEWS.settings = async () => {
             <label><input type="radio" name="pm" value="live" ${modeNow === 'live' ? 'checked' : ''}><span><b>روشن</b><small>همه‌ی مشتری‌ها قبل از ثبت نهایی از درگاه زیبال پرداخت می‌کنن. کد پذیرنده باید در Secrets ثبت شده باشه.</small></span></label>
           </div>
           <div style="margin-top:12px"><button class="btn" id="pmGo">ذخیره</button></div>
-        </div>
-        <div class="card pad"><h3>مدیرها</h3>
-          <table class="tbl"><tbody>${admins.map(a => `<tr><td class="num ltr" style="text-align:right">${esc(showPhone(a.phone))}${a.phone === me.phone ? ' <span class="pill">شما</span>' : ''}</td><td class="small muted">${lastSeen[a.phone] ? 'آخرین حضور: ' + ago(lastSeen[a.phone]) : ''}</td></tr>`).join('')}</tbody></table>
-          <p class="small muted" style="margin-top:8px">اضافه یا حذف کردن مدیر به دلایل امنیتی فقط از سمت دیتابیس انجام می‌شه.</p>
         </div>
       </div>
       <div class="card pad"><h3>گزارش کارهای مدیرها</h3>

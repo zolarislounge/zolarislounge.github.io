@@ -33,8 +33,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'احراز هویت نامعتبره' }), { status: 401, headers: corsHeaders });
     }
     const adminClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: adminRow } = await adminClient.from('admins').select('phone').eq('phone', callerData.user.phone).maybeSingle();
-    if (!adminRow) {
+    const { data: adminRow } = await adminClient.from('admins').select('phone, role, perms').eq('phone', callerData.user.phone).maybeSingle();
+    // فقط مالک یا مدیری که دسترسی «مشتری‌ها» داره
+    if (!adminRow || !(adminRow.role === 'owner' || (adminRow.perms || []).includes('customers'))) {
       return new Response(JSON.stringify({ error: 'این عملیات فقط برای مدیرهاست' }), { status: 403, headers: corsHeaders });
     }
     const { userId } = await req.json();
