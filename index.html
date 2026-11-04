@@ -32,7 +32,7 @@ img{display:block;max-width:100%}
 .announce a{white-space:nowrap}
 
 /* header: wordmark on the left, icons on the right (as in reference) */
-header{position:sticky;top:0;z-index:40;background:#fff;transition:box-shadow .3s}
+header{position:sticky;top:0;z-index:40;background:#fff;transition:box-shadow .3s;overflow-x:clip}
 header.scrolled{box-shadow:0 1px 0 var(--line)}
 .hdr{display:flex;align-items:center;justify-content:space-between;height:76px;gap:8px}
 .icons{display:flex;align-items:center;gap:2px}
@@ -47,15 +47,16 @@ header.scrolled{box-shadow:0 1px 0 var(--line)}
 /* logo animation: letters rise in one by one, LOUNGE settles, then a soft shine every few seconds */
 .brand{display:inline-block;transition:transform .5s var(--ease);transform-origin:center}
 header.scrolled .brand{transform:scale(.9)}
-.brand .word{display:inline-block;position:relative}
-/* the shine moves with transform (GPU) instead of repainting the header every frame */
-.brand .word::after{content:"";position:absolute;top:-15%;bottom:-15%;left:0;width:100%;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,214,204,.85) 50%,transparent 70%);mix-blend-mode:screen;transform:translateX(110%);animation:zl-shine 7s 2.2s ease-in-out infinite}
+.brand .word{display:inline-block;position:relative;overflow:hidden;padding:6px 2px;margin:-6px -2px;vertical-align:bottom}
+/* the shine moves with transform (GPU), and uses no mix-blend-mode: blending inside the sticky header
+   made iPhone Safari paint a white box over the menu and search icons */
+.brand .word::after{content:"";position:absolute;top:-15%;bottom:-15%;left:0;width:100%;pointer-events:none;background:linear-gradient(105deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.72) 50%,rgba(255,255,255,0) 70%);transform:translateX(110%);opacity:0;animation:zl-shine 7s 2.2s ease-in-out infinite}
 .brand .lt{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(70deg);filter:blur(5px);animation:zl-in .9s var(--ease) forwards;animation-delay:calc(.15s + var(--i) * 75ms);transition:transform .45s var(--ease);transition-delay:calc(var(--i) * 35ms)}
 .brand small{opacity:0;letter-spacing:1.3em;animation:zl-lounge 1.4s .85s var(--ease) forwards}
 .brand:hover .lt{transform:translateY(-3px)}
 @keyframes zl-in{60%{filter:blur(0)}to{opacity:1;transform:none;filter:none}}
 @keyframes zl-lounge{to{opacity:1;letter-spacing:.62em}}
-@keyframes zl-shine{0%{transform:translateX(110%)}30%,100%{transform:translateX(-110%)}}
+@keyframes zl-shine{0%{transform:translateX(110%);opacity:1}30%{transform:translateX(-110%);opacity:1}31%,100%{transform:translateX(-110%);opacity:0}}
 @media (prefers-reduced-motion:reduce){.brand .lt,.brand small,.brand .word::after{animation:none!important;opacity:1;transform:none;filter:none}.brand small{letter-spacing:.62em}}
 .nav{display:none;gap:28px;font-size:14px}
 .nav a{color:#5b4a47;transition:color .2s}.nav a:hover{color:var(--m)}
