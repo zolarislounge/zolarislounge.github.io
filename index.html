@@ -44,25 +44,18 @@ header.scrolled{box-shadow:0 1px 0 var(--line)}
 .cnt:not(.on){display:none}
 .brand{font-family:var(--serif);font-weight:600;color:var(--m);font-size:clamp(17px,5vw,26px);letter-spacing:.02em;direction:ltr;white-space:nowrap;line-height:1}
 .brand small{display:block;font-family:var(--sans);font-weight:300;font-size:.36em;letter-spacing:.62em;color:var(--mut);margin-top:5px;text-align:center}
-/* logo animation: letters rise in one by one, LOUNGE settles, then each letter of ZOLARIS drains
-   and refills with colour in a wave (the outline stays, so the mark never disappears) */
+/* logo animation: letters rise in one by one, LOUNGE settles, then a soft shine every few seconds */
 .brand{display:inline-block;transition:transform .5s var(--ease);transform-origin:center}
 header.scrolled .brand{transform:scale(.9)}
 .brand .word{display:inline-block;position:relative}
-.brand .lt{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(70deg);filter:blur(5px);
-  color:transparent;-webkit-text-stroke:.9px var(--m);
-  background-image:linear-gradient(to top,var(--m) 50%,transparent 50%);background-size:100% 200%;background-position:0 100%;
-  -webkit-background-clip:text;background-clip:text;
-  animation:zl-in .9s var(--ease) forwards,zl-fill 7s cubic-bezier(.65,0,.35,1) infinite both;
-  animation-delay:calc(.15s + var(--i) * 75ms),calc(1.6s + var(--i) * .2s);
-  transition:transform .45s var(--ease);transition-delay:calc(var(--i) * 35ms)}
+.brand .word::after{content:"";position:absolute;inset:-15% -4%;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,214,204,.85) 50%,transparent 58%);background-size:300% 100%;background-position:100% 0;mix-blend-mode:screen;animation:zl-shine 7s 2.2s ease-in-out infinite}
+.brand .lt{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(70deg);filter:blur(5px);animation:zl-in .9s var(--ease) forwards;animation-delay:calc(.15s + var(--i) * 75ms);transition:transform .45s var(--ease);transition-delay:calc(var(--i) * 35ms)}
 .brand small{opacity:0;letter-spacing:1.3em;animation:zl-lounge 1.4s .85s var(--ease) forwards}
 .brand:hover .lt{transform:translateY(-3px)}
 @keyframes zl-in{60%{filter:blur(0)}to{opacity:1;transform:none;filter:none}}
 @keyframes zl-lounge{to{opacity:1;letter-spacing:.62em}}
-/* full → drains downwards → stays empty a moment → fills back up → rests full */
-@keyframes zl-fill{0%,8%{background-position:0 100%}26%,40%{background-position:0 0}60%,100%{background-position:0 100%}}
-@media (prefers-reduced-motion:reduce){.brand .lt,.brand small{animation:none!important;opacity:1;transform:none;filter:none}.brand small{letter-spacing:.62em}}
+@keyframes zl-shine{0%{background-position:100% 0}30%,100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.brand .lt,.brand small,.brand .word::after{animation:none!important;opacity:1;transform:none;filter:none}.brand small{letter-spacing:.62em}}
 .nav{display:none;gap:28px;font-size:14px}
 .nav a{color:#5b4a47;transition:color .2s}.nav a:hover{color:var(--m)}
 @media (min-width:1024px){.nav{display:flex}}
