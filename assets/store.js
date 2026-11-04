@@ -58,7 +58,7 @@
 
   // ───────── وضعیت ─────────
   // state: 'loading' تا جواب دیتابیس بیاد (اسکلت نمایش داده می‌شه)، 'ready' یا 'error'
-  let products = [], live = false, state = 'loading', cat = 0, query = '', sizes = new Set(), favOnly = false;
+  let products = [], live = false, state = 'loading', cat = 0, query = '', sizes = new Set(), colorsF = new Set(), favOnly = false;
   let cart = ls.get('zl-cart', []).filter(i => i && i.id > 0 && i.qty > 0);
   let favs = new Set(ls.get('zl-favs', []));
   let user = null, profile = null, payMode = 'off', afterLogin = null;
@@ -113,6 +113,17 @@
       return html;
     }).join('');
   }
+  // سایزها و رنگ‌های محصول؛ هر ترکیب در variants با نام «سایز / رنگ» ثبت شده
+  const SEP = ' / ';
+  function optsOf(p) {
+    const o = p.options || {};
+    const sz = Array.isArray(o.sizes) ? o.sizes : [], cl = Array.isArray(o.colors) ? o.colors.filter(c => c && c.name) : [];
+    if (sz.length || cl.length) return { sizes: sz, colors: cl };
+    const vs = variants(p);
+    return vs.length ? { sizes: vs.map(v => v.name), colors: [] } : null;   // محصول‌های قدیمی: مدل‌ها = سایز
+  }
+  const combo = (o, sz, cl) => [o.sizes.length ? sz : null, o.colors.length ? cl : null].filter(Boolean).join(SEP);
+  const colorHex = (p, variant) => { const o = optsOf(p); return o && variant ? o.colors.find(c => variant.split(SEP).includes(c.name))?.hex : null; };
   const inCart = (id, v) => cart.filter(i => i.id === id && (v == null || i.variant === v)).reduce((a, i) => a + i.qty, 0);
 
   // ───────── محصولات ─────────
@@ -140,7 +151,8 @@
     const term = toEn(query.trim()).toLowerCase();
     let list = products.filter(p => (!cat || p.category_label === CATS[cat] || p.category === CATS[cat])
       && (!term || toEn(p.name + ' ' + (p.category_label || '')).toLowerCase().includes(term))
-      && (!sizes.size || variants(p).some(v => sizes.has(v.name)))
+      && (!sizes.size || (optsOf(p)?.sizes || []).some(z => sizes.has(z)))
+      && (!colorsF.size || (optsOf(p)?.colors || []).some(c => colorsF.has(c.name)))
       && (!favOnly || favs.has(p.id)));
     const s = $('#sort').value;
     if (s === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
@@ -157,6 +169,7 @@
           ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : p.is_new ? '<span class="badge">جدید</span>' : ''}</div>
         <h3 class="name" data-view="${p.id}" ${p.sample ? '' : 'role="button" tabindex="0"'}>${esc(p.name)}</h3>
         <div class="cat">${esc(p.category_label || '')}</div>
+        ${(() => { const cs = optsOf(p)?.colors || []; return cs.length ? `<div class="dots" aria-label="${fa(cs.length)} رنگ">${cs.slice(0, 6).map(c => `<i style="background:${esc(c.hex || '#999')}" title="${esc(c.name)}"></i>`).join('')}${cs.length > 6 ? `<small>+${fa(cs.length - 6)}</small>` : ''}</div>` : ''; })()}
         <div class="price">${priceHtml(p)}</div>
         ${p.sample ? '' : out ? '<button class="add out" disabled>ناموجود</button>'
           : vs.length ? `<button class="add" data-view="${p.id}">انتخاب سایز</button>` : `<button class="add" data-add="${p.id}">افزودن به سبد خرید</button>`}
@@ -188,9 +201,13 @@
     $('#fcat').innerHTML = CATS.map((c, i) => `<button data-fc="${i}"${i === cat ? ' class="on"' : ''}>${esc(c)}</button>`).join('');
   }
   function drawSizes() {
-    const all = [...new Set(products.flatMap(p => variants(p).map(v => v.name)))];
+    const all = [...new Set(products.filter(p => !p.sample).flatMap(p => optsOf(p)?.sizes || []))];
     $('#fsizeWrap').hidden = !all.length;
     $('#fsize').innerHTML = all.map(s => `<button dir="auto" data-sz="${esc(s)}"${sizes.has(s) ? ' class="on"' : ''}>${esc(s)}</button>`).join('');
+    const cols = new Map();
+    products.filter(p => !p.sample).forEach(p => (optsOf(p)?.colors || []).forEach(c => cols.has(c.name) || cols.set(c.name, c.hex)));
+    $('#fcolorWrap').hidden = !cols.size;
+    $('#fcolor').innerHTML = [...cols].map(([n, h]) => `<button data-fcl="${esc(n)}"${colorsF.has(n) ? ' class="on"' : ''}><i style="background:${esc(h || '#999')}"></i>${esc(n)}</button>`).join('');
   }
   function setCat(i) {
     cat = i >= 0 && i < CATS.length ? i : 0; favOnly = false;
@@ -202,8 +219,13 @@
   // ───────── صفحه‌ی محصول ─────────
   async function openProduct(id) {
     const p = products.find(x => x.id === id); if (!p || p.sample) return;
-    const vs = variants(p);
-    let sel = vs.length === 1 && avail(p, vs[0].name) ? vs[0].name : null, qty = 1;
+    const vs = variants(p), o = optsOf(p);
+    let sz = o && o.sizes.length === 1 ? o.sizes[0] : null, cl = o && o.colors.length === 1 ? o.colors[0].name : null, qty = 1;
+    const curSel = () => !o || (o.sizes.length && !sz) || (o.colors.length && !cl) ? null : combo(o, sz, cl);
+    let sel = curSel();
+    const sizeOk = z => cl || !o.colors.length ? avail(p, combo(o, z, cl)) > 0 : o.colors.some(c => avail(p, combo(o, z, c.name)) > 0);
+    const colorOk = c => sz || !o.sizes.length ? avail(p, combo(o, sz, c)) > 0 : o.sizes.some(z => avail(p, combo(o, z, c)) > 0);
+    const missing = () => o ? [o.colors.length && !cl ? 'رنگ' : null, o.sizes.length && !sz ? 'سایز' : null].filter(Boolean).join(' و ') : '';
     const sh = $('#pv'), imgs = imgsOf(p);
     sh.querySelector('.pv-body').innerHTML = `
       <div class="pv-gal">
@@ -243,19 +265,25 @@
           <h2 class="pv-name" dir="auto">${esc(p.name)}</h2>
           <div class="pv-price">${sel || !vs.some(v => v.price) ? `${was ? `<s>${toman(was)}</s>` : ''}<b>${toman(unit)}</b>` : priceHtml(p)}</div>
           <div class="pv-stock ${stock[0]}"><i></i>${stock[1]}</div>
-          ${vs.length ? `<div class="pv-opt ${needPick ? 'need' : ''}" id="pvOpt">
-            <div class="pv-opt-h"><span>سایز / مدل</span><b>${sel ? `<bdi>${esc(sel)}</bdi>` : needPick ? 'لطفاً یکی رو انتخاب کن' : 'انتخاب کن'}</b></div>
-            ${needPick ? `<div class="pv-alert" role="alert">${IC.alert}<span><b>سایز رو انتخاب نکردی</b>برای افزودن به سبد، یکی از سایزهای زیر رو انتخاب کن.</span></div>` : ''}
-            <div class="pv-sz" id="pvV">${vs.map(v => { const a = avail(p, v.name); return `<button data-v="${esc(v.name)}" class="${v.name === sel ? 'on' : ''}" ${a ? '' : 'disabled'} aria-pressed="${v.name === sel}" dir="auto">${esc(v.name)}${a ? '' : '<small>ناموجود</small>'}</button>`; }).join('')}</div></div>` : ''}
+          ${o ? `<div class="pv-opt ${needPick ? 'need' : ''}" id="pvOpt">
+            ${needPick && missing() ? `<div class="pv-alert" role="alert">${IC.alert}<span><b>${missing()} رو انتخاب نکردی</b>برای افزودن به سبد، ${missing()} رو از گزینه‌های زیر انتخاب کن.</span></div>` : ''}
+            ${o.colors.length ? `<div class="pv-grp">
+              <div class="pv-opt-h"><span>رنگ</span><b class="${needPick && !cl ? 'miss' : ''}">${cl ? esc(cl) : needPick ? 'لطفاً رنگ رو انتخاب کن' : 'انتخاب کن'}</b></div>
+              <div class="pv-cl" id="pvC">${o.colors.map(c => { const a = colorOk(c.name); return `<button data-c="${esc(c.name)}" class="${c.name === cl ? 'on' : ''}" ${a ? '' : 'disabled'} aria-pressed="${c.name === cl}" aria-label="${esc(c.name)}${a ? '' : ' (ناموجود)'}" title="${esc(c.name)}${a ? '' : ' — ناموجود'}"><i style="background:${esc(c.hex || '#999')}"></i></button>`; }).join('')}</div></div>` : ''}
+            ${o.sizes.length ? `<div class="pv-grp">
+              <div class="pv-opt-h"><span>سایز</span><b class="${needPick && !sz ? 'miss' : ''}">${sz ? `<bdi>${esc(sz)}</bdi>` : needPick ? 'لطفاً سایز رو انتخاب کن' : 'انتخاب کن'}</b></div>
+              <div class="pv-sz" id="pvV">${o.sizes.map(z => { const a = sizeOk(z); return `<button data-v="${esc(z)}" class="${z === sz ? 'on' : ''}" ${a ? '' : 'disabled'} aria-pressed="${z === sz}" dir="auto">${esc(z)}${a ? '' : '<small>ناموجود</small>'}</button>`; }).join('')}</div></div>` : ''}
+          </div>` : ''}
           ${p.stock ? `<div class="pv-qrow"><span>تعداد</span><div class="cl-q"><button data-q="1" ${qty >= Math.max(1, max) ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(qty)}</span><button data-q="-1" ${qty <= 1 ? 'disabled' : ''} aria-label="کمتر">−</button></div></div>` : ''}`;
       $('#pvBar', sh).innerHTML = `
           <div class="pv-bar-p"><small>${qty > 1 ? `${fa(qty)} عدد` : 'قیمت'}</small><b>${toman(unit * qty)}</b></div>
-          <button class="lg-btn pv-add ${added ? 'done' : ''}" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? '<span>ناموجود</span>' : added ? `<span>به سبد اضافه شد</span>${IC.check}` : needPick && !sel ? `<span>اول سایز رو انتخاب کن</span>${IC.up}` : `<span>افزودن به سبد</span>${IC.bag}`}</button>`;
-      $$('#pvV button', sh).forEach(b => b.onclick = () => { sel = b.dataset.v; qty = 1; needPick = false; draw(); });
+          <button class="lg-btn pv-add ${added ? 'done' : ''}" id="pvAdd" ${!p.stock ? 'disabled' : ''}>${!p.stock ? '<span>ناموجود</span>' : added ? `<span>به سبد اضافه شد</span>${IC.check}` : needPick && !sel ? `<span>اول ${missing() || 'سایز'} رو انتخاب کن</span>${IC.up}` : `<span>افزودن به سبد</span>${IC.bag}`}</button>`;
+      $$('#pvV button', sh).forEach(b => b.onclick = () => { sz = b.dataset.v; if (cl && !colorOk(cl)) cl = null; qty = 1; sel = curSel(); needPick = needPick && !sel; draw(); });
+      $$('#pvC button', sh).forEach(b => b.onclick = () => { cl = b.dataset.c; if (sz && !sizeOk(sz)) sz = null; qty = 1; sel = curSel(); needPick = needPick && !sel; draw(); });
       $$('[data-q]', sh).forEach(b => b.onclick = () => { qty = Math.min(Math.max(1, qty + +b.dataset.q), Math.max(1, max)); draw(); });
       $('#pvAdd', sh).onclick = () => {
         if (added) return;
-        if (vs.length && !sel) {
+        if (o && !sel) {
           needPick = true; draw();
           const o = $('#pvOpt', sh); o.scrollIntoView({ behavior: 'smooth', block: 'center' });
           o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake');
@@ -431,7 +459,7 @@
         <div class="cl-b">
           <div class="cl-h"><b class="cl-n" dir="auto">${esc(l.p.name)}</b>
             <button class="cl-x" data-rm="${k}" aria-label="حذف ${esc(l.p.name)} از سبد">${IC.trash}</button></div>
-          <div class="cl-m">${l.p.category_label ? `<span>${esc(l.p.category_label)}</span>` : ''}${l.variant ? `<span class="cl-v">سایز <bdi>${esc(l.variant)}</bdi></span>` : ''}</div>
+          <div class="cl-m">${l.p.category_label ? `<span>${esc(l.p.category_label)}</span>` : ''}${l.variant ? `<span class="cl-v">${colorHex(l.p, l.variant) ? `<i style="background:${esc(colorHex(l.p, l.variant))}"></i>` : ''}<bdi>${esc(l.variant.split(SEP).join(' · '))}</bdi></span>` : ''}</div>
           <div class="cl-f">
             <div class="cl-q"><button data-cq="${k}" data-d="1" ${l.qty >= max ? 'disabled' : ''} aria-label="بیشتر">+</button><span>${fa(l.qty)}</span><button data-cq="${k}" data-d="-1" aria-label="${l.qty > 1 ? 'کمتر' : 'حذف'}">${l.qty > 1 ? '−' : IC.trash}</button></div>
             <div class="cl-p">${was ? `<s>${fa(was * l.qty)}</s>` : ''}<b>${toman(unit * l.qty)}</b></div>
@@ -924,7 +952,8 @@
     const mc = t.closest('[data-cat]'); if (mc) { if (+mc.dataset.cat < CATS.length) setCat(+mc.dataset.cat); closeAll(); return; }
     const fc = t.closest('[data-fc]'); if (fc) { setCat(+fc.dataset.fc); return; }
     const sz = t.closest('[data-sz]'); if (sz) { const s = sz.dataset.sz; sizes.has(s) ? sizes.delete(s) : sizes.add(s); sz.classList.toggle('on'); render(); return; }
-    if (t.closest('#fclear')) { sizes.clear(); drawSizes(); setCat(0); return; }
+    const fcl = t.closest('[data-fcl]'); if (fcl) { const n = fcl.dataset.fcl; colorsF.has(n) ? colorsF.delete(n) : colorsF.add(n); fcl.classList.toggle('on'); render(); return; }
+    if (t.closest('#fclear')) { sizes.clear(); colorsF.clear(); drawSizes(); setCat(0); return; }
     if (t.closest('#favBtn')) { favOnly = !favOnly; render(); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
     if (t.closest('#favOff')) { favOnly = false; render(); return; }
     if (t.closest('[data-shop]')) { closeAll(); setCat(0); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }

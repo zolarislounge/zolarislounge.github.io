@@ -256,6 +256,26 @@ html:has(#dlg[open]) .edge{background:#fff}
 .ad-p{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .ad-a{display:flex;gap:6px}
 @media(max-width:600px){.ad-row{grid-template-columns:auto 1fr}.ad-a{grid-column:1/-1;justify-content:flex-end}}
+.opt-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.opt-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);font-weight:500}
+.opt-pre{display:flex;gap:6px;flex-wrap:wrap}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 4px 0 12px;border-radius:16px;background:var(--soft);border:1px solid var(--line);font-size:13px}
+.tag button{width:24px;height:24px;border-radius:50%;color:var(--mut);font-size:16px}
+.tag button:hover{background:#fff;color:var(--bad)}
+.tag-add{display:flex;gap:8px}.tag-add .in{height:38px;max-width:220px}
+.clist{display:flex;flex-direction:column;gap:8px}
+.crow{display:grid;grid-template-columns:40px 1fr 34px;gap:8px;align-items:center}
+.sw{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid rgba(0,0,0,.12);box-shadow:inset 0 0 0 3px #fff;cursor:pointer;overflow:hidden}
+.sw input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.cpal{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pal{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 8px;border-radius:15px;border:1px solid var(--line);font-size:12px;background:#fff}
+.pal:hover{border-color:var(--m)}
+.pal i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.vtable{display:flex;flex-direction:column;gap:8px}
+.vrow2{display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:8px;align-items:center}
+.vn{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+.vn i{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.15)}
 .perm-grid{display:grid;gap:8px}
 @media(min-width:640px){.perm-grid{grid-template-columns:1fr 1fr}}
 .perm{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;transition:border-color .2s,background .2s}
@@ -811,7 +831,7 @@ function parseVariants(s) {
     return { name, qty: qty === 'ناموجود' ? 0 : (/^\d+$/.test(qty || '') ? +qty : null), price: /^\d+(\.\d+)?$/.test(price || '') && +price > 0 ? +price : null };
   });
 }
-const joinVariants = vs => vs.filter(v => v.name).map(v => [v.name.replace(/[:,،]/g, ' '), v.qty == null ? '' : v.qty, v.price || ''].join(':').replace(/:+$/, '')).join(', ') || null;
+const joinVariants = vs => vs.filter(v => v.name).map(v => [v.name.replace(/[:,،]/g, ' ').trim(), v.qty == null ? '' : v.qty, v.price || ''].join(':').replace(/:+$/, '')).join(', ') || null;
 const onSale = p => p.sale_price > 0 && p.sale_price < p.price && (!p.sale_starts_at || new Date(p.sale_starts_at) <= Date.now()) && (!p.sale_ends_at || new Date(p.sale_ends_at) > Date.now());
 
 VIEWS.products = async () => {
@@ -849,7 +869,19 @@ function productDialog(p, all) {
   const isNew = !p;
   p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
   const cats = [...new Map(all.filter(x => x.category).map(x => [x.category, x.category_label])).entries()];
-  let vars = parseVariants(p.variants);
+  // سایزها و رنگ‌ها؛ موجودی/قیمت هر ترکیب در variants با نام «سایز / رنگ» ذخیره می‌شه
+  const COMBO_SEP = ' / ';
+  const oldVars = parseVariants(p.variants);
+  let sizes = Array.isArray(p.options?.sizes) ? [...p.options.sizes] : [];
+  let colors = Array.isArray(p.options?.colors) ? p.options.colors.map(c => ({ name: c.name, hex: c.hex || '#999999' })) : [];
+  // محصول‌های قدیمی: هر مدل به‌عنوان سایز
+  if (!sizes.length && !colors.length && oldVars.length) sizes = oldVars.map(v => v.name);
+  const stockOf = new Map(oldVars.map(v => [v.name, { qty: v.qty, price: v.price }]));
+  const comboName = (sz, c) => [sz, c].filter(Boolean).join(COMBO_SEP);
+  const combos = () => {
+    if (sizes.length && colors.length) return sizes.flatMap(sz => colors.map(c => comboName(sz, c.name)));
+    return sizes.length ? [...sizes] : colors.map(c => c.name);
+  };
   // عکس‌ها: {url} = عکس ذخیره‌شده؛ {orig} = عکس جدید؛ proc = نسخه‌ی بدون پس‌زمینه
   const startImgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image_url ? [p.image_url] : []);
   let gal = startImgs.map(url => ({ url })), bgQueue = [], bgRunning = false;
@@ -879,9 +911,20 @@ function productDialog(p, all) {
         <label class="f">شروع حراج (اختیاری)<input class="in ltr" id="pfSS" type="datetime-local" value="${toLocalInput(p.sale_starts_at)}"></label>
         <label class="f">پایان حراج (اختیاری)<input class="in ltr" id="pfSE" type="datetime-local" value="${toLocalInput(p.sale_ends_at)}"></label>
       </div>
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="small muted" style="font-weight:500">سایز / مدل‌ها (اختیاری)</span><button type="button" class="btn ghost sm" id="pfVA">+ افزودن</button></div>
-        <div id="pfV" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="opt-box">
+        <div class="opt-h"><span>سایزها (اختیاری)</span>
+          <span class="opt-pre"><button type="button" class="btn ghost sm" data-pre="XS,S,M,L,XL">XS تا XL</button><button type="button" class="btn ghost sm" data-pre="Free">فری‌سایز</button><button type="button" class="btn ghost sm" data-pre="36,38,40,42,44">۳۶ تا ۴۴</button></span></div>
+        <div class="tags" id="pfSz"></div>
+        <div class="tag-add"><input class="in" id="pfSzIn" maxlength="20" placeholder="سایز جدید، مثلاً M"><button type="button" class="btn ghost sm" id="pfSzAdd">افزودن</button></div>
+      </div>
+      <div class="opt-box">
+        <div class="opt-h"><span>رنگ‌ها (اختیاری)</span><button type="button" class="btn ghost sm" id="pfClAdd">+ رنگ دلخواه</button></div>
+        <div id="pfCl" class="clist"></div>
+        <div class="cpal" id="pfPal"></div>
+      </div>
+      <div class="opt-box" id="pfStockBox" hidden>
+        <div class="opt-h"><span>موجودی و قیمت هر ترکیب</span><span class="small muted">قیمت خالی = قیمت اصلی محصول</span></div>
+        <div id="pfV" class="vtable"></div>
         <p class="small muted" id="pfVH" style="margin-top:6px"></p>
       </div>
       <label class="f">توضیحات محصول (در صفحه‌ی محصول، بخش «توضیحات» نمایش داده می‌شه)
@@ -902,30 +945,53 @@ function productDialog(p, all) {
   $('#pfCL', d).oninput = e => { const v = e.target.value.trim(), hit = cats.find(([, l]) => l === v); if (hit) $('#pfC', d).value = hit[0]; else if (CAT_SLUG[v]) $('#pfC', d).value = CAT_SLUG[v]; };
   $('#pfC', d).oninput = e => { e.target.value = slug(e.target.value); };
   $('#pfSP', d).oninput = e => { $('#pfSaleDates', d).hidden = !intOf(e.target.value); };
-  const drawV = () => {
-    $('#pfV', d).innerHTML = vars.map((v, i) => `<div class="vrow">
-      <input class="in" data-vi="${i}" data-k="name" placeholder="نام (مثلاً S یا قرمز)" value="${esc(v.name)}">
-      <input class="in num" data-vi="${i}" data-k="qty" inputmode="numeric" placeholder="تعداد" value="${v.qty ?? ''}">
-      <input class="in num" data-vi="${i}" data-k="price" inputmode="numeric" placeholder="قیمت متفاوت؟" value="${v.price ?? ''}">
-      <button type="button" class="x" data-vr="${i}" aria-label="حذف">×</button></div>`).join('');
-    syncStock();
-    $$('[data-vi]', d).forEach(inp => inp.oninput = () => {
-      const v = vars[+inp.dataset.vi], k = inp.dataset.k;
-      v[k] = k === 'name' ? inp.value : intOf(inp.value);
-      syncStock();
-    });
-    $$('[data-vr]', d).forEach(b => b.onclick = () => { vars.splice(+b.dataset.vr, 1); drawV(); });
+  const PALETTE = [['مشکی', '#1E1E1E'], ['سفید', '#F7F6F2'], ['کرم', '#EBDDC3'], ['بژ', '#D6C1A3'], ['طوسی', '#8C8C8C'], ['قهوه‌ای', '#6B4A33'],
+    ['زرشکی', '#6E1E24'], ['قرمز', '#B3262C'], ['صورتی', '#E8B4BE'], ['سبز', '#6B7A3A'], ['سبز پسته‌ای', '#B9C98B'], ['سرمه‌ای', '#1F2A44'], ['آبی', '#4A6FA5'], ['خردلی', '#C9A23A']];
+  const clean = v => String(v || '').replace(/[:,،/]/g, ' ').replace(/\s+/g, ' ').trim();
+  const drawSz = () => {
+    $('#pfSz', d).innerHTML = sizes.length ? sizes.map((z, i) => `<span class="tag" dir="auto">${esc(z)}<button type="button" data-szr="${i}" aria-label="حذف ${esc(z)}">×</button></span>`).join('') : '<span class="small muted">سایزی اضافه نشده</span>';
+    $$('[data-szr]', d).forEach(b => b.onclick = () => { sizes.splice(+b.dataset.szr, 1); drawSz(); drawV(); });
   };
-  // اگه همه‌ی مدل‌ها تعداد دارن، موجودی کل = جمعشون
+  const addSize = v => { v = clean(v); if (v && !sizes.includes(v)) sizes.push(v); };
+  $('#pfSzAdd', d).onclick = () => { addSize($('#pfSzIn', d).value); $('#pfSzIn', d).value = ''; drawSz(); drawV(); $('#pfSzIn', d).focus(); };
+  $('#pfSzIn', d).onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#pfSzAdd', d).click(); } };
+  $$('[data-pre]', d).forEach(b => b.onclick = () => { b.dataset.pre.split(',').forEach(addSize); drawSz(); drawV(); });
+  const drawCl = () => {
+    $('#pfCl', d).innerHTML = colors.map((c, i) => `<div class="crow">
+      <label class="sw" style="background:${esc(c.hex)}" title="انتخاب رنگ"><input type="color" data-ch="${i}" value="${esc(c.hex)}"></label>
+      <input class="in" data-cn="${i}" maxlength="30" placeholder="نام رنگ" value="${esc(c.name)}">
+      <button type="button" class="x" data-cr="${i}" aria-label="حذف رنگ">×</button></div>`).join('');
+    $('#pfPal', d).innerHTML = '<span class="small muted">افزودن سریع:</span>' + PALETTE.filter(([n]) => !colors.some(c => c.name === n))
+      .map(([n, h]) => `<button type="button" class="pal" data-pal="${esc(n)}" data-hex="${h}" title="${esc(n)}"><i style="background:${h}"></i>${esc(n)}</button>`).join('');
+    $$('[data-ch]', d).forEach(inp => inp.oninput = () => { colors[+inp.dataset.ch].hex = inp.value; inp.parentElement.style.background = inp.value; });
+    $$('[data-cn]', d).forEach(inp => inp.onchange = () => { colors[+inp.dataset.cn].name = clean(inp.value); drawV(); });
+    $$('[data-cr]', d).forEach(b => b.onclick = () => { colors.splice(+b.dataset.cr, 1); drawCl(); drawV(); });
+    $$('[data-pal]', d).forEach(b => b.onclick = () => { colors.push({ name: b.dataset.pal, hex: b.dataset.hex }); drawCl(); drawV(); });
+  };
+  $('#pfClAdd', d).onclick = () => { colors.push({ name: '', hex: '#8C8C8C' }); drawCl(); drawV(); $$('[data-cn]', d).pop().focus(); };
+  const hexOf = n => colors.find(c => c.name === n)?.hex;
+  const drawV = () => {
+    const list = combos().filter(Boolean);
+    $('#pfStockBox', d).hidden = !list.length;
+    $('#pfV', d).innerHTML = list.map(n => { const st = stockOf.get(n) || {}; const parts = n.split(COMBO_SEP);
+      const sw = parts.map(x => hexOf(x)).filter(Boolean)[0];
+      return `<div class="vrow2"><span class="vn">${sw ? `<i style="background:${esc(sw)}"></i>` : ''}<bdi>${esc(n)}</bdi></span>
+        <input class="in num" data-vq="${esc(n)}" inputmode="numeric" placeholder="تعداد" value="${st.qty ?? ''}">
+        <input class="in num" data-vp="${esc(n)}" inputmode="numeric" placeholder="قیمت متفاوت؟" value="${st.price ?? ''}"></div>`; }).join('');
+    $$('[data-vq]', d).forEach(inp => inp.oninput = () => { const o = stockOf.get(inp.dataset.vq) || {}; o.qty = intOf(inp.value); stockOf.set(inp.dataset.vq, o); syncStock(); });
+    $$('[data-vp]', d).forEach(inp => inp.oninput = () => { const o = stockOf.get(inp.dataset.vp) || {}; o.price = intOf(inp.value); stockOf.set(inp.dataset.vp, o); });
+    syncStock();
+  };
+  // اگه همه‌ی ترکیب‌ها تعداد دارن، موجودی کل = جمعشون
   const syncStock = () => {
-    const all = vars.length && vars.every(v => v.qty != null);
+    const list = combos().filter(Boolean);
+    const all = list.length && list.every(n => stockOf.get(n)?.qty != null);
     const s = $('#pfS', d);
     s.readOnly = !!all;
-    if (all) s.value = vars.reduce((a, v) => a + v.qty, 0);
-    $('#pfVH', d).textContent = vars.length ? (all ? 'موجودی کل خودکار از جمع مدل‌ها حساب می‌شه.' : 'مدلی که تعداد نداره، فقط به موجودی کل وابسته‌ست.') : '';
+    if (all) s.value = list.reduce((a, n) => a + stockOf.get(n).qty, 0);
+    $('#pfVH', d).textContent = list.length ? (all ? 'موجودی کل خودکار از جمع ترکیب‌ها حساب می‌شه.' : 'ترکیبی که تعداد نداره، فقط به موجودی کل وابسته‌ست.') : '';
   };
-  $('#pfVA', d).onclick = () => { vars.push({ name: '', qty: null, price: null }); drawV(); $$('[data-k=name]', d).pop().focus(); };
-  drawV();
+  drawSz(); drawCl(); drawV();
   // ── عکس‌های محصول + حذف پس‌زمینه ──
   const st = $('#pfBgSt', d), bgChk = $('#pfBg', d), galEl = $('#pfGal', d);
   let bgPref = true; try { bgPref = localStorage.getItem('zl-bg') !== '0'; } catch (e) { }
@@ -1001,9 +1067,10 @@ function productDialog(p, all) {
     const price = intOf($('#pfP', d).value), sp = intOf($('#pfSP', d).value);
     if (!price) return toast('قیمت رو وارد کن', true);
     if (sp && sp >= price) return toast('قیمت حراج باید کمتر از قیمت اصلی باشه', true);
-    if (vars.some(v => !v.name.trim())) return toast('نام همه‌ی مدل‌ها رو پر کن یا ردیف خالی رو حذف کن', true);
-    const names = vars.map(v => v.name.trim());
-    if (new Set(names).size !== names.length) return toast('اسم مدل‌ها نباید تکراری باشه', true);
+    if (colors.some(c => !clean(c.name))) return toast('اسم همه‌ی رنگ‌ها رو بنویس یا رنگ خالی رو حذف کن', true);
+    colors.forEach(c => { c.name = clean(c.name); });
+    if (new Set(colors.map(c => c.name)).size !== colors.length) return toast('اسم رنگ‌ها نباید تکراری باشه', true);
+    const comboList = combos().filter(Boolean);
     if (bgRunning || bgQueue.length) return toast('صبر کن حذف پس‌زمینه تموم بشه', true);
     e.target.disabled = true; e.target.textContent = 'در حال ذخیره…';
     try {
@@ -1020,7 +1087,8 @@ function productDialog(p, all) {
         name: $('#pfN', d).value.trim(), category: $('#pfC', d).value.trim(), category_label: $('#pfCL', d).value.trim(),
         price, sale_price: sp || null, stock: intOf($('#pfS', d).value) || 0, is_new: $('#pfNew', d).checked,
         sale_starts_at: sp ? fromLocalInput($('#pfSS', d).value) : null, sale_ends_at: sp ? fromLocalInput($('#pfSE', d).value) : null,
-        variants: joinVariants(vars.map(v => ({ ...v, name: v.name.trim() }))), description: $('#pfD', d).value.trim() || null, image_url: images[0] || null, images,
+        variants: joinVariants(comboList.map(n => ({ name: n, qty: stockOf.get(n)?.qty ?? null, price: stockOf.get(n)?.price || null }))),
+        options: sizes.length || colors.length ? { sizes, colors } : {}, description: $('#pfD', d).value.trim() || null, image_url: images[0] || null, images,
       };
       if (isNew) await q(sb.from('products').insert(row));
       else await q(sb.from('products').update(row).eq('id', p.id));
