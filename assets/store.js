@@ -209,6 +209,13 @@
     $('#fcolorWrap').hidden = !cols.size;
     $('#fcolor').innerHTML = [...cols].map(([n, h]) => `<button data-fcl="${esc(n)}"${colorsF.has(n) ? ' class="on"' : ''}><i style="background:${esc(h || '#999')}"></i>${esc(n)}</button>`).join('');
   }
+  // اسکرول به ابتدای یه بخش، درست زیر هدر چسبون (قبلاً هدر بالای محصولات و نوار فیلتر رو می‌پوشوند)
+  function scrollToEl(el) {
+    if (!el) return;
+    const head = $('header').getBoundingClientRect().height;
+    const y = el.getBoundingClientRect().top + window.scrollY - head;
+    window.scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
   function setCat(i) {
     cat = i >= 0 && i < CATS.length ? i : 0; favOnly = false;
     $$('[data-fc]').forEach(b => b.classList.toggle('on', +b.dataset.fc === cat));
@@ -1013,7 +1020,16 @@
       return;
     }
     const vw = t.closest('[data-view]'); if (vw) { openProduct(+vw.dataset.view); return; }
-    const mc = t.closest('[data-cat]'); if (mc) { if (+mc.dataset.cat < CATS.length) setCat(+mc.dataset.cat); closeAll(); return; }
+    const mc = t.closest('[data-cat]');
+    if (mc) {
+      e.preventDefault();
+      const i = +mc.dataset.cat;
+      closeAll();
+      if (i >= CATS.length) { scrollToEl($('#contact')); return; }
+      setCat(i);
+      if (i < 0) window.scrollTo({ top: 0, behavior: 'smooth' }); else scrollToEl($('#shop'));
+      return;
+    }
     const fc = t.closest('[data-fc]'); if (fc) { setCat(+fc.dataset.fc); return; }
     const sz = t.closest('[data-sz]'); if (sz) { const s = sz.dataset.sz; sizes.has(s) ? sizes.delete(s) : sizes.add(s); sz.classList.toggle('on'); render(); return; }
     const fcl = t.closest('[data-fcl]'); if (fcl) { const n = fcl.dataset.fcl; colorsF.has(n) ? colorsF.delete(n) : colorsF.add(n); fcl.classList.toggle('on'); render(); return; }
@@ -1021,6 +1037,7 @@
 
     if (t.closest('#favOff')) { favOnly = false; render(); return; }
     if (t.closest('[data-shop]')) { closeAll(); setCat(0); $('#shop').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (t.closest('#filter .dfoot [data-close]')) { closeAll(); scrollToEl($('#shop')); return; }
     if (t.closest('[data-close]') || t === scrim || t.id === 'acct') { closeAll(); return; }
     const a = t.closest('[data-add]');
     if (a) { if (addToCart(+a.dataset.add, null, 1)) { a.classList.add('done'); a.textContent = 'اضافه شد ✓'; setTimeout(() => { a.classList.remove('done'); a.textContent = 'افزودن به سبد خرید'; }, 1300); } return; }
