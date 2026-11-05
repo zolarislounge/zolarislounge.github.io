@@ -191,7 +191,7 @@ dialog.narrow{width:min(400px,calc(100vw - 24px))}
   #dlg .df{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
 }
 /* thin fixed strips on the screen edges: Safari 26 takes its bar colours from them */
-.edge{position:fixed;left:0;right:0;height:2px;z-index:15;pointer-events:none;background:var(--bg)}
+.edge{position:fixed;left:0;right:0;height:2px;z-index:15;pointer-events:none;background:var(--bg);opacity:0}
 .edge-t{top:0}.edge-b{bottom:0}
 @media (max-width:860px){.edge-t{background:var(--m)}}
 #login:not([hidden]) ~ .edge{background:var(--m)}

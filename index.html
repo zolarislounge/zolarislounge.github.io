@@ -118,7 +118,9 @@ footer a:hover{color:#fff}
 .scrim.on{background:rgba(30,10,8,.45);visibility:visible;pointer-events:auto;transition:background-color .35s,visibility 0s}
 /* thin fixed strips on the screen edges: Safari 26 takes its top/bottom bar colour from them,
    so the page no longer shows through under the address bar and the floating tab bar */
-.edge{position:fixed;left:0;right:0;height:2px;background:#fff;z-index:45;pointer-events:none;transition:background-color .35s}
+/* opacity 0: Safari still reads the colour for its bar tint, but if iOS misplaces fixed layers after the
+   keyboard closes (a known iOS 26 bug) the strip can never show as a line across the page */
+.edge{position:fixed;left:0;right:0;height:2px;background:#fff;z-index:45;pointer-events:none;opacity:0;transition:background-color .35s}
 .edge-t{top:0}.edge-b{bottom:0}
 html.at-top .edge-t{background:var(--m)}
 /* full-screen pages: the top strip matches the page that is open, not the page behind */

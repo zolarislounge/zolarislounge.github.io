@@ -1051,6 +1051,12 @@
     document.documentElement.classList.toggle('at-top', !!ann && scrollY < ann.offsetHeight - 2);
   };
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  // iOS 26: after the keyboard closes, fixed layers (WhatsApp button, bars) can stay where the keyboard top
+  // was. A tiny scroll nudge once the field loses focus makes Safari put them back.
+  document.addEventListener('focusout', e => {
+    if (!e.target.matches || !e.target.matches('input,textarea,select')) return;
+    setTimeout(() => { if (!document.activeElement || !document.activeElement.matches('input,textarea,select')) { const y = scrollY; window.scrollTo(0, y + 1); window.scrollTo(0, y); } }, 120);
+  });
   // سبد خرید بین تب‌ها هماهنگ می‌مونه
   addEventListener('storage', e => { if (e.key === 'zl-cart') { cart = ls.get('zl-cart', []); renderCart(); } });
 
