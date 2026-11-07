@@ -353,16 +353,39 @@
       clamp();
     };
     const show = k => {
-      idx = (k + list.length) % list.length; s = 1; tx = ty = 0; apply(false);
+      idx = (k + list.length) % list.length; s = 1; tx = ty = 0; apply(false); img.style.opacity = '1';
       img.src = list[idx];
       $('.zv-count', el).textContent = list.length > 1 ? `${fa(idx + 1)} / ${fa(list.length)}` : '';
       $$('.zv-nav', el).forEach(b => b.hidden = list.length < 2);
     };
+    // رفتن به عکس بعدی/قبلی با حرکت نرم. جهت همه‌جا یکیه (مثل گالری صفحه‌ی محصول):
+    // بعدی از سمت راست میاد (عکس فعلی به چپ می‌ره)، قبلی از سمت چپ.
+    let busy = false;
+    const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const go = dir => {
+      if (list.length < 2 || busy) return;
+      if (reduced()) { show(idx + dir); return; }
+      busy = true;
+      const W = stage.clientWidth;
+      s = 1; ty = 0; tx = -dir * W;
+      img.style.transition = 'transform .2s cubic-bezier(.4,0,.6,1)';
+      img.style.transform = `translate3d(${tx}px,0,0) scale(1)`;
+      setTimeout(async () => {
+        show(idx + dir);
+        try { await Promise.race([img.decode(), new Promise(r => setTimeout(r, 350))]); } catch (e) { }
+        tx = dir * W * .35; apply(false); img.style.opacity = '0'; void img.offsetWidth;
+        tx = 0;
+        img.style.transition = 'transform .34s cubic-bezier(.23,1,.32,1),opacity .22s ease-out';
+        img.style.transform = 'translate3d(0,0,0) scale(1)'; img.style.opacity = '1';
+        setTimeout(() => { busy = false; }, 340);
+      }, 190);
+    };
     const open = (l, k) => { list = l; el.hidden = false; root.classList.add('zfull'); requestAnimationFrame(() => el.classList.add('on')); show(k || 0); };
-    const close = () => { el.classList.remove('on'); el.hidden = true; root.classList.remove('zfull'); pts.clear(); g = null; };
+    const close = () => { busy = false; el.classList.remove('on'); el.hidden = true; root.classList.remove('zfull'); pts.clear(); g = null; };
     const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
     const startOne = (x, y) => { g = { type: s > 1 ? 'pan' : 'swipe', x0: x, y0: y, tx0: tx, ty0: ty, t: Date.now(), moved: false }; };
     stage.addEventListener('pointerdown', e => {
+      if (busy) return;
       stage.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 2) { const m = mid(), b = box(); g = { type: 'pinch', d0: m.d, s0: s, ux: (m.x - b.cx - tx) / s, uy: (m.y - b.cy - ty) / s }; }
@@ -393,7 +416,9 @@
       }
       const dx = e.clientX - g.x0, now = Date.now();
       if (g.type === 'swipe' && g.moved) {
-        if (Math.abs(dx) > 60 && list.length > 1) show(idx + (dx < 0 ? 1 : -1)); else { tx = 0; apply(true); }
+        // کشیدن به اندازه‌ی کافی، یا یه حرکت سریع کوتاه
+        const fast = Math.abs(dx) > 24 && Math.abs(dx) / Math.max(1, now - g.t) > .35;
+        if ((Math.abs(dx) > 60 || fast) && list.length > 1) go(dx < 0 ? 1 : -1); else { tx = 0; apply(true); }
       } else if (!g.moved && now - g.t < 300) {
         // دو بار ضربه: بزرگ‌نمایی روی همون نقطه / برگشت
         if (now - lastTap < 320 && Math.hypot(e.clientX - lx, e.clientY - ly) < 40) {
@@ -407,14 +432,14 @@
     stage.addEventListener('pointercancel', up);
     stage.addEventListener('wheel', e => { e.preventDefault(); zoomAt(s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY); apply(false); }, { passive: false });
     $('.zv-x', el).onclick = close;
-    $('.zv-nav.prev', el).onclick = () => show(idx - 1);
-    $('.zv-nav.next', el).onclick = () => show(idx + 1);
+    $('.zv-nav.prev', el).onclick = () => go(-1);
+    $('.zv-nav.next', el).onclick = () => go(1);
     addEventListener('resize', () => { if (!el.hidden) { s = 1; tx = ty = 0; apply(false); } });
     document.addEventListener('keydown', e => {
       if (el.hidden) return;
       if (e.key === 'Escape') { e.stopImmediatePropagation(); close(); }
-      if (e.key === 'ArrowRight') show(idx - 1);
-      if (e.key === 'ArrowLeft') show(idx + 1);
+      if (e.key === 'ArrowRight') go(1);
+      if (e.key === 'ArrowLeft') go(-1);
     }, true);
     return { open, close };
   })();
