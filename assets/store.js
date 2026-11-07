@@ -482,7 +482,13 @@
       <button class="lg-btn" id="checkoutBtn"><span>ادامه و ثبت سفارش</span>${IC.arrow}</button>
       <button class="cf-back" data-close>ادامه‌ی خرید</button>`;
   }
-  function count(id, n) { const el = $(id); el.textContent = fa(n); el.classList.toggle('on', n > 0); }
+  function count(id, n) {
+    const el = $(id), up = n > (+el.dataset.n || 0);
+    el.textContent = fa(n); el.classList.toggle('on', n > 0);
+    // فقط وقتی عدد بیشتر شد (نه موقع بارگذاری اول) یه پرش کوچیک
+    if (up && el.dataset.n != null) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    el.dataset.n = n;
+  }
 
   // ───────── علاقه‌مندی‌ها ─────────
   async function toggleFav(id, btn) {

@@ -181,6 +181,14 @@ main{flex:1;min-width:0;padding:26px 30px 60px}
 /* dialogs */
 dialog{overscroll-behavior:contain;border:0;border-radius:16px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);color:var(--ink)}
 dialog::backdrop{background:rgba(30,10,8,.45)}
+/* entrance: short fade + scale from 97% */
+dialog[open]{animation:dlg-in .22s cubic-bezier(.23,1,.32,1)}
+dialog[open]::backdrop{animation:dlg-fade .22s ease-out}
+@keyframes dlg-in{from{opacity:0;transform:scale(.97)}}
+@keyframes dlg-fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){dialog[open]{animation-name:dlg-fade}}
+.btn{transition:background .2s,opacity .2s,transform .16s ease-out}
+.btn:active:not(:disabled){transform:scale(.97);transition-duration:.1s}
 dialog.wide{width:min(820px,calc(100vw - 24px))}
 dialog.narrow{width:min(400px,calc(100vw - 24px))}
 /* phones: forms open as a full page sized to the visible area (iOS 26 Safari counts the area
@@ -241,7 +249,7 @@ html:has(#dlg[open]) .edge{background:#fff}
 .bar .tr i{display:block;height:100%;background:var(--m);border-radius:4px}
 
 /* toast */
-#toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:all .3s;z-index:100;max-width:calc(100vw - 32px)}
+#toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s cubic-bezier(.23,1,.32,1);z-index:100;max-width:calc(100vw - 32px)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast.bad{background:var(--bad)}
 .loading{padding:50px;text-align:center;color:var(--mut)}
