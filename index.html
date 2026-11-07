@@ -641,6 +641,22 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   .drawer,.search{opacity:0;transition:opacity .2s,transform 0s .2s!important}
   .drawer.on,.search.on{opacity:1;transition:opacity .2s,transform 0s!important}
 }
+/* admin shortcut (shown only to admins) */
+.adm-link{flex:none;display:flex;align-items:center;gap:12px;margin:0 18px;margin-bottom:max(16px,env(safe-area-inset-bottom));padding:14px 16px;background:var(--m);color:#fff;font-size:14px;font-weight:500;transition:background .2s,transform .16s ease-out}
+.adm-link[hidden]{display:none}
+.adm-link span{flex:1}
+.adm-link svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.adm-link svg.go{width:17px;height:17px;opacity:.8}
+.adm-link:active{transform:scale(.98)}
+.ac-adm{display:flex;align-items:center;gap:14px;padding:16px;margin-bottom:22px;background:var(--m);color:#fff;transition:background .2s,transform .16s ease-out}
+.ac-adm > svg:first-child{width:38px;height:38px;padding:8px;border-radius:50%;background:rgba(255,255,255,.12);color:var(--gold);flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ac-adm span{flex:1;display:flex;flex-direction:column;gap:2px;font-size:14.5px;font-weight:500}
+.ac-adm small{font-size:11.5px;font-weight:400;color:rgba(255,255,255,.7)}
+.ac-adm > svg:last-child{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.8;flex:none}
+.ac-adm:active{transform:scale(.98)}
+@media (hover:hover) and (pointer:fine){.adm-link:hover,.ac-adm:hover{background:var(--m2)}}
+/* gold dot on the account icon for admins (instead of green) */
+.ib.acct.in.adm::after{background:var(--gold)}
 /* press feedback */
 .btn:active:not(:disabled),.lg-btn:active:not(:disabled),.fv-btn:active:not(:disabled){transform:scale(.97);transition-duration:.1s}
 .ib:active{transform:scale(.92);transition-duration:.1s}
@@ -706,6 +722,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 <aside class="drawer r" id="menu">
   <div class="dh">منو<button class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="dl" id="menuList"></div>
+  <a class="adm-link" id="admMenu" href="admin.html" hidden><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.4 3 8 7 9.5 4-1.5 7-5.1 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span>پنل مدیریت</span><svg class="go" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
 </aside>
 
 <aside class="drawer r" id="filter">

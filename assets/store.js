@@ -584,6 +584,20 @@
     }
     $('#acctBtn').classList.toggle('in', !!user);
     syncLock();
+    checkAdmin();
+  }
+  // مدیرها (هر نقشی) یه راه سریع به پنل می‌بینن: کارت بالای صفحه‌ی حساب و پایین منو.
+  // دسترسی واقعی رو خود پنل و دیتابیس کنترل می‌کنن؛ این فقط نمایش لینکه.
+  let isAdmin = false;
+  function setAdmin(v) {
+    isAdmin = !!v;
+    $('#admMenu').hidden = !isAdmin;
+    $('#acctBtn').classList.toggle('adm', isAdmin);
+  }
+  async function checkAdmin() {
+    if (!user?.phone) return setAdmin(false);
+    try { setAdmin(await q(sb.from('admins').select('phone').eq('phone', user.phone).maybeSingle())); } catch (e) { setAdmin(false); }
+    if ($('#acct').classList.contains('on') && user) drawAcct();
   }
   // نام و نام خانوادگی اجباریه: تا وارد نشه، پنل حساب بسته نمی‌شه و بقیه‌ی بخش‌ها باز نمی‌شن
   let profileOk = false;
@@ -606,6 +620,7 @@
     edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
     user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
     chev: '<svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg>',
+    shield: '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.4 3 8 7 9.5 4-1.5 7-5.1 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>',
     out: '<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/></svg>',
     chat: '<svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/></svg>',
     alert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.3"/></svg>',
@@ -814,12 +829,13 @@
           if (afterLogin) { const f = afterLogin; afterLogin = null; closeAll(); f(); } else drawAcct();
         } catch (ex) { er.textContent = errText(ex); busy(btn, false); }
       };
-      $('#nmOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; afterLogin = null; syncLock(); $('#acctBtn').classList.remove('in'); drawAcct(); toast('از حساب خارج شدی'); };
+      $('#nmOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; afterLogin = null; syncLock(); $('#acctBtn').classList.remove('in'); setAdmin(false); drawAcct(); toast('از حساب خارج شدی'); };
       return;
     }
     const name = (profile?.full_name || '').trim();
     setHero(name ? `سلام، ${name}` : 'خوش برگشتی', faDigits(normPhone(user.phone) || ''), (name || 'Z').charAt(0).toUpperCase());
     b.innerHTML = `<div class="ac">
+      ${isAdmin ? `<a class="ac-adm rise" href="admin.html">${IC.shield}<span>پنل مدیریت<small>سفارش‌ها، محصولات و تنظیمات فروشگاه</small></span>${IC.arrow}</a>` : ''}
       <section class="ac-sec rise"><h5>سفارش‌های من</h5><div id="myOrders"><div class="mo sk"></div><div class="mo sk"></div></div></section>
       <details class="ac-acc rise"><summary>${IC.user}<span>اطلاعات من<small>نام و آدرس برای ارسال سفارش</small></span>${IC.chev}</summary>
         <form id="pfF" class="ac-form"><label class="lg-f"><span>نام و نام خانوادگی</span><div class="lg-in"><input name="n" maxlength="100" autocomplete="name" required value="${esc(profile?.full_name || '')}"></div></label>
@@ -845,7 +861,7 @@
       if (error) return toast(/weak|short|least/i.test(error.message) ? 'رمز ضعیفه؛ طولانی‌ترش کن' : errText(error), true);
       e.target.reset(); toast('رمز عبور ثبت شد');
     };
-    $('#lgOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; syncLock(); $('#acctBtn').classList.remove('in'); drawAcct(); toast('از حساب خارج شدی'); };
+    $('#lgOut').onclick = async () => { await sb.auth.signOut(); user = profile = null; profileOk = false; syncLock(); $('#acctBtn').classList.remove('in'); setAdmin(false); drawAcct(); toast('از حساب خارج شدی'); };
     loadMyOrders();
   }
   async function saveProfile(name, address) {
@@ -1111,7 +1127,7 @@
   // ───────── شروع ─────────
   drawCats(); render(); count('#favN', favs.size); renderCart();
   if (!sb) { toast('اتصال به فروشگاه برقرار نشد؛ صفحه رو تازه کن', true); return; }
-  sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { user = profile = null; $('#acctBtn').classList.remove('in'); } });
+  sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { user = profile = null; $('#acctBtn').classList.remove('in'); setAdmin(false); } });
   Promise.all([loadProducts(), loadUser()]).then(() => { if (needsName()) { drawAcct(); open('acct'); } return handleReturn(); });
   track('visit');
 })();
