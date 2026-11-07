@@ -90,6 +90,10 @@ nav.menu svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1
 nav.menu .badge{margin-right:auto;background:#C9483F;color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
 .side-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#C4A8A2}
 .side-foot button{color:#fff;font-size:12.5px;margin-top:4px;text-decoration:underline;text-underline-offset:3px}
+.to-site{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;margin:0 -8px 12px;border:1px solid rgba(255,255,255,.18);border-radius:10px;color:#fff;font-size:13px;text-decoration:none;transition:background .2s,transform .16s ease-out}
+.to-site svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.to-site:hover{background:rgba(255,255,255,.07)}
+.to-site:active{transform:scale(.97)}
 main{flex:1;min-width:0;padding:26px 30px 60px}
 .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .ph h2{font-size:20px;font-weight:700}
@@ -105,8 +109,11 @@ main{flex:1;min-width:0;padding:26px 30px 60px}
   nav.menu::-webkit-scrollbar{display:none}
   nav.menu button{flex:none;height:36px;padding:0 12px;font-size:13px}
   nav.menu svg{display:none}
-  .side-foot{position:absolute;top:10px;left:16px;padding:0;border:0}
-  .side-foot span{display:none}
+  .side-foot{position:absolute;top:10px;left:16px;padding:0;border:0;display:flex;align-items:center;gap:14px}
+  .side-foot span,.side-foot br{display:none}
+  .side-foot button{margin-top:0}
+  .to-site{height:32px;margin:0;padding:0 10px;font-size:12.5px;gap:6px}
+  .to-site svg{width:16px;height:16px}
   main{padding:18px 16px 50px}
 }
 
@@ -346,7 +353,7 @@ html:has(#dlg[open]) .edge{background:#fff}
       <button data-v="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>تنظیمات</button>
       <button data-v="admins" hidden><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.4 3 8 7 9.5 4-1.5 7-5.1 7-9.5V6z"/><circle cx="12" cy="10" r="2.5"/><path d="M8 16.5c.8-1.6 2.3-2.5 4-2.5s3.2.9 4 2.5"/></svg>مدیرها</button>
     </nav>
-    <div class="side-foot"><span id="whoami"></span><br><button id="logout">خروج</button></div>
+    <div class="side-foot"><a class="to-site" href="./"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5M10 21v-6h4v6"/></svg>مشاهده‌ی سایت</a><span id="whoami"></span><br><button id="logout">خروج</button></div>
   </aside>
   <main id="view"></main>
 </div>
