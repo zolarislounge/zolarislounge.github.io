@@ -15,7 +15,7 @@ const ZIBAL = 'https://gateway.zibal.ir';
 const PENDING = 'در انتظار پرداخت';
 const PAID = 'پرداخت شده';
 // اگه دامنه‌ی اختصاصی گرفتی (مثلاً https://zolaris.ir) اینجا اضافه‌ش کن
-const ALLOWED_RETURN = ['https://zolarislounge.github.io', 'https://zolaris.netlify.app'];
+const ALLOWED_RETURN = ['https://zolaris.ir', 'https://www.zolaris.ir', 'https://zolarislounge.github.io', 'https://zolaris.netlify.app'];
 const DEFAULT_RETURN = 'https://zolarislounge.github.io/';
 const SHOP_NAME = 'زولاریس';
 
