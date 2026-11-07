@@ -7,9 +7,9 @@
 <title>پنل مدیریت Zolaris</title>
 <meta name="theme-color" content="#3D0D0B">
 <link rel="icon" href="assets/logo-z-maroon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Bodoni+Moda:opsz,wght@6..96,600&display=swap" rel="stylesheet">
+<!-- fonts are self-hosted: Google Fonts is slow or blocked in Iran without a VPN -->
+<link rel="preload" href="assets/fonts/Vazirmatn-arabic-1c749e.woff2" as="font" type="font/woff2" crossorigin>
+<link href="assets/fonts/fonts.css" rel="stylesheet">
 <!-- جلوگیری از نمایش پنل داخل سایت دیگه (clickjacking)؛ GitHub Pages هدر امنیتی نمی‌فرسته -->
 <style id="noframe">body{display:none!important}</style>
 <script>if (window.top === window.self) document.getElementById('noframe').remove(); else window.top.location = window.self.location.href;</script>
@@ -362,7 +362,8 @@ html:has(#dlg[open]) .edge{background:#fff}
 // ───────── اتصال به Supabase (کلید publishable عمومیه و جای امنی برای نگه‌داری لازم نداره؛ امنیت با RLS سمت سروره) ─────────
 const SB_URL = 'https://avwgfmdnwibtxurlnphw.supabase.co';
 const SB_KEY = 'sb_publishable_VOh9R0tdxf-3YFN9_y3J1Q_mf9kIXf2';
-const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: 'zl-admin' } });
+// همون ورود سایت: مدیری که توی سایت وارد شده، اینجا دوباره لاگین نمی‌خواد
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: 'zl-auth' } });
 
 // ───────── ابزارها ─────────
 const $ = (s, r = document) => r.querySelector(s);
@@ -589,7 +590,7 @@ async function boot() {
   let row = null;
   try { row = await q(sb.from('admins').select('phone, role, perms, name').eq('phone', phone).maybeSingle()); } catch (e) { fail(e); }
   if (!row) {
-    await sb.auth.signOut();
+    // از حساب سایت خارجش نمی‌کنیم؛ فقط فرم ورود با یه حساب مدیر نشون داده می‌شه
     $('#login').hidden = false; $('#app').hidden = true; syncLogin();
     $('#lerr').textContent = 'این شماره دسترسی مدیریت نداره';
     return;
@@ -820,7 +821,7 @@ function printLabel(o) {
   const w = window.open('', '_blank', 'width=480,height=640');
   if (!w) return toast('پنجره‌ی چاپ باز نشد؛ اجازه‌ی پاپ‌آپ رو بده', true);
   w.document.write(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>برچسب ${esc(o.tracking_code)}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link href="${location.origin}/assets/fonts/fonts.css" rel="stylesheet">
     <style>body{font-family:Vazirmatn,sans-serif;padding:24px;font-size:15px;line-height:1.9}.b{border:2px solid #000;border-radius:10px;padding:18px}h2{font-size:17px;margin:0 0 10px}small{color:#555}hr{border:0;border-top:1px dashed #999;margin:12px 0}</style></head>
     <body><div class="b"><small>گیرنده</small><h2>${esc(o.customer_name)}</h2><div>${esc(o.customer_address)}</div><div>موبایل: ${esc(o.customer_phone || '—')}</div>
     <hr><small>فرستنده</small><div><b>Zolaris Lounge</b></div><div>کد سفارش: ${esc(o.tracking_code)}</div>
@@ -1198,7 +1199,8 @@ function productDialog(p, all) {
   };
 }
 
-// عکس رو حداکثر ۱۴۰۰px و WebP می‌کنه و در باکت image آپلود می‌کنه
+// عکس رو حداکثر ۱۴۰۰px و فشرده (WebP، یا JPEG در سافاری که WebP نمی‌سازه) می‌کنه و در باکت image آپلود می‌کنه.
+// قبلاً سافاری آیفون WebP نمی‌ساخت و فایل اصلی (گاهی PNGِ چند مگابایتی) آپلود می‌شد؛ سایت بدون VPN خیلی کند لود می‌شد.
 async function uploadImage(file) {
   let blob = file, ext = (file.name.split('.').pop() || 'jpg').toLowerCase(), type = file.type || 'image/jpeg';
   try {
@@ -1206,9 +1208,14 @@ async function uploadImage(file) {
     const sc = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
     const c = document.createElement('canvas');
     c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
-    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-    const out = await new Promise(r => c.toBlob(r, 'image/webp', 0.86));
-    if (out && out.type === 'image/webp') { blob = out; ext = 'webp'; type = 'image/webp'; }
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);   // پس‌زمینه‌ی شفاف PNG در JPEG سیاه نشه
+    g.drawImage(bmp, 0, 0, c.width, c.height);
+    let out = await new Promise(r => c.toBlob(r, 'image/webp', 0.84));
+    if (!out || out.type !== 'image/webp') out = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.84));
+    if (out && (out.type === 'image/webp' || out.type === 'image/jpeg') && (out.size < file.size || sc < 1 || !/jpe?g|webp/i.test(file.type))) {
+      blob = out; type = out.type; ext = out.type === 'image/webp' ? 'webp' : 'jpg';
+    }
   } catch (e) { /* اگه مرورگر نتونست، همون فایل اصلی آپلود می‌شه */ }
   const path = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   await q(sb.storage.from('image').upload(path, blob, { contentType: type, cacheControl: '31536000', upsert: false }));
