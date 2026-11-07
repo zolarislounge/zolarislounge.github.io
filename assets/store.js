@@ -842,7 +842,7 @@
         <label class="lg-f"><span>آدرس کامل پستی</span><div class="lg-in"><textarea name="a" rows="3" maxlength="600" autocomplete="street-address">${esc(profile?.address || '')}</textarea></div></label>
         <button class="lg-btn sm"><span>ذخیره‌ی اطلاعات</span></button></form></details>
       <details class="ac-acc rise"><summary>${IC.lock}<span>رمز عبور<small>ورود سریع بدون نیاز به پیامک</small></span>${IC.chev}</summary>
-        <form id="pwF" class="ac-form"><label class="lg-f"><span>رمز جدید (حداقل ۸ کاراکتر)</span><div class="lg-in"><input name="p" type="password" minlength="8" autocomplete="new-password" dir="ltr" required></div></label>
+        <form id="pwF" class="ac-form"><label class="lg-f"><span>رمز جدید (حداقل ۶ کاراکتر)</span><div class="lg-in"><input name="p" type="password" minlength="6" autocomplete="new-password" dir="ltr" required></div></label>
         <button class="lg-btn sm"><span>ثبت رمز عبور</span></button></form></details>
       <button class="ac-out rise" id="lgOut">${IC.out}خروج از حساب</button></div>`;
     stagger(b);
