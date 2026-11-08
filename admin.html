@@ -1226,7 +1226,8 @@ function productDialog(p, all) {
         ${i > 0 ? `<button type="button" data-g="main" data-i="${i}" title="عکس اصلی بشه">★</button><button type="button" data-g="up" data-i="${i}" title="جلوتر">→</button>` : ''}
         ${i < gal.length - 1 ? `<button type="button" data-g="down" data-i="${i}" title="عقب‌تر">←</button>` : ''}
         ${window.ZLRemoveBg && !it.busy && !bgQueue.includes(it) ? (it.proc ? `<button type="button" data-g="ver" data-i="${i}" title="${it.useProc ? 'برگشت به عکس اصلی' : 'نسخه‌ی بدون پس‌زمینه'}">${it.useProc ? '↺' : '✨'}</button>` : `<button type="button" data-g="bg" data-i="${i}" title="حذف پس‌زمینه">✨</button>`) : ''}
-        ${it.proc && it.useProc && !it.busy && !bgQueue.includes(it) ? `<button type="button" data-g="hang" data-i="${i}" title="${it.hang ? 'برگرداندن چوب‌لباسی (اگه بخشی از لباس هم پاک شده)' : 'حذف خودکار چوب‌لباسی'}">${it.hang ? '🪝' : '✂'}</button><button type="button" data-g="erase" data-i="${i}" title="پاک‌کن دستی">🧽</button>` : ''}
+        ${it.proc && it.useProc && !it.busy && !bgQueue.includes(it) ? `<button type="button" data-g="hang" data-i="${i}" title="${it.hang ? 'برگرداندن چوب‌لباسی (اگه بخشی از لباس هم پاک شده)' : 'حذف خودکار چوب‌لباسی'}">${it.hang ? '🪝' : '✂'}</button>` : ''}
+        ${(it.proc ? it.useProc : it.url) && !it.busy && !bgQueue.includes(it) ? `<button type="button" data-g="erase" data-i="${i}" title="پاک‌کن دستی">🧽</button>` : ''}
         <button type="button" class="d" data-g="del" data-i="${i}" title="حذف عکس">✕</button>
       </div></div>`).join('') + (gal.length < MAX_IMGS ? '<label class="add-g" for="pfImg"><b>+</b>افزودن عکس<br><span style="font-size:10.5px">(چندتا با هم)</span></label>' : '');
   };
@@ -1277,7 +1278,21 @@ function productDialog(p, all) {
     if (g === 'ver') it.useProc = !it.useProc;
     if (g === 'bg') return queueBg(it);
     if (g === 'hang') { it.hang = !it.hang; return queueBg(it); }   // مدل دوباره اجرا نمی‌شه؛ فقط ماسک از نو تمیز می‌شه
-    if (g === 'erase') { eraser(it.proc).then(bl => { if (bl) { it.proc = bl; it.edited = true; drawGal(); } }); return; }
+    if (g === 'erase') {
+      // عکسی که قبلاً ذخیره شده (پس‌زمینه‌اش از قبل حذف شده) هم مستقیم با پاک‌کن ویرایش می‌شه، بدون اجرای دوباره‌ی مدل
+      (async () => {
+        let src = it.proc;
+        if (!src) {
+          st.classList.remove('bad'); st.textContent = 'دریافت عکس…';
+          try { const r = await fetch(it.url); if (!r.ok) throw new Error('http ' + r.status); src = await r.blob(); } catch (ex) { st.classList.add('bad'); st.textContent = 'عکس دریافت نشد؛ دوباره امتحان کن.'; return; }
+          st.textContent = '';
+        }
+        const bl = await eraser(src); if (!bl) return;
+        if (!it.proc) it.orig = new File([src], 'current.' + ((src.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg')), { type: src.type || 'image/jpeg' });
+        it.proc = bl; it.useProc = true; it.edited = true; drawGal();
+      })();
+      return;
+    }
     drawGal();
   };
   drawGal();
