@@ -7,6 +7,11 @@
 <title>پنل مدیریت Zolaris</title>
 <meta name="theme-color" content="#3D0D0B">
 <link rel="icon" href="assets/logo-z-maroon.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="admin.webmanifest">
+<meta name="apple-mobile-web-app-title" content="پنل Zolaris">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <!-- fonts are self-hosted: Google Fonts is slow or blocked in Iran without a VPN -->
 <link rel="preload" href="assets/fonts/Vazirmatn-arabic-1c749e.woff2" as="font" type="font/woff2" crossorigin>
 <link href="assets/fonts/fonts.css" rel="stylesheet">
@@ -14,7 +19,7 @@
 <style id="noframe">body{display:none!important}</style>
 <script>if (window.top === window.self) document.getElementById('noframe').remove(); else window.top.location = window.self.location.href;</script>
 <script src="assets/vendor/supabase.js"></script>
-<script src="assets/bg/removebg.js?v=20261108b"></script>
+<script src="assets/bg/removebg.js?v=20261109a"></script>
 <style>
 :root{
   --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
@@ -251,6 +256,11 @@ html:has(#dlg[open]) .edge{background:#fff}
 .cat-b button:disabled{opacity:.3;cursor:default}
 .cat-b button.d:not(:disabled){color:var(--bad)}
 .cat-add{display:flex;gap:8px}
+.ord-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ord-row{display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.ord-im{width:40px;height:52px;border-radius:8px;overflow:hidden;background:var(--soft);flex:none}
+.ord-im img{width:100%;height:100%;object-fit:cover}
+.ord-n{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cat-add .in{flex:1}
 @media (max-width:560px){.cat-row{flex-wrap:wrap}.cat-row .in{flex:1 1 calc(100% - 40px)}.cat-n{order:3;margin-right:28px}.cat-b{order:4;margin-right:auto}}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
@@ -748,6 +758,22 @@ VIEWS.dash = async () => {
 
 // ═════════ سفارش‌ها ═════════
 let oFilter = 'open', oSearch = '', orders = [];
+// خروجی اکسل (CSV با UTF-8 BOM تا اکسل فارسی رو درست نشون بده) از سفارش‌های همین فیلتر
+function exportOrders(list) {
+  if (!list.length) return toast('سفارشی برای خروجی نیست', true);
+  const cell = v => { const t = String(v ?? '').replace(/\r?\n/g, ' '); return /[",;\t]/.test(t) || /^[=+\-@]/.test(t) ? `"${(/^[=+\-@]/.test(t) ? "'" : '') + t.replace(/"/g, '""')}"` : t; };
+  const head = ['کد پیگیری', 'تاریخ', 'مشتری', 'موبایل', 'آدرس', 'اقلام', 'تعداد', 'تخفیف', 'مبلغ (تومان)', 'پرداخت', 'وضعیت', 'کد مرسوله', 'توضیح مشتری'];
+  // موبایل با یه نویسه‌ی نامرئی شروع می‌شه تا اکسل صفر اولش رو نندازه
+  const rows = list.map(o => [o.tracking_code, ftime(o.created_at), o.customer_name, o.customer_phone ? '\u200e' + o.customer_phone : '', o.customer_address,
+    (o.items || []).map(i => `${i.name || ''}${i.variant ? ' (' + i.variant + ')' : ''} ×${i.qty}`).join(' | '),
+    (o.items || []).reduce((a, i) => a + (+i.qty || 0), 0), o.discount_amount || 0, o.total, payLabel(o), o.status, o.post_tracking || '', o.customer_note || '']);
+  const csv = '﻿' + [head, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `zolaris-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  log('orders_export', `${list.length} سفارش`);
+}
 VIEWS.orders = async () => {
   orders = await q(sb.from('orders').select('*').order('created_at', { ascending: false }).limit(500));
   renderOrders();
@@ -761,6 +787,7 @@ function renderOrders() {
   $('#view').innerHTML = `
     <div class="ph"><h2>سفارش‌ها</h2><div class="acts">
       <button class="btn ghost" id="oRef"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5"/></svg>به‌روزرسانی</button>
+      <button class="btn ghost" id="oCsv"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>خروجی اکسل</button>
       <button class="btn" id="oNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>ثبت سفارش دستی</button></div></div>
     <div class="tools">
       <input class="in" id="oQ" placeholder="جستجو: کد پیگیری، نام، موبایل" value="${esc(oSearch)}">
@@ -780,6 +807,7 @@ function renderOrders() {
   $('#oQ').oninput = e => { oSearch = e.target.value; const pos = e.target.selectionStart; renderOrders(); const i = $('#oQ'); i.focus(); i.setSelectionRange(pos, pos); };
   $('#oChips').onclick = e => { const b = e.target.closest('button'); if (b) { oFilter = b.dataset.k; renderOrders(); } };
   $('#oRef').onclick = () => go('orders');
+  $('#oCsv').onclick = () => exportOrders(list);
   $('#oNew').onclick = manualOrderDialog;
   $$('[data-o]').forEach(r => r.onclick = () => orderDialog(+r.dataset.o));
 }
@@ -970,11 +998,12 @@ VIEWS.products = async () => {
   const [prods] = await Promise.all([q(sb.from('products').select('*').order('created_at', { ascending: false })), loadCats()]);
   const draw = () => {
     const term = pSearch.trim();
-    const list = prods.filter(p => !term || (p.name + ' ' + p.category_label).includes(term));
+    const nz = t => faLetters(t).replace(/\u200c/g, ' ').toLowerCase();
+    const list = prods.filter(p => !term || nz(p.name + ' ' + p.category_label).includes(nz(term)));
     $('#pGrid').innerHTML = list.length ? list.map(p => `
       <div class="card pc" data-p="${p.id}">
         <div class="im">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ''}
-          <span class="tag">${!p.stock ? '<span class="pill cancel">ناموجود</span>' : onSale(p) ? '<span class="pill paid">حراج</span>' : p.is_new ? '<span class="pill new">جدید</span>' : ''}</span></div>
+          <span class="tag">${p.hidden ? '<span class="pill">مخفی</span> ' : ''}${!p.stock ? '<span class="pill cancel">ناموجود</span>' : onSale(p) ? '<span class="pill paid">حراج</span>' : p.is_new ? '<span class="pill new">جدید</span>' : ''}</span></div>
         <div class="bd"><b>${esc(p.name)}</b><div class="muted small">${esc(p.category_label)}</div>
           <div class="pr num">${onSale(p) ? `<s>${fa(p.price)}</s>${toman(p.sale_price)}` : toman(p.price)}</div>
           <div class="st num ${p.stock <= 2 ? 'low' : ''}">${fa(p.stock)} عدد موجود</div></div>
@@ -983,12 +1012,13 @@ VIEWS.products = async () => {
   };
   $('#view').innerHTML = `
     <div class="ph"><h2>محصولات <span class="muted small num">(${fa(prods.length)})</span></h2>
-      <div class="acts"><button class="btn ghost" id="pCats"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>دسته‌بندی‌ها</button><button class="btn" id="pNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>محصول جدید</button></div></div>
+      <div class="acts"><button class="btn ghost" id="pOrd"><svg viewBox="0 0 24 24"><path d="M8 4v16M4 8l4-4 4 4M16 20V4M12 16l4 4 4-4"/></svg>ترتیب نمایش</button><button class="btn ghost" id="pCats"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>دسته‌بندی‌ها</button><button class="btn" id="pNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>محصول جدید</button></div></div>
     <div class="tools"><input class="in" id="pQ" placeholder="جستجوی نام یا دسته" value="${esc(pSearch)}"></div>
     <div class="pgrid" id="pGrid"></div>`;
   $('#pQ').oninput = e => { pSearch = e.target.value; draw(); };
   $('#pNew').onclick = () => productDialog(null, prods);
   $('#pCats').onclick = () => catsDialog(prods, () => VIEWS.products());
+  $('#pOrd').onclick = () => orderDialog(prods);
   draw();
 };
 
@@ -1001,7 +1031,9 @@ const CAT_SLUG = { 'بافت و پلیور': 'knit', 'مانتو، کت و جل�
 // ───────── دسته‌بندی‌ها (منوی سایت) ─────────
 // در site_settings با کلید categories: { list: [{ key, label, hidden }] } ؛ محصولات با category = key وصلن
 let CATLIST = null;
-const faLetters = t => String(t || '').replace(/ك/g, 'ک').replace(/ي/g, 'ی').replace(/\s+/g, ' ').trim();
+const faLetters = t => String(t || '').replace(/ك/g, 'ک').replace(/[يى]/g, 'ی').replace(/\s+/g, ' ').trim();
+// مثل بالا ولی خط‌های توضیحات حفظ می‌شه
+const faLetters2 = t => String(t || '').replace(/ك/g, 'ک').replace(/[يى]/g, 'ی').replace(/\r/g, '').trim();
 async function loadCats() {
   try {
     const r = await q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle());
@@ -1078,8 +1110,39 @@ function catsDialog(prods, onDone) {
   };
 }
 
-function productDialog(p, all) {
-  const isNew = !p;
+// ترتیب نمایش محصولات در سایت (مرتب‌سازی «پیشنهادی» که پیش‌فرض سایته)
+function orderDialog(prods) {
+  let list = [...prods].sort((a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || new Date(b.created_at) - new Date(a.created_at));
+  const d = openDlg(`<div class="dh"><h3>ترتیب نمایش محصولات</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="db"><p class="small muted">این ترتیب، ترتیب پیش‌فرض صفحه‌ی اول سایته («پیشنهادی»). با فلش‌ها جابه‌جا کن؛ ⇡ می‌بره اول لیست.</p><div class="ord-list" id="odL"></div></div>
+    <div class="df"><button class="btn" id="odGo">ذخیره</button><button class="btn ghost" data-x>انصراف</button></div>`, 'wide');
+  const draw = () => {
+    $('#odL', d).innerHTML = list.map((p, i) => `<div class="ord-row"><span class="num cat-i">${fa(i + 1)}</span>
+      <span class="ord-im">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ''}</span>
+      <span class="ord-n">${esc(p.name)}${p.hidden ? ' <span class="pill">مخفی</span>' : ''}</span>
+      <div class="cat-b"><button type="button" data-o="top" data-i="${i}" ${i ? '' : 'disabled'} title="اول لیست">⇡</button><button type="button" data-o="up" data-i="${i}" ${i ? '' : 'disabled'} title="بالاتر">↑</button><button type="button" data-o="down" data-i="${i}" ${i < list.length - 1 ? '' : 'disabled'} title="پایین‌تر">↓</button></div></div>`).join('');
+  };
+  draw();
+  $('#odL', d).onclick = e => {
+    const b = e.target.closest('button[data-o]'); if (!b) return;
+    const i = +b.dataset.i, o = b.dataset.o;
+    if (o === 'up' && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+    if (o === 'down' && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+    if (o === 'top' && i > 0) list.unshift(...list.splice(i, 1));
+    draw();
+  };
+  $('#odGo', d).onclick = async e => {
+    e.target.disabled = true;
+    try {
+      for (const [i, p] of list.entries()) if (p.sort_order !== i + 1) await q(sb.from('products').update({ sort_order: i + 1 }).eq('id', p.id));
+      log('product_order', list.slice(0, 5).map(p => p.name).join('، ') + (list.length > 5 ? '…' : ''));
+      d.close(); toast('ترتیب ذخیره شد'); VIEWS.products();
+    } catch (ex) { fail(ex); e.target.disabled = false; }
+  };
+}
+
+function productDialog(p, all, copy = false) {
+  const isNew = !p || copy;
   p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
   // سایزها و رنگ‌ها؛ موجودی/قیمت هر ترکیب در variants با نام «سایز / رنگ» ذخیره می‌شه
   const COMBO_SEP = ' / ';
@@ -1099,7 +1162,7 @@ function productDialog(p, all) {
   let gal = startImgs.map(url => ({ url })), bgQueue = [], bgRunning = false;
   const MAX_IMGS = 12;
   const d = openDlg(`
-    <div class="dh"><h3>${isNew ? 'محصول جدید' : 'ویرایش محصول'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="dh"><h3>${copy ? 'کپی محصول' : isNew ? 'محصول جدید' : 'ویرایش محصول'}</h3><button class="x" data-x aria-label="بستن">×</button></div>
     <form class="db" id="pf">
       <div>
         <div class="gal-h"><span class="small muted" style="font-weight:500">عکس‌ها <span id="pfGN"></span></span>
@@ -1150,9 +1213,10 @@ function productDialog(p, all) {
 - شستشو با آب سرد">${esc(p.description || '')}</textarea>
         <span style="font-weight:400">هر خط که با «-» شروع بشه، به‌صورت فهرست نشون داده می‌شه. یه خط خالی = پاراگراف جدید.</span></label>
       <label class="chk"><input type="checkbox" id="pfNew" ${p.is_new ? 'checked' : ''}>نشان «جدید» روی محصول</label>
+      <label class="chk"><input type="checkbox" id="pfHid" ${p.hidden ? 'checked' : ''}>مخفی از سایت (فعلاً به مشتری نشون داده نشه)</label>
     </form>
     <div class="df"><button class="btn" id="pfGo">${isNew ? 'افزودن محصول' : 'ذخیره'}</button><button class="btn ghost" data-x>انصراف</button>
-      ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="pfDel">حذف</button>'}</div>`, 'wide');
+      ${isNew ? '' : '<button class="btn ghost" id="pfCopy" type="button">کپی محصول</button><span class="sp"></span><button class="btn danger" id="pfDel">حذف</button>'}</div>`, 'wide');
 
   const slug = s => s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   $('#pfSP', d).oninput = e => { $('#pfSaleDates', d).hidden = !intOf(e.target.value); };
@@ -1320,11 +1384,11 @@ function productDialog(p, all) {
       }
       e.target.textContent = 'در حال ذخیره…';
       const row = {
-        name: $('#pfN', d).value.trim(), category: $('#pfCat', d).value, category_label: catLabel($('#pfCat', d).value, p.category_label),
+        name: faLetters($('#pfN', d).value), hidden: $('#pfHid', d).checked, category: $('#pfCat', d).value, category_label: catLabel($('#pfCat', d).value, p.category_label),
         price, sale_price: sp || null, stock: intOf($('#pfS', d).value) || 0, is_new: $('#pfNew', d).checked,
         sale_starts_at: sp ? fromLocalInput($('#pfSS', d).value) : null, sale_ends_at: sp ? fromLocalInput($('#pfSE', d).value) : null,
         variants: joinVariants(comboList.map(n => ({ name: n, qty: stockOf.get(n)?.qty ?? null, price: stockOf.get(n)?.price || null }))),
-        options: sizes.length || colors.length ? { sizes, colors } : {}, description: $('#pfD', d).value.trim() || null, image_url: images[0] || null, images,
+        options: sizes.length || colors.length ? { sizes, colors } : {}, description: faLetters2($('#pfD', d).value) || null, image_url: images[0] || null, images,
       };
       if (isNew) await q(sb.from('products').insert(row));
       else await q(sb.from('products').update(row).eq('id', p.id));
@@ -1332,6 +1396,7 @@ function productDialog(p, all) {
       toast(isNew ? 'محصول اضافه شد' : 'ذخیره شد'); d.close(); VIEWS.products();
     } catch (ex) { fail(ex); e.target.disabled = false; e.target.textContent = isNew ? 'افزودن محصول' : 'ذخیره'; }
   };
+  if (!isNew) $('#pfCopy', d).onclick = () => productDialog({ ...p, name: p.name + ' (کپی)', hidden: true }, all, true);
   if (!isNew) $('#pfDel', d).onclick = async () => {
     if (!(await ask(`«${esc(p.name)}» حذف بشه؟ نظرها و علاقه‌مندی‌های این محصول هم پاک می‌شن. سفارش‌های قبلی دست نمی‌خورن.`, 'حذف محصول'))) return;
     try { await q(sb.from('products').delete().eq('id', p.id)); log('product_delete', p.name); toast('حذف شد'); d.close(); VIEWS.products(); } catch (ex) { fail(ex); }
@@ -1398,6 +1463,14 @@ async function uploadImage(file) {
   } catch (e) { /* اگه مرورگر نتونست، همون فایل اصلی آپلود می‌شه */ }
   const path = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   await q(sb.storage.from('image').upload(path, blob, { contentType: type, cacheControl: '31536000', upsert: false }));
+  // نسخه‌ی کوچیک برای کارت‌های صفحه‌ی اول (…/x.webp.t.jpg)؛ اگه نشد، سایت خود عکس اصلی رو نشون می‌ده
+  try {
+    const bmp = await createImageBitmap(blob), k = Math.min(1, 640 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height);
+    const tb = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8));
+    if (tb) await sb.storage.from('image').upload(path + '.t.jpg', tb, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: true });
+  } catch (e) { console.warn('thumb', e); }
   return sb.storage.from('image').getPublicUrl(path).data.publicUrl;
 }
 
@@ -1545,7 +1618,7 @@ VIEWS.reviews = async () => {
 };
 
 // ═════════ تنظیمات ═════════
-const ACT = { categories: 'ویرایش دسته‌بندی‌ها', order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
+const ACT = { categories: 'ویرایش دسته‌بندی‌ها', product_order: 'ترتیب محصولات', orders_export: 'خروجی اکسل سفارش‌ها', notify_phones: 'شماره‌های پیامک سفارش', order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
 // ═════════ مدیرها (فقط مالک‌ها) ═════════
 async function adminFn(body) {
   const { data, error } = await sb.functions.invoke('admin-users', { body });
@@ -1619,10 +1692,12 @@ function adminDialog(a) {
 }
 
 VIEWS.settings = async () => {
-  const [pay, logs] = await Promise.all([
+  const [pay, logs, nt] = await Promise.all([
     q(sb.from('site_settings').select('value').eq('key', 'payment').maybeSingle()),
     q(sb.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(60)),
+    q(sb.from('site_settings').select('value').eq('key', 'notify').maybeSingle()).catch(() => null),
   ]);
+  let nPhones = Array.isArray(nt?.value?.phones) ? nt.value.phones : [];
   const modeNow = pay?.value?.mode || 'off';
   $('#view').innerHTML = `<div class="ph"><h2>تنظیمات</h2></div>
     <div class="g2">
@@ -1635,11 +1710,31 @@ VIEWS.settings = async () => {
           </div>
           <div style="margin-top:12px"><button class="btn" id="pmGo">ذخیره</button></div>
         </div>
+        <div class="card pad"><h3>پیامک سفارش جدید</h3>
+          <p class="small muted" style="margin-bottom:10px">با هر سفارش جدید، برای این شماره‌ها پیامک می‌ره.</p>
+          <div class="np-list" id="npL"></div>
+          <div class="cat-add" style="margin-top:8px"><input class="in ltr" id="npN" type="tel" inputmode="numeric" placeholder="09xxxxxxxxx"><button type="button" class="btn ghost" id="npA">+ افزودن</button></div>
+          <div style="margin-top:12px"><button class="btn" id="npGo">ذخیره</button></div>
+        </div>
       </div>
       <div class="card pad"><h3>گزارش کارهای مدیرها</h3>
         ${logs.length ? `<table class="tbl"><tbody>${logs.map(l => `<tr><td><b style="font-weight:500">${esc(ACT[l.action] || l.action)}</b>${l.details ? `<div class="small muted">${esc(l.details)}</div>` : ''}</td><td class="small muted num" style="white-space:nowrap">${esc(showPhone(l.admin_phone))}<br>${ago(l.created_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="muted small">هنوز کاری ثبت نشده</div>'}
       </div>
     </div>`;
+  const drawNp = () => { $('#npL').innerHTML = nPhones.length ? nPhones.map((ph, i) => `<div class="cat-row"><span class="num ltr" style="flex:1">${esc(showPhone(ph))}</span><div class="cat-b"><button type="button" class="d" data-np="${i}" title="حذف">🗑</button></div></div>`).join('') : '<p class="small muted">هنوز شماره‌ای اضافه نشده.</p>'; };
+  drawNp();
+  $('#npL').onclick = e => { const b = e.target.closest('[data-np]'); if (b) { nPhones.splice(+b.dataset.np, 1); drawNp(); } };
+  const npAdd = () => { const ph = normPhone($('#npN').value); if (!ph) return toast('شماره موبایل درست نیست', true); if (!nPhones.includes(ph)) nPhones.push(ph); $('#npN').value = ''; drawNp(); };
+  $('#npA').onclick = npAdd;
+  $('#npN').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); npAdd(); } };
+  $('#npGo').onclick = async e => {
+    e.target.disabled = true;
+    try {
+      await q(sb.from('site_settings').upsert({ key: 'notify', value: { phones: nPhones }, updated_at: new Date().toISOString() }));
+      log('notify_phones', nPhones.map(showPhone).join('، ') || 'خالی'); toast('ذخیره شد');
+    } catch (ex) { fail(ex); }
+    e.target.disabled = false;
+  };
   $('#pmGo').onclick = async e => {
     const v = $('input[name=pm]:checked').value;
     if (v === 'live' && v !== modeNow && !(await ask('پرداخت آنلاین برای همه روشن بشه؟ قبلش با حالت آزمایشی امتحانش کن و مطمئن شو IP دیتابیس در پنل زیبال ثبت شده.', 'روشن کن', false))) return;

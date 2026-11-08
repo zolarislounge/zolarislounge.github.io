@@ -7,6 +7,20 @@
 <meta name="description" content="Zolaris Lounge — طراحی شده برای زنانی که الهام‌بخش هستند">
 <meta name="theme-color" content="#3D0D0B">
 <link rel="icon" href="assets/logo-z-maroon.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Zolaris">
+<link rel="canonical" href="https://zolaris.ir/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Zolaris Lounge">
+<meta property="og:title" content="Zolaris Lounge | زولاریس">
+<meta property="og:description" content="طراحی شده برای زنانی که الهام‌بخش هستند — خرید آنلاین پوشاک زنانه">
+<meta property="og:url" content="https://zolaris.ir/">
+<meta property="og:image" content="https://zolaris.ir/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="fa_IR">
+<meta name="twitter:card" content="summary_large_image">
 <!-- fonts are self-hosted: Google Fonts is slow or blocked in Iran without a VPN -->
 <link rel="preload" href="assets/fonts/Vazirmatn-arabic-1c749e.woff2" as="font" type="font/woff2" crossorigin>
 <link href="assets/fonts/fonts.css" rel="stylesheet">
@@ -37,6 +51,7 @@ header{position:sticky;top:0;z-index:40;background:#fff;transition:box-shadow .3
 header.scrolled{box-shadow:0 1px 0 var(--line)}
 .hdr{display:flex;align-items:center;justify-content:space-between;height:76px;gap:8px}
 .icons{display:flex;align-items:center;gap:2px}
+@media (max-width:359px){.icons{gap:0}.icons .ib{width:38px;height:44px}.wrap.hdr{padding:0 8px}}
 .ib{width:44px;height:44px;display:grid;place-items:center;position:relative;border-radius:50%;transition:background .2s,transform .16s ease-out}
 @media (hover:hover) and (pointer:fine){.ib:hover{background:#F6F0EF}}
 .ib svg{width:23px;height:23px;stroke:var(--ink);fill:none;stroke-width:1.5}
@@ -349,6 +364,8 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
   #pv .sheet-x{top:max(10px,env(safe-area-inset-top));left:10px}
 }
 #pv .sheet-x{width:44px;height:44px;background:rgba(255,255,255,.94);box-shadow:0 2px 12px rgba(30,10,8,.12)}
+#pv .pv-share{left:62px}
+@media (max-width:640px){#pv .pv-share{left:64px}}
 .pv-info{padding:22px 22px 0;display:flex;flex-direction:column;gap:0}
 @media (min-width:720px){.pv-info{padding:30px 30px 0}}
 .pv-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mut);letter-spacing:.02em}
@@ -603,7 +620,7 @@ input,textarea{caret-color:var(--m)}
 .ctot{display:flex;justify-content:space-between;padding:16px 18px;font-size:14px}
 .muted{color:var(--mut);font-size:12.5px}
 .ok{color:#2E7D4F}
-.link{color:var(--m);text-decoration:underline;text-underline-offset:3px;font-size:13px;align-self:flex-start}
+.link{color:var(--m);text-decoration:underline;text-underline-offset:3px;font-size:13px;align-self:flex-start;min-height:44px;display:inline-flex;align-items:center}
 
 /* forms */
 .form{display:flex;flex-direction:column;gap:12px;padding:18px}
@@ -688,7 +705,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <main class="wrap" id="shop">
   <div class="bar">
-    <select class="sort" id="sort" aria-label="مرتب‌سازی"><option value="new">جدیدترین</option><option value="cheap">ارزان‌ترین</option><option value="exp">گران‌ترین</option><option value="name">بر اساس نام</option></select>
+    <select class="sort" id="sort" aria-label="مرتب‌سازی"><option value="pick">پیشنهادی</option><option value="new">جدیدترین</option><option value="cheap">ارزان‌ترین</option><option value="exp">گران‌ترین</option><option value="name">بر اساس نام</option></select>
     <button class="fbtn" data-open="filter">Filters <svg viewBox="0 0 24 24"><path d="M3 7h10M17 7h4M3 17h4M11 17h10"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
   </div>
   <div class="favbar" id="favBar" hidden>فقط علاقه‌مندی‌ها نمایش داده می‌شن <button id="favOff">نمایش همه</button></div>
@@ -776,6 +793,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <section class="sheet wide" id="pv" role="dialog" aria-modal="true" aria-label="جزئیات محصول">
   <button class="ib sheet-x" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <button class="ib sheet-x pv-share" id="pvShare" aria-label="اشتراک‌گذاری محصول"><svg viewBox="0 0 24 24"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M8 11H6v9.5h12V11h-2"/></svg></button>
   <div class="pv-body"></div>
 </section>
 
@@ -798,6 +816,6 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 </div>
 
 <script src="assets/vendor/supabase.js"></script>
-<script src="assets/store.js?v=20261108b"></script>
+<script src="assets/store.js?v=20261109a"></script>
 </body>
 </html>

@@ -60,7 +60,10 @@ Deno.serve(async (req) => {
     if (error || !order) return new Response(JSON.stringify({ skipped: true }), { status: 200, headers: corsHeaders });
 
     const apiKey = Deno.env.get('FARAZSMS_API_KEY');
-    const ownerPhone = Deno.env.get('OWNER_PHONE');
+    // شماره‌های گیرنده از پنل مدیریت (تنظیمات ← پیامک سفارش)؛ اگه خالی بود، Secret قدیمی OWNER_PHONE
+    const { data: ns } = await db.from('site_settings').select('value').eq('key', 'notify').maybeSingle();
+    const panelPhones = Array.isArray(ns?.value?.phones) ? ns.value.phones.map((x: unknown) => String(x).trim()).filter(Boolean) : [];
+    const ownerPhone = panelPhones.length ? panelPhones.join(',') : Deno.env.get('OWNER_PHONE');
     const lineNumber = Deno.env.get('FARAZSMS_LINE') || '';
     const ownerPatternCode = Deno.env.get('FARAZSMS_PATTERN_CODE');
     const customerPatternCode = Deno.env.get('FARAZSMS_CUSTOMER_PATTERN_CODE');

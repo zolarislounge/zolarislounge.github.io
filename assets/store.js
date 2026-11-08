@@ -101,6 +101,12 @@
   // همه‌ی عکس‌های محصول (اولی = عکس اصلی)
   const imgsOf = p => (Array.isArray(p.images) && p.images.length ? p.images : (p.image_url ? [p.image_url] : [])).filter(Boolean);
   // توضیحات: پاراگراف با خط خالی، خط‌های «-» فهرست، «عنوان: مقدار» با عنوان پررنگ
+  // جستجو: «ك/ي» عربی و فاصله‌ی مجازی با شکل فارسی یکی حساب می‌شن
+  const norm = t => toEn(String(t || '')).replace(/ك/g, 'ک').replace(/[يى]/g, 'ی').replace(/\u200c/g, ' ').toLowerCase();
+  // عکس کوچیک (حدود ۶۰۰px) برای کارت‌ها؛ پنل موقع آپلود کنار هر عکس می‌سازه (…/x.jpg → …/x.jpg.t.jpg).
+  // اگه نبود (عکس‌های قدیمی‌تر)، خودِ عکس اصلی لود می‌شه.
+  const thumbOf = u => /\/storage\/v1\/object\/public\/image\/products\/[^/?#]+\.(jpe?g|png|webp)$/i.test(u || '') ? u + '.t.jpg' : u;
+  const thumbImg = (u, alt = '', extra = '') => { const t = thumbOf(u); return `<img src="${esc(t)}"${t !== u ? ` data-full="${esc(u)}" onerror="this.onerror=null;this.src=this.dataset.full"` : ''} alt="${esc(alt)}" loading="lazy"${extra}>`; };
   function descHtml(t) {
     return String(t || '').replace(/\r/g, '').trim().split(/\n\s*\n/).map(block => {
       let html = '', list = [], para = [];
@@ -150,13 +156,15 @@
       $('#retryLoad').onclick = () => { state = 'loading'; render(); loadProducts(); };
       return;
     }
-    const term = toEn(query.trim()).toLowerCase();
+    const term = norm(query.trim());
     let list = products.filter(p => (!cat || (CKEYS[cat] ? p.category === CKEYS[cat] : p.category_label === CATS[cat]))
-      && (!term || toEn(p.name + ' ' + (p.category_label || '')).toLowerCase().includes(term))
+      && (!term || norm(p.name + ' ' + (p.category_label || '')).includes(term))
       && (!sizes.size || (optsOf(p)?.sizes || []).some(z => sizes.has(z)))
       && (!colorsF.size || (optsOf(p)?.colors || []).some(c => colorsF.has(c.name)))
       && (!favOnly || favs.has(p.id)));
     const s = $('#sort').value;
+    // «پیشنهادی»: ترتیبی که در پنل چیده شده؛ بقیه به ترتیب جدیدترین
+    if (s === 'pick') list = [...list].sort((a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9));
     if (s === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
     if (s === 'cheap') list = [...list].sort((a, b) => priceOf(a) - priceOf(b));
     if (s === 'exp') list = [...list].sort((a, b) => priceOf(b) - priceOf(a));
@@ -166,7 +174,7 @@
     $('#grid').innerHTML = list.length ? list.map(p => {
       const out = !p.sample && !p.stock, vs = variants(p);
       return `<article class="card">
-        <div class="media" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}${imgsOf(p)[1] ? `<img class="alt" src="${esc(imgsOf(p)[1])}" alt="" loading="lazy">` : ''}
+        <div class="media" data-view="${p.id}">${p.image_url ? thumbImg(p.image_url, p.name) : ''}${imgsOf(p)[1] ? thumbImg(imgsOf(p)[1], '', ' class="alt"') : ''}
           ${p.sample ? '' : `<button class="fav${favs.has(p.id) ? ' on' : ''}" data-fav="${p.id}" aria-label="علاقه‌مندی">${heart}</button>`}
           ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : p.is_new ? '<span class="badge">جدید</span>' : ''}</div>
         <h3 class="name" data-view="${p.id}" ${p.sample ? '' : 'role="button" tabindex="0"'}>${esc(p.name)}</h3>
@@ -201,7 +209,8 @@
       }
       live = rows.length > 0;
       // نمونه‌ها فقط وقتی که دیتابیس واقعاً هیچ محصولی نداره
-      products = live ? rows : SAMPLE;
+      // مدیرها محصولات مخفی رو هم از دیتابیس می‌گیرن؛ توی سایت نشون داده نمی‌شن
+      products = live ? rows.filter(p => !p.hidden) : SAMPLE;
       state = 'ready';
     } catch (e) { console.error(e); if (!live) { products = []; state = 'error'; } }
     // محصولی که دسته‌اش در لیست پنل نیست (و مخفی هم نشده) گم نمی‌شه: دسته‌اش ته منو اضافه می‌شه
@@ -239,8 +248,23 @@
   }
 
   // ───────── صفحه‌ی محصول ─────────
+  // آدرس صفحه با محصول باز همراهه تا قابل اشتراک و برگشت باشه
+  function setProductUrl(id) {
+    const u = new URL(location.href);
+    if (id) u.searchParams.set('p', id); else u.searchParams.delete('p');
+    if (u.href !== location.href) history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
+  async function shareProduct(p) {
+    const url = `${location.origin}${location.pathname}?p=${p.id}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: p.name + ' | Zolaris Lounge', url }); return; }
+      await navigator.clipboard.writeText(url); toast('لینک محصول کپی شد');
+    } catch (e) { if (e && e.name !== 'AbortError') { prompt('لینک محصول:', url); } }
+  }
   async function openProduct(id) {
     const p = products.find(x => x.id === id); if (!p || p.sample) return;
+    setProductUrl(id);
+    $('#pvShare').onclick = () => shareProduct(p);
     const vs = variants(p), o = optsOf(p);
     let sz = o && o.sizes.length === 1 ? o.sizes[0] : null, cl = o && o.colors.length === 1 ? o.colors[0].name : null, qty = 1;
     const curSel = () => !o || (o.sizes.length && !sz) || (o.colors.length && !cl) ? null : combo(o, sz, cl);
@@ -256,7 +280,7 @@
         ${imgs.length > 1 ? `<button class="pv-nav prev" data-nav="-1" aria-label="عکس قبلی">‹</button><button class="pv-nav next" data-nav="1" aria-label="عکس بعدی">›</button>
           <div class="pv-dots">${imgs.map((_, k) => `<i class="${k ? '' : 'on'}"></i>`).join('')}</div>` : ''}
       </div>
-      ${imgs.length > 1 ? `<div class="pv-thumbs">${imgs.map((u, k) => `<button data-th="${k}" class="${k ? '' : 'on'}" aria-label="عکس ${fa(k + 1)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+      ${imgs.length > 1 ? `<div class="pv-thumbs">${imgs.map((u, k) => `<button data-th="${k}" class="${k ? '' : 'on'}" aria-label="عکس ${fa(k + 1)}">${thumbImg(u)}</button>`).join('')}</div>` : ''}
       <div class="pv-info"><div id="pvMain"></div>
         <ul class="pv-trust">
           <li>${IC.truck}<span>ارسال<br>هفته‌ای دو بار</span></li>
@@ -321,7 +345,7 @@
     loadReviews(p);
     draw();
     sh.scrollTop = 0;
-    open('pv');
+    open('pv'); setProductUrl(id);
     track('view', p.id);
   }
   async function loadReviews(p) {
@@ -490,7 +514,7 @@
           <button class="lg-btn sm" data-shop><span>مشاهده‌ی محصولات</span>${IC.arrow}</button>
         </div>
         ${picks.length ? `<section class="cs"><h5>شاید بپسندی</h5><div class="cs-row">${picks.map(p => `
-          <button class="cs-i" data-view="${p.id}"><span class="cs-im">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : ''}</span>
+          <button class="cs-i" data-view="${p.id}"><span class="cs-im">${p.image_url ? thumbImg(p.image_url) : ''}</span>
             <span class="cs-n">${esc(p.name)}</span><b>${toman(priceOf(p))}</b></button>`).join('')}</div></section>` : ''}`;
       foot.hidden = true; foot.innerHTML = '';
       return;
@@ -502,7 +526,7 @@
       const max = avail(l.p, l.variant), unit = priceOf(l.p, l.variant);
       const was = onSale(l.p) && !(variants(l.p).find(v => v.name === l.variant)?.price) ? l.p.price : 0;
       return `<article class="cl" style="animation-delay:${60 + k * 50}ms">
-        <button class="cl-im" data-view="${l.p.id}" aria-label="${esc(l.p.name)}">${l.p.image_url ? `<img src="${esc(l.p.image_url)}" alt="" loading="lazy">` : ''}</button>
+        <button class="cl-im" data-view="${l.p.id}" aria-label="${esc(l.p.name)}">${l.p.image_url ? thumbImg(l.p.image_url) : ''}</button>
         <div class="cl-b">
           <div class="cl-h"><b class="cl-n" dir="auto">${esc(l.p.name)}</b>
             <button class="cl-x" data-rm="${k}" aria-label="حذف ${esc(l.p.name)} از سبد">${IC.trash}</button></div>
@@ -563,7 +587,7 @@
         const out = !p.stock, o = optsOf(p), needPick = o && ((o.sizes.length > 1) || (o.colors.length > 1));
         const cs = o?.colors || [];
         return `<article class="fv" style="animation-delay:${60 + k * 45}ms">
-          <div class="fv-im" data-view="${p.id}">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ''}
+          <div class="fv-im" data-view="${p.id}">${p.image_url ? thumbImg(p.image_url, p.name) : ''}
             <button class="fv-x" data-unfav="${p.id}" aria-label="حذف ${esc(p.name)} از علاقه‌مندی‌ها">${IC.heart}</button>
             ${out ? '<span class="badge out">ناموجود</span>' : onSale(p) ? '<span class="badge sale">حراج</span>' : ''}</div>
           <b class="fv-n" dir="auto" data-view="${p.id}">${esc(p.name)}</b>
@@ -1048,6 +1072,7 @@
   }
   const locked = () => $('#acct').classList.contains('locked') && $('#acct').classList.contains('on');
   function closeAll() {
+    if (new URLSearchParams(location.search).has('p')) setProductUrl(null);
     if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); setOvl(true, isPhone()); return; }
     setOvl(false);
     $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); unlockScroll(); }
@@ -1143,6 +1168,12 @@
   drawCats(); render(); count('#favN', favs.size); renderCart();
   if (!sb) { toast('اتصال به فروشگاه برقرار نشد؛ صفحه رو تازه کن', true); return; }
   sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { user = profile = null; $('#acctBtn').classList.remove('in'); setAdmin(false); } });
-  Promise.all([loadProducts(), loadUser()]).then(() => { if (needsName()) { drawAcct(); open('acct'); } return handleReturn(); });
+  Promise.all([loadProducts(), loadUser()]).then(() => {
+    if (needsName()) { drawAcct(); open('acct'); }
+    // لینک مستقیم محصول: zolaris.ir/?p=12
+    const pid = +new URLSearchParams(location.search).get('p');
+    if (pid && !needsName()) { if (products.some(x => x.id === pid)) openProduct(pid); else setProductUrl(null); }
+    return handleReturn();
+  });
   track('visit');
 })();
