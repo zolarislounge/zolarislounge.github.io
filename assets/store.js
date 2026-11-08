@@ -6,7 +6,9 @@
   const SB_KEY = 'sb_publishable_VOh9R0tdxf-3YFN9_y3J1Q_mf9kIXf2';
   const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: 'zl-auth' } }) : null;
 
-  const CATS = ['همه محصولات', 'بافت و پلیور', 'مانتو، کت و جلیقه', 'پالتو', 'شومیز و تاپ', 'شلوار و دامن', 'تیشرت', 'شال', 'کیف', 'کفش', 'اکسسوری'];
+  // دسته‌های منو از پنل مدیریت (site_settings → categories) میان؛ این فقط پیش‌فرض تا وقتی لود بشه
+  let CATS = ['همه محصولات', 'بافت و پلیور', 'مانتو، کت و جلیقه', 'پالتو', 'شومیز و تاپ', 'شلوار و دامن', 'تیشرت', 'شال', 'کیف', 'کفش', 'اکسسوری'];
+  let CKEYS = [null, 'knit', 'coat', 'overcoat', 'top', 'bottom', 'tshirt', 'scarf', 'bag', 'shoes', 'accessory'];
   // تا وقتی محصولی در پنل اضافه نشده، این نمونه‌ها فقط برای نمایش هستن (قابل خرید نیستن)
   const SAMPLE = [
     { id: -1, image_url: 'assets/products/knit-1-w.jpg', name: 'Argyle Grey', category_label: 'بافت و پلیور' },
@@ -149,7 +151,7 @@
       return;
     }
     const term = toEn(query.trim()).toLowerCase();
-    let list = products.filter(p => (!cat || p.category_label === CATS[cat] || p.category === CATS[cat])
+    let list = products.filter(p => (!cat || (CKEYS[cat] ? p.category === CKEYS[cat] : p.category_label === CATS[cat]))
       && (!term || toEn(p.name + ' ' + (p.category_label || '')).toLowerCase().includes(term))
       && (!sizes.size || (optsOf(p)?.sizes || []).some(z => sizes.has(z)))
       && (!colorsF.size || (optsOf(p)?.colors || []).some(c => colorsF.has(c.name)))
@@ -183,17 +185,30 @@
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .05 });
     cards.forEach((c, i) => { c.style.transitionDelay = (i % 2) * .08 + 's'; io.observe(c); });
   }
+  let hiddenKeys = new Set();
   async function loadProducts() {
     if (!sb) { state = 'error'; render(); return; }
     try {
-      const rows = await q(sb.from('products').select('*').order('created_at', { ascending: false }));
+      const [rows, cs] = await Promise.all([
+        q(sb.from('products').select('*').order('created_at', { ascending: false })),
+        q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle()).catch(() => null),
+      ]);
+      const list = Array.isArray(cs?.value?.list) ? cs.value.list : null;
+      if (list) {
+        CATS = ['همه محصولات', ...list.filter(c => !c.hidden).map(c => c.label)];
+        CKEYS = [null, ...list.filter(c => !c.hidden).map(c => c.key)];
+        hiddenKeys = new Set(list.filter(c => c.hidden).map(c => c.key));
+      }
       live = rows.length > 0;
       // نمونه‌ها فقط وقتی که دیتابیس واقعاً هیچ محصولی نداره
       products = live ? rows : SAMPLE;
       state = 'ready';
     } catch (e) { console.error(e); if (!live) { products = []; state = 'error'; } }
-    // دسته‌هایی که در پنل تعریف شدن ولی در لیست ثابت نیستن هم به منو اضافه می‌شن
-    for (const p of products) if (p.category_label && !CATS.includes(p.category_label)) CATS.push(p.category_label);
+    // محصولی که دسته‌اش در لیست پنل نیست (و مخفی هم نشده) گم نمی‌شه: دسته‌اش ته منو اضافه می‌شه
+    for (const p of products) {
+      if (!p.category_label || hiddenKeys.has(p.category)) continue;
+      if (p.category ? !CKEYS.includes(p.category) : !CATS.includes(p.category_label)) { CATS.push(p.category_label); CKEYS.push(p.category || null); }
+    }
     drawCats(); drawSizes(); render(); renderCart();
   }
   function drawCats() {

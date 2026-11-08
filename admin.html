@@ -240,6 +240,19 @@ html:has(#dlg[open]) .edge{background:#fff}
 .gi .ga button{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.94);font-size:12px;color:var(--ink);display:grid;place-items:center;line-height:1}
 .gi .ga button:hover{background:#fff}
 .gi .ga button.d{color:var(--bad)}
+.cat-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.cat-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.cat-row.off{opacity:.55}
+.cat-row .in{flex:1;min-width:0;height:38px}
+.cat-i{width:20px;text-align:center;color:var(--mut);font-size:12px;flex:none}
+.cat-n{flex:none;white-space:nowrap}
+.cat-b{display:flex;gap:4px;flex:none}
+.cat-b button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;font-size:13px}
+.cat-b button:disabled{opacity:.3;cursor:default}
+.cat-b button.d:not(:disabled){color:var(--bad)}
+.cat-add{display:flex;gap:8px}
+.cat-add .in{flex:1}
+@media (max-width:560px){.cat-row{flex-wrap:wrap}.cat-row .in{flex:1 1 calc(100% - 40px)}.cat-n{order:3;margin-right:28px}.cat-b{order:4;margin-right:auto}}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
 /* eraser */
 .er-b{padding:14px 20px;display:flex;flex-direction:column;gap:12px}
@@ -954,7 +967,7 @@ const joinVariants = vs => vs.filter(v => v.name).map(v => [v.name.replace(/[:,�
 const onSale = p => p.sale_price > 0 && p.sale_price < p.price && (!p.sale_starts_at || new Date(p.sale_starts_at) <= Date.now()) && (!p.sale_ends_at || new Date(p.sale_ends_at) > Date.now());
 
 VIEWS.products = async () => {
-  const prods = await q(sb.from('products').select('*').order('created_at', { ascending: false }));
+  const [prods] = await Promise.all([q(sb.from('products').select('*').order('created_at', { ascending: false })), loadCats()]);
   const draw = () => {
     const term = pSearch.trim();
     const list = prods.filter(p => !term || (p.name + ' ' + p.category_label).includes(term));
@@ -970,11 +983,12 @@ VIEWS.products = async () => {
   };
   $('#view').innerHTML = `
     <div class="ph"><h2>محصولات <span class="muted small num">(${fa(prods.length)})</span></h2>
-      <div class="acts"><button class="btn" id="pNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>محصول جدید</button></div></div>
+      <div class="acts"><button class="btn ghost" id="pCats"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>دسته‌بندی‌ها</button><button class="btn" id="pNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>محصول جدید</button></div></div>
     <div class="tools"><input class="in" id="pQ" placeholder="جستجوی نام یا دسته" value="${esc(pSearch)}"></div>
     <div class="pgrid" id="pGrid"></div>`;
   $('#pQ').oninput = e => { pSearch = e.target.value; draw(); };
   $('#pNew').onclick = () => productDialog(null, prods);
+  $('#pCats').onclick = () => catsDialog(prods, () => VIEWS.products());
   draw();
 };
 
@@ -984,10 +998,89 @@ const fromLocalInput = v => v ? new Date(v).toISOString() : null;
 // همون دسته‌هایی که منوی سایت نشون می‌ده (assets/store.js)
 const SITE_CATS = ['بافت و پلیور', 'مانتو، کت و جلیقه', 'پالتو', 'شومیز و تاپ', 'شلوار و دامن', 'تیشرت', 'شال', 'کیف', 'کفش', 'اکسسوری'];
 const CAT_SLUG = { 'بافت و پلیور': 'knit', 'مانتو، کت و جلیقه': 'coat', 'پالتو': 'overcoat', 'شومیز و تاپ': 'top', 'شلوار و دامن': 'bottom', 'تیشرت': 'tshirt', 'شال': 'scarf', 'کیف': 'bag', 'کفش': 'shoes', 'اکسسوری': 'accessory' };
+// ───────── دسته‌بندی‌ها (منوی سایت) ─────────
+// در site_settings با کلید categories: { list: [{ key, label, hidden }] } ؛ محصولات با category = key وصلن
+let CATLIST = null;
+const faLetters = t => String(t || '').replace(/ك/g, 'ک').replace(/ي/g, 'ی').replace(/\s+/g, ' ').trim();
+async function loadCats() {
+  try {
+    const r = await q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle());
+    if (Array.isArray(r?.value?.list)) return (CATLIST = r.value.list);
+  } catch (e) { }
+  return (CATLIST = SITE_CATS.map(l => ({ key: CAT_SLUG[l], label: l })));
+}
+const catLabel = (key, fb = '') => (CATLIST || []).find(c => c.key === key)?.label || fb;
+function catOpts(cur, curLabel) {
+  const list = CATLIST || [];
+  const known = list.some(c => c.key === cur);
+  return (cur ? '' : '<option value="" selected disabled>انتخاب دسته…</option>')
+    + (cur && !known ? `<option value="${esc(cur)}" selected>${esc(curLabel || cur)}</option>` : '')
+    + list.map(c => `<option value="${esc(c.key)}" ${c.key === cur ? 'selected' : ''}>${esc(c.label)}${c.hidden ? ' (مخفی)' : ''}</option>`).join('');
+}
+function catsDialog(prods, onDone) {
+  let list = (CATLIST || []).map(c => ({ ...c, _old: c.label }));
+  // دسته‌هایی که محصول دارن ولی در لیست نیستن هم نشون داده می‌شن تا قابل مدیریت باشن
+  for (const p of prods) if (p.category && !list.some(c => c.key === p.category)) list.push({ key: p.category, label: p.category_label || p.category, _old: p.category_label });
+  const count = k => prods.filter(p => p.category === k).length;
+  const d = openDlg(`<div class="dh"><h3>دسته‌بندی‌های منوی سایت</h3><button class="x" data-x aria-label="بستن">×</button></div>
+    <div class="db"><p class="small muted">نام هر دسته رو همینجا عوض کن، با فلش‌ها ترتیب منو رو بچین، با 👁 از منو مخفیش کن (محصولاتش در «همه محصولات» می‌مونن)، یا دسته‌ی جدید بساز. دسته‌ای که محصول داره رو اول باید خالی کنی تا حذف بشه.</p>
+      <div class="cat-list" id="ctL"></div>
+      <div class="cat-add"><input class="in" id="ctN" maxlength="40" placeholder="نام دسته‌ی جدید، مثلاً «بامبرجکت»"><button type="button" class="btn ghost" id="ctA">+ افزودن</button></div></div>
+    <div class="df"><button class="btn" id="ctGo">ذخیره</button><button class="btn ghost" data-x>انصراف</button></div>`, 'wide');
+  const draw = () => {
+    $('#ctL', d).innerHTML = list.map((c, i) => `<div class="cat-row ${c.hidden ? 'off' : ''}">
+      <span class="num cat-i">${fa(i + 1)}</span>
+      <input class="in" data-l="${i}" maxlength="40" value="${esc(c.label)}">
+      <span class="small muted cat-n">${fa(count(c.key))} محصول</span>
+      <div class="cat-b">
+        <button type="button" data-c="up" data-i="${i}" ${i ? '' : 'disabled'} title="بالاتر">↑</button>
+        <button type="button" data-c="down" data-i="${i}" ${i < list.length - 1 ? '' : 'disabled'} title="پایین‌تر">↓</button>
+        <button type="button" data-c="hide" data-i="${i}" title="${c.hidden ? 'نمایش در منو' : 'مخفی از منو'}">${c.hidden ? '🙈' : '👁'}</button>
+        <button type="button" data-c="del" data-i="${i}" class="d" title="${count(c.key) ? 'اول محصولات این دسته رو به دسته‌ی دیگه ببر' : 'حذف دسته'}" ${count(c.key) ? 'disabled' : ''}>🗑</button>
+      </div></div>`).join('') || '<p class="muted small">هنوز دسته‌ای نیست</p>';
+  };
+  draw();
+  $('#ctL', d).oninput = e => { const i = e.target.dataset.l; if (i != null) list[+i].label = e.target.value; };
+  $('#ctL', d).onclick = e => {
+    const b = e.target.closest('button[data-c]'); if (!b) return;
+    const i = +b.dataset.i, c = b.dataset.c;
+    if (c === 'up' && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+    if (c === 'down' && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+    if (c === 'hide') list[i].hidden = !list[i].hidden;
+    if (c === 'del') list.splice(i, 1);
+    draw();
+  };
+  const add = () => {
+    const v = faLetters($('#ctN', d).value);
+    if (!v) return;
+    if (list.some(c => faLetters(c.label) === v)) return toast('این دسته از قبل هست', true);
+    list.push({ key: CAT_SLUG[v] && !list.some(c => c.key === CAT_SLUG[v]) ? CAT_SLUG[v] : 'c' + Date.now().toString(36), label: v });
+    $('#ctN', d).value = ''; draw();
+  };
+  $('#ctA', d).onclick = add;
+  $('#ctN', d).onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); add(); } };
+  $('#ctGo', d).onclick = async e => {
+    for (const c of list) c.label = faLetters(c.label);
+    if (list.some(c => !c.label)) return toast('نام دسته نمی‌تونه خالی باشه', true);
+    const names = list.map(c => c.label);
+    if (new Set(names).size !== names.length) return toast('دو دسته با یک اسم نمی‌شه', true);
+    e.target.disabled = true;
+    try {
+      const clean = list.map(c => ({ key: c.key, label: c.label, ...(c.hidden ? { hidden: true } : {}) }));
+      await q(sb.from('site_settings').upsert({ key: 'categories', value: { list: clean }, updated_at: new Date().toISOString() }));
+      // محصولاتی که اسم دسته‌شون عوض شده
+      const renamed = list.filter(c => prods.some(p => p.category === c.key && p.category_label !== c.label));
+      for (const c of renamed) await q(sb.from('products').update({ category_label: c.label }).eq('category', c.key));
+      CATLIST = clean;
+      log('categories', clean.map(c => c.label + (c.hidden ? ' (مخفی)' : '')).join('، '));
+      d.close(); toast('دسته‌ها ذخیره شد'); onDone && onDone();
+    } catch (ex) { fail(ex); e.target.disabled = false; }
+  };
+}
+
 function productDialog(p, all) {
   const isNew = !p;
   p = p || { name: '', category: '', category_label: '', price: '', stock: 0, is_new: true, variants: null, sale_price: null, description: '', image_url: null };
-  const cats = [...new Map(all.filter(x => x.category).map(x => [x.category, x.category_label])).entries()];
   // سایزها و رنگ‌ها؛ موجودی/قیمت هر ترکیب در variants با نام «سایز / رنگ» ذخیره می‌شه
   const COMBO_SEP = ' / ';
   const oldVars = parseVariants(p.variants);
@@ -1019,8 +1112,8 @@ function productDialog(p, all) {
       </div>
       <label class="f">نام محصول<input class="in" id="pfN" required maxlength="120" value="${esc(p.name)}"></label>
       <div class="row c2">
-        <label class="f">دسته (نمایشی)<input class="in" id="pfCL" required maxlength="60" list="catl" value="${esc(p.category_label)}" placeholder="مثلاً بافت"><datalist id="catl">${[...new Set([...SITE_CATS, ...cats.map(([, l]) => l)])].map(l => `<option>${esc(l)}</option>`).join('')}</datalist></label>
-        <label class="f">شناسه‌ی دسته (انگلیسی، برای فیلتر سایت)<input class="in ltr" id="pfC" required maxlength="40" pattern="[a-z0-9\\-]+" value="${esc(p.category)}" placeholder="knit"></label>
+        <label class="f">دسته<select class="in" id="pfCat" required>${catOpts(p.category, p.category_label)}</select></label>
+        <div class="f"><span class="small muted">دسته‌ی جدید یا تغییر نام دسته‌ها: صفحه‌ی محصولات ← «دسته‌بندی‌ها»</span></div>
       </div>
       <div class="row c3">
         <label class="f">قیمت (تومان)<input class="in num" id="pfP" required inputmode="numeric" placeholder="مثلاً 1,850,000" value="${p.price === '' ? '' : esc(p.price)}"></label>
@@ -1062,8 +1155,6 @@ function productDialog(p, all) {
       ${isNew ? '' : '<span class="sp"></span><button class="btn danger" id="pfDel">حذف</button>'}</div>`, 'wide');
 
   const slug = s => s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  $('#pfCL', d).oninput = e => { const v = e.target.value.trim(), hit = cats.find(([, l]) => l === v); if (hit) $('#pfC', d).value = hit[0]; else if (CAT_SLUG[v]) $('#pfC', d).value = CAT_SLUG[v]; };
-  $('#pfC', d).oninput = e => { e.target.value = slug(e.target.value); };
   $('#pfSP', d).oninput = e => { $('#pfSaleDates', d).hidden = !intOf(e.target.value); };
   const PALETTE = [['مشکی', '#1E1E1E'], ['سفید', '#F7F6F2'], ['کرم', '#EBDDC3'], ['بژ', '#D6C1A3'], ['طوسی', '#8C8C8C'], ['قهوه‌ای', '#6B4A33'],
     ['زرشکی', '#6E1E24'], ['قرمز', '#B3262C'], ['صورتی', '#E8B4BE'], ['سبز', '#6B7A3A'], ['سبز پسته‌ای', '#B9C98B'], ['سرمه‌ای', '#1F2A44'], ['آبی', '#4A6FA5'], ['خردلی', '#C9A23A']];
@@ -1214,7 +1305,7 @@ function productDialog(p, all) {
       }
       e.target.textContent = 'در حال ذخیره…';
       const row = {
-        name: $('#pfN', d).value.trim(), category: $('#pfC', d).value.trim(), category_label: $('#pfCL', d).value.trim(),
+        name: $('#pfN', d).value.trim(), category: $('#pfCat', d).value, category_label: catLabel($('#pfCat', d).value, p.category_label),
         price, sale_price: sp || null, stock: intOf($('#pfS', d).value) || 0, is_new: $('#pfNew', d).checked,
         sale_starts_at: sp ? fromLocalInput($('#pfSS', d).value) : null, sale_ends_at: sp ? fromLocalInput($('#pfSE', d).value) : null,
         variants: joinVariants(comboList.map(n => ({ name: n, qty: stockOf.get(n)?.qty ?? null, price: stockOf.get(n)?.price || null }))),
@@ -1439,7 +1530,7 @@ VIEWS.reviews = async () => {
 };
 
 // ═════════ تنظیمات ═════════
-const ACT = { order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
+const ACT = { categories: 'ویرایش دسته‌بندی‌ها', order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
 // ═════════ مدیرها (فقط مالک‌ها) ═════════
 async function adminFn(body) {
   const { data, error } = await sb.functions.invoke('admin-users', { body });
