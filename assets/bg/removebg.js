@@ -32,8 +32,98 @@
     });
   }
 
+  // فاصله‌ی هر پیکسلِ داخل ماسک تا نزدیک‌ترین پیکسل بیرون (چمفر ۸ همسایه، دو گذر)
+  function distIn(inside) {
+    const N = S * S, D = new Float32Array(N), BIG = 1e9, R2 = Math.SQRT2;
+    for (let i = 0; i < N; i++) D[i] = inside[i] ? BIG : 0;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const i = y * S + x; if (!D[i]) continue;
+      let v = D[i];
+      if (x > 0) v = Math.min(v, D[i - 1] + 1); else v = Math.min(v, 1);
+      if (y > 0) {
+        v = Math.min(v, D[i - S] + 1);
+        if (x > 0) v = Math.min(v, D[i - S - 1] + R2);
+        if (x < S - 1) v = Math.min(v, D[i - S + 1] + R2);
+      } else v = Math.min(v, 1);
+      D[i] = v;
+    }
+    for (let y = S - 1; y >= 0; y--) for (let x = S - 1; x >= 0; x--) {
+      const i = y * S + x; if (!D[i]) continue;
+      let v = D[i];
+      if (x < S - 1) v = Math.min(v, D[i + 1] + 1); else v = Math.min(v, 1);
+      if (y < S - 1) {
+        v = Math.min(v, D[i + S] + 1);
+        if (x < S - 1) v = Math.min(v, D[i + S + 1] + R2);
+        if (x > 0) v = Math.min(v, D[i + S - 1] + R2);
+      } else v = Math.min(v, 1);
+      D[i] = v;
+    }
+    return D;
+  }
+  // برچسب اجزای به‌هم‌پیوسته (۸ همسایه) → { lab, sizes, minY, maxV } ؛ maxV بیشترین مقدار val در هر جزء
+  function label(b, val) {
+    const N = S * S, lab = new Int32Array(N), stack = new Int32Array(N), sizes = [0], minY = [0], maxV = [0], sumY = [0];
+    for (let i = 0; i < N; i++) {
+      if (!b[i] || lab[i]) continue;
+      const id = sizes.length; let sp = 0, cnt = 0, my = S, mv = 0, sy = 0;
+      stack[sp++] = i; lab[i] = id;
+      while (sp) {
+        const p = stack[--sp]; cnt++;
+        const x = p % S, y = (p / S) | 0;
+        if (y < my) my = y; sy += y;
+        if (val && val[p] > mv) mv = val[p];
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
+          const q = ny * S + nx;
+          if (b[q] && !lab[q]) { lab[q] = id; stack[sp++] = q; }
+        }
+      }
+      sizes.push(cnt); minY.push(my); maxV.push(mv); sumY.push(sy / cnt);
+    }
+    return { lab, sizes, minY, maxV, cy: sumY };
+  }
+
+  // چوب‌لباسی، قلاب و دستگیره‌ی بالای لباس: مدل این‌ها رو جزو محصول می‌بینه چون به لباس چسبیدن.
+  // ۱) «خط شروع لباس» = اولین ردیفی که از بالا پهنای واقعی داره (قلاب و دستگیره و کمان چوب‌لباسی باریکن)
+  // ۲) بالای اون خط فقط بخش‌های ضخیمی که به بدنه‌ی لباس وصلن (مثل لبه‌ی گرد یقه) می‌مونن؛ بقیه حذف می‌شه.
+  // پایین‌تر از اون خط هیچ پیکسلی دست نمی‌خوره، پس لبه‌های لباس خراب نمی‌شه.
+  function dropHanger(b) {
+    const N = S * S;
+    let y0 = S, y1 = -1, x0 = S, x1 = -1;
+    for (let i = 0; i < N; i++) if (b[i]) { const x = i % S, y = (i / S) | 0; if (y < y0) y0 = y; if (y > y1) y1 = y; if (x < x0) x0 = x; if (x > x1) x1 = x; }
+    if (y1 < 0) return 0;
+    const h = y1 - y0 + 1, w = x1 - x0 + 1;
+    // باز کردن مورفولوژیک: بخش‌های باریک‌تر از 2r (قلاب، کمان چوب‌لباسی) جدا می‌شن؛ بدنه = بزرگ‌ترین تکه‌ی ضخیم
+    const r = Math.max(5, Math.round(Math.min(w, h) * 0.025));
+    const D = distIn(b), notCore = new Uint8Array(N);
+    for (let i = 0; i < N; i++) notCore[i] = D[i] > r ? 0 : 1;
+    const Dc = distIn(notCore), opened = new Uint8Array(N);
+    for (let i = 0; i < N; i++) opened[i] = b[i] && (!notCore[i] || Dc[i] <= r + 1) ? 1 : 0;
+    const L = label(opened);
+    let body = 0; for (let k = 1; k < L.sizes.length; k++) if (!body || L.sizes[k] > L.sizes[body]) body = k;
+    if (!body) return 0;
+    // خط شروع لباس: اولین ردیفی که بدنه از اونجا به بعد پهنای واقعی داره
+    const cnt = new Int32Array(S);
+    for (let i = 0; i < N; i++) if (L.lab[i] === body) cnt[(i / S) | 0]++;
+    let maxC = 0; for (let y = 0; y < S; y++) if (cnt[y] > maxC) maxC = cnt[y];
+    const thr = maxC * 0.15, RUN = 6;
+    let yc = y0;
+    for (let y = y0; y < S - RUN; y++) {
+      let ok = true; for (let k = 0; k < RUN; k++) if (cnt[y + k] < thr) { ok = false; break; }
+      if (ok) { yc = y; break; }
+    }
+    yc = Math.min(yc, Math.round(y0 + h * 0.4));
+    if (yc <= y0) return 0;   // چیزی بالای لباس نیست
+    // بالای خط فقط بخش‌های ضخیمِ وصل به بدنه می‌مونه (مثل گردی یقه)؛ پایین خط دست نمی‌خوره
+    let removed = 0;
+    const lim = yc * S;
+    for (let i = 0; i < lim; i++) if (b[i] && !(opened[i] && L.lab[i] === body)) { b[i] = 0; removed++; }
+    return removed;
+  }
+
   // ماسک خام مدل → آلفای تمیز: فقط شکل(های) اصلی، بدون سوراخ و لکه، با لبه‌ی نرم
-  function cleanMask(m) {
+  function cleanMask(m, opts = {}) {
     const N = S * S;
     let mn = Infinity, mx = -Infinity;
     for (let i = 0; i < N; i++) { const v = m[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
@@ -64,6 +154,16 @@
     for (let k = 1; k < sizes.length; k++) if (sizes[k] > max) max = sizes[k];
     if (max < N * 0.01) throw new Error('no_object');
     for (let i = 0; i < N; i++) if (b[i] && sizes[lab[i]] < max * 0.1) b[i] = 0;
+    let hangerPx = 0;
+    if (opts.hanger) {
+      hangerPx = dropHanger(b);
+      // بعد از بریدن قلاب، فقط بزرگ‌ترین تکه بمونه
+      if (hangerPx) {
+        const L2 = label(b); let big = 0;
+        for (let k = 1; k < L2.sizes.length; k++) if (!big || L2.sizes[k] > L2.sizes[big]) big = k;
+        for (let i = 0; i < N; i++) if (b[i] && L2.sizes[L2.lab[i]] < L2.sizes[big] * 0.1) b[i] = 0;
+      }
+    }
 
     // پر کردن سوراخ‌ها: هر جای خالی که به لبه‌ی عکس راه نداره، جزو محصوله
     const out = new Uint8Array(N); let sp = 0;
@@ -107,10 +207,13 @@
       const i = (y * S + x) * 4;
       px[i] = px[i + 1] = px[i + 2] = 255; px[i + 3] = Math.round(s / c * 255);
     }
-    return { px, box: { x0, y0, x1: x1 + 1, y1: y1 + 1 } };
+    return { px, box: { x0, y0, x1: x1 + 1, y1: y1 + 1 }, hangerPx };
   }
 
-  async function removeBackground(file, onProgress = () => { }) {
+  // ماسک مدل برای هر فایل نگه داشته می‌شه تا روشن/خاموش کردن «حذف آویز» دوباره مدل رو اجرا نکنه
+  const masks = new WeakMap();
+  // opts.hanger: حذف چوب‌لباسی/قلاب/دستگیره‌ی بالای لباس. نتیجه: Blob با .hanger (آیا چیزی حذف شد)
+  async function removeBackground(file, onProgress = () => { }, opts = {}) {
     const bmp = await createImageBitmap(file);
     // ورودی مدل: ۱۰۲۴×۱۰۲۴، مقادیر (رنگ/۲۵۵ − ۰٫۵) به ترتیب کانال‌ها
     const c1 = new OffscreenCanvasOr(S, S), x1 = c1.getContext('2d');
@@ -122,9 +225,10 @@
       input[N + i] = d[i * 4 + 1] / 255 - 0.5;
       input[2 * N + i] = d[i * 4 + 2] / 255 - 0.5;
     }
-    const mask = await runModel(input, onProgress);
+    let mask = masks.get(file);
+    if (!mask) { mask = await runModel(input, onProgress); masks.set(file, mask); }
     onProgress('compose');
-    const { px, box } = cleanMask(mask);
+    const { px, box, hangerPx } = cleanMask(mask, opts);
 
     // عکس اصلی با آلفای ماسک (حداکثر ۲۴۰۰ پیکسل برای حافظه)
     const k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
@@ -146,7 +250,9 @@
     ox.imageSmoothingQuality = 'high';
     ox.drawImage(cut, bx, by, bw, bh, (OW - bw * sc) / 2, (OH - bh * sc) / 2, bw * sc, bh * sc);
     bmp.close && bmp.close();
-    return toBlob(outC, 'image/jpeg', 0.93);
+    const blob = await toBlob(outC, 'image/jpeg', 0.93);
+    blob.hanger = hangerPx > S * S * 0.0005;
+    return blob;
   }
 
   // OffscreenCanvas در سافاری‌های قدیمی نیست؛ اون‌جا از canvas معمولی استفاده می‌شه
