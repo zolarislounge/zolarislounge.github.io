@@ -9,7 +9,8 @@
 
   function getWorker() {
     if (worker) return worker;
-    worker = new Worker(new URL('worker.js', BASE), { type: 'module' });
+    // نسخه‌ی اسکریپت (‎?v=…‎) به worker هم داده می‌شه تا CDN نسخه‌ی قدیمی رو نده
+    worker = new Worker(new URL('worker.js' + new URL(BASE).search, BASE), { type: 'module' });
     worker.onmessage = e => {
       const d = e.data;
       if (d.type === 'progress') { for (const j of jobs.values()) j.onProgress && j.onProgress(d.stage, d.p); return; }
@@ -119,6 +120,23 @@
     let removed = 0;
     const lim = yc * S;
     for (let i = 0; i < lim; i++) if (b[i] && !(opened[i] && L.lab[i] === body)) { b[i] = 0; removed++; }
+    // ۳) دسته‌های چوب‌لباسی کنار یقه/روی شونه: تکه‌های باریکی که از «لبه‌ی بالای» بدنه بیرون زدن.
+    // لبه‌ی بالای بدنه برای هر ستون حساب می‌شه؛ فقط چیزی که بالاتر از اون لبه‌ست حذف می‌شه، پس داخل لباس دست نمی‌خوره.
+    const top = new Int32Array(S).fill(S);
+    for (let i = 0; i < N; i++) if (L.lab[i] === body) { const x = i % S, y = (i / S) | 0; if (y < top[x]) top[x] = y; }
+    const topLim = Math.round(y0 + h * 0.45), res = new Uint8Array(N), above = new Float32Array(N);
+    for (let i = 0; i < topLim * S; i++) {
+      if (!b[i] || (opened[i] && L.lab[i] === body)) continue;
+      const x = i % S, y = (i / S) | 0;
+      res[i] = 1; if (y < top[x]) above[i] = top[x] - y;
+    }
+    const R = label(res, above);
+    const below = new Int32Array(R.sizes.length);
+    for (let i = 0; i < N; i++) if (R.lab[i] && !above[i]) below[R.lab[i]]++;
+    for (let i = 0; i < N; i++) {
+      const k = R.lab[i]; if (!k) continue;
+      if (R.maxV[k] > r * 0.6 && below[k] < R.sizes[k] * 0.4 && above[i] > 0) { b[i] = 0; removed++; }
+    }
     return removed;
   }
 
