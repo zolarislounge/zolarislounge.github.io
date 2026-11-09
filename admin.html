@@ -1018,7 +1018,7 @@ VIEWS.products = async () => {
   $('#pQ').oninput = e => { pSearch = e.target.value; draw(); };
   $('#pNew').onclick = () => productDialog(null, prods);
   $('#pCats').onclick = () => catsDialog(prods, () => VIEWS.products());
-  $('#pOrd').onclick = () => orderDialog(prods);
+  $('#pOrd').onclick = () => productOrderDialog(prods);
   draw();
 };
 
@@ -1111,7 +1111,7 @@ function catsDialog(prods, onDone) {
 }
 
 // ترتیب نمایش محصولات در سایت (مرتب‌سازی «پیشنهادی» که پیش‌فرض سایته)
-function orderDialog(prods) {
+function productOrderDialog(prods) {
   let list = [...prods].sort((a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || new Date(b.created_at) - new Date(a.created_at));
   const d = openDlg(`<div class="dh"><h3>ترتیب نمایش محصولات</h3><button class="x" data-x aria-label="بستن">×</button></div>
     <div class="db"><p class="small muted">این ترتیب، ترتیب پیش‌فرض صفحه‌ی اول سایته («پیشنهادی»). با فلش‌ها جابه‌جا کن؛ ⇡ می‌بره اول لیست.</p><div class="ord-list" id="odL"></div></div>
