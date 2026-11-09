@@ -196,6 +196,9 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
 .empty-go button{min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:40px;font-size:13px;color:var(--ink);background:#fff;transition:background .2s,border-color .2s,transform .16s ease-out}
 .empty-go button:active{transform:scale(.96);background:#FAF4F2}
 /* product view: «شاید بپسندی» */
+/* grid items default to min-width:auto, so the horizontal row below would widen the whole sheet */
+.pv-info,.pv-gal,.pv-rel{min-width:0}
+#pv{overflow-x:hidden}
 .pv-rel{margin-top:26px}
 .pv-rel h4{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)}
 .pv-rel-t{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:6px;margin:0 -22px;padding-inline:22px;scrollbar-width:none;overscroll-behavior-x:contain}
