@@ -224,7 +224,9 @@
       if (c && Array.isArray(c.rows) && c.rows.length) { fromCache = true; applyData(c.rows, c.list); }
     }
     try {
-      const [rows, cs] = await withTimeout(Promise.all([
+      // بار اول از درخواستی که از <head> شروع شده استفاده می‌شه؛ تلاش‌های بعدی از راه معمول
+      const early = !attempt && window.__zlEarly; window.__zlEarly = null;
+      const [rows, cs] = await withTimeout(early || Promise.all([
         q(sb.from('products').select('*').order('created_at', { ascending: false })),
         q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle()).catch(() => null),
       ]), 15000);

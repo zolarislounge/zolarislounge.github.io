@@ -23,6 +23,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <!-- fonts are self-hosted: Google Fonts is slow or blocked in Iran without a VPN -->
 <link rel="preload" href="assets/fonts/Vazirmatn-arabic-1c749e.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://avwgfmdnwibtxurlnphw.supabase.co" crossorigin>
+<script>
+// دریافت محصولات از همون اول صفحه شروع می‌شه (همزمان با لود فونت و اسکریپت‌ها)، نه بعد از آماده شدن کل سایت
+window.__zlEarly = (() => {
+  try {
+    const B = 'https://avwgfmdnwibtxurlnphw.supabase.co/rest/v1/', H = { headers: { apikey: 'sb_publishable_VOh9R0tdxf-3YFN9_y3J1Q_mf9kIXf2' } };
+    const j = r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status));
+    return Promise.all([
+      fetch(B + 'products?select=*&order=created_at.desc', H).then(j),
+      fetch(B + 'site_settings?select=value&key=eq.categories', H).then(j).then(a => a[0] || null).catch(() => null),
+    ]);
+  } catch (e) { return null; }
+})();
+if (window.__zlEarly) window.__zlEarly.catch(() => { });
+</script>
 <link href="assets/fonts/fonts.css" rel="stylesheet">
 <style>
 :root{
@@ -816,6 +831,6 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 </div>
 
 <script src="assets/vendor/supabase.js"></script>
-<script src="assets/store.js?v=20261109b"></script>
+<script src="assets/store.js?v=20261109c"></script>
 </body>
 </html>
