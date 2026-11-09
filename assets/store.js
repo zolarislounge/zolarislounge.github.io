@@ -297,7 +297,7 @@
       <div class="pv-gal">
         <div class="pv-track" id="pvT">${imgs.map((u, k) => `<div class="pv-slide"><img src="${esc(u)}" alt="${esc(p.name)}" data-zoom="${k}" ${k ? 'loading="lazy"' : ''} draggable="false"></div>`).join('') || '<div class="pv-slide"></div>'}</div>
         ${imgs.length ? '<span class="pv-zh" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4M11 8v6M8 11h6"/></svg></span>' : ''}
-        ${imgs.length > 1 ? `<button class="pv-nav prev" data-nav="-1" aria-label="عکس قبلی">‹</button><button class="pv-nav next" data-nav="1" aria-label="عکس بعدی">›</button>
+        ${imgs.length > 1 ? `<button class="pv-nav prev" data-nav="-1" aria-label="عکس قبلی">›</button><button class="pv-nav next" data-nav="1" aria-label="عکس بعدی">‹</button>
           <div class="pv-dots">${imgs.map((_, k) => `<i class="${k ? '' : 'on'}"></i>`).join('')}</div>` : ''}
       </div>
       ${imgs.length > 1 ? `<div class="pv-thumbs">${imgs.map((u, k) => `<button data-th="${k}" class="${k ? '' : 'on'}" aria-label="عکس ${fa(k + 1)}">${thumbImg(u)}</button>`).join('')}</div>` : ''}
@@ -311,8 +311,9 @@
         <a class="pv-ask" href="https://wa.me/989121816762?text=${encodeURIComponent('سلام، درباره‌ی محصول «' + p.name + '» سوال داشتم.')}" target="_blank" rel="noopener">${IC.chat}<span>سوالی درباره‌ی این محصول داری؟ <b>در واتس‌اپ بپرس</b></span></a>
         <div class="pv-bar" id="pvBar"></div></div>`;
     const gtrack = $('#pvT', sh);
-    const goSlide = k => { k = Math.max(0, Math.min(imgs.length - 1, k)); gtrack.scrollTo({ left: k * gtrack.clientWidth, behavior: 'smooth' }); };
-    const cur = () => Math.round(gtrack.scrollLeft / Math.max(1, gtrack.clientWidth));
+    // گالری راست‌به‌چپ: عکس اول سمت راست؛ scrollLeft در RTL منفیه
+    const goSlide = k => { k = Math.max(0, Math.min(imgs.length - 1, k)); gtrack.scrollTo({ left: -k * gtrack.clientWidth, behavior: 'smooth' }); };
+    const cur = () => Math.round(Math.abs(gtrack.scrollLeft) / Math.max(1, gtrack.clientWidth));
     gtrack.onscroll = () => { const k = cur(); $$('.pv-dots i', sh).forEach((d, n) => d.classList.toggle('on', n === k)); $$('.pv-thumbs button', sh).forEach((b, n) => b.classList.toggle('on', n === k)); };
     $$('[data-nav]', sh).forEach(b => b.onclick = () => goSlide(cur() + +b.dataset.nav));
     $$('[data-th]', sh).forEach(b => b.onclick = () => goSlide(+b.dataset.th));
@@ -426,13 +427,13 @@
       if (reduced()) { show(idx + dir); return; }
       busy = true;
       const W = stage.clientWidth;
-      s = 1; ty = 0; tx = -dir * W;
+      s = 1; ty = 0; tx = dir * W;   // راست‌به‌چپ: بعدی از چپ میاد، فعلی به راست می‌ره
       img.style.transition = 'transform .2s cubic-bezier(.4,0,.6,1)';
       img.style.transform = `translate3d(${tx}px,0,0) scale(1)`;
       setTimeout(async () => {
         show(idx + dir);
         try { await Promise.race([img.decode(), new Promise(r => setTimeout(r, 350))]); } catch (e) { }
-        tx = dir * W * .35; apply(false); img.style.opacity = '0'; void img.offsetWidth;
+        tx = -dir * W * .35; apply(false); img.style.opacity = '0'; void img.offsetWidth;
         tx = 0;
         img.style.transition = 'transform .34s cubic-bezier(.23,1,.32,1),opacity .22s ease-out';
         img.style.transform = 'translate3d(0,0,0) scale(1)'; img.style.opacity = '1';
@@ -477,7 +478,7 @@
       if (g.type === 'swipe' && g.moved) {
         // کشیدن به اندازه‌ی کافی، یا یه حرکت سریع کوتاه
         const fast = Math.abs(dx) > 24 && Math.abs(dx) / Math.max(1, now - g.t) > .35;
-        if ((Math.abs(dx) > 60 || fast) && list.length > 1) go(dx < 0 ? 1 : -1); else { tx = 0; apply(true); }
+        if ((Math.abs(dx) > 60 || fast) && list.length > 1) go(dx > 0 ? 1 : -1); else { tx = 0; apply(true); }
       } else if (!g.moved && now - g.t < 300) {
         // دو بار ضربه: بزرگ‌نمایی روی همون نقطه / برگشت
         if (now - lastTap < 320 && Math.hypot(e.clientX - lx, e.clientY - ly) < 40) {
@@ -497,8 +498,8 @@
     document.addEventListener('keydown', e => {
       if (el.hidden) return;
       if (e.key === 'Escape') { e.stopImmediatePropagation(); close(); }
-      if (e.key === 'ArrowRight') go(1);
-      if (e.key === 'ArrowLeft') go(-1);
+      if (e.key === 'ArrowLeft') go(1);
+      if (e.key === 'ArrowRight') go(-1);
     }, true);
     return { open, close };
   })();

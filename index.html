@@ -228,19 +228,19 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
 @media (min-width:720px){.pv-body{grid-template-columns:1fr 1fr}}
 /* product gallery: swipe on phones, arrows + thumbnails on desktop, tap to zoom */
 .pv-gal{position:relative;background:#fff;aspect-ratio:3/4;overflow:hidden}
-.pv-track{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;direction:ltr;overscroll-behavior-x:contain}
+.pv-track{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;direction:rtl;overscroll-behavior-x:contain}
 .pv-track::-webkit-scrollbar{display:none}
 .pv-slide{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always}
 .pv-slide img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;-webkit-user-drag:none}
 .pv-zh{position:absolute;bottom:12px;left:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;pointer-events:none;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 .pv-zh svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.6}
 .pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);font-size:24px;line-height:1;display:none;place-items:center;box-shadow:0 1px 8px rgba(0,0,0,.1);color:var(--ink)}
-.pv-nav.prev{left:10px}.pv-nav.next{right:10px}
+.pv-nav.prev{right:10px}.pv-nav.next{left:10px}
 @media (hover:hover){.pv-gal:hover .pv-nav{display:grid}}
 .pv-dots{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none}
 .pv-dots i{width:6px;height:6px;border-radius:50%;background:rgba(30,20,19,.25);transition:background-color .25s,width .25s var(--ease)}
 .pv-dots i.on{background:var(--m);width:16px;border-radius:3px}
-.pv-thumbs{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;direction:ltr;scrollbar-width:none}
+.pv-thumbs{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;scrollbar-width:none}
 @media (min-width:720px){.pv-body{grid-template-rows:auto 1fr}.pv-thumbs{grid-column:1;grid-row:2;align-self:start}.pv-gal{grid-column:1;grid-row:1;align-self:start}.pv-info{grid-column:2;grid-row:1/span 2}}
 .pv-thumbs button{flex:0 0 58px;aspect-ratio:3/4;border:1px solid var(--line);opacity:.6;transition:opacity .2s,border-color .2s;padding:0;background:#fff}
 .pv-thumbs button.on{opacity:1;border-color:var(--m)}
@@ -607,7 +607,7 @@ input,textarea{caret-color:var(--m)}
 .zv-nav[hidden]{display:none}
 .zv-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .zv-nav:active{transform:translateY(-50%) scale(.9)}
-.zv-nav.prev{left:10px}.zv-nav.next{right:10px}
+.zv-nav.prev{right:10px}.zv-nav.next{left:10px}
 .zv-count{position:absolute;top:max(22px,calc(env(safe-area-inset-top) + 10px));right:0;left:0;text-align:center;font-size:13px;color:var(--mut);pointer-events:none;font-family:var(--fa)}
 .zv-hint{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:12px;color:var(--mut);pointer-events:none}
 .pv-desc{margin-top:18px;font-size:13.5px;color:#4d3d3a;border-top:1px solid var(--line);padding-top:16px;line-height:2;scroll-margin-top:10px}
@@ -825,12 +825,12 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 <div class="zv" id="zv" hidden role="dialog" aria-modal="true" aria-label="بزرگ‌نمایی عکس">
   <div class="zv-stage"><img alt=""></div>
   <button class="zv-x" aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  <button class="zv-nav prev" aria-label="عکس قبلی"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="zv-nav next" aria-label="عکس بعدی"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <button class="zv-nav prev" aria-label="عکس قبلی"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button><button class="zv-nav next" aria-label="عکس بعدی"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <div class="zv-count"></div>
   <div class="zv-hint">برای بزرگ‌نمایی دو بار بزن یا با دو انگشت باز کن</div>
 </div>
 
 <script src="assets/vendor/supabase.js"></script>
-<script src="assets/store.js?v=20261109c"></script>
+<script src="assets/store.js?v=20261109d"></script>
 </body>
 </html>
