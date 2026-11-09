@@ -47,7 +47,10 @@ if (window.__zlEarly) window.__zlEarly.catch(() => { });
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+/* feel like an app on phones: no gray tap flash, no 300ms wait, no text selection when holding a control */
+button,a,[role="button"],label.chk,summary{touch-action:manipulation}
+button,[role="button"],summary,.chip,.chips button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body{font-family:var(--fa);color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
@@ -188,6 +191,24 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
 .ci small{color:var(--mut)}
 .ci button{font-size:12px;color:var(--mut);min-height:44px;min-width:44px;padding:0 6px}
 .empty{padding:44px 20px;text-align:center;color:var(--mut)}
+.empty-go{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:16px}
+.empty-go span{width:100%;font-size:12.5px}
+.empty-go button{min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:40px;font-size:13px;color:var(--ink);background:#fff;transition:background .2s,border-color .2s,transform .16s ease-out}
+.empty-go button:active{transform:scale(.96);background:#FAF4F2}
+/* product view: «شاید بپسندی» */
+.pv-rel{margin-top:26px}
+.pv-rel h4{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+.pv-rel-t{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:6px;margin:0 -22px;padding-inline:22px;scrollbar-width:none;overscroll-behavior-x:contain}
+.pv-rel-t::-webkit-scrollbar{display:none}
+.pv-ri{flex:none;width:132px;display:flex;flex-direction:column;gap:5px;text-align:right;scroll-snap-align:start;transition:transform .16s ease-out}
+.pv-ri:active{transform:scale(.97)}
+.pv-ri-im{position:relative;display:block;aspect-ratio:3/4;background:#FAF7F6;overflow:hidden}
+.pv-ri-im img{width:100%;height:100%;object-fit:cover}
+.pv-ri-im em{position:absolute;bottom:6px;right:6px;font-style:normal;font-size:10.5px;background:rgba(255,255,255,.92);color:var(--mut);padding:1px 7px}
+.pv-ri b{font-weight:400;font-size:12.5px;line-height:1.5;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-ri-p{font-size:12px;font-weight:700;color:var(--ink)}
+.pv-ri-p s{display:none}
+.media:active img{opacity:.92}
 .dfoot{margin-top:auto;padding:16px 18px;display:flex;gap:10px;position:sticky;bottom:0;background:#fff}
 .btn{flex:1;height:48px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
 .btn-m{background:var(--m);color:#fff}
@@ -831,6 +852,6 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 </div>
 
 <script src="assets/vendor/supabase.js"></script>
-<script src="assets/store.js?v=20261109d"></script>
+<script src="assets/store.js?v=20261110a"></script>
 </body>
 </html>

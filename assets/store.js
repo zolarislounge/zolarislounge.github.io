@@ -184,7 +184,8 @@
         ${p.sample ? '' : out ? '<button class="add out" disabled>ناموجود</button>'
           : vs.length ? `<button class="add" data-view="${p.id}">انتخاب سایز</button>` : `<button class="add" data-add="${p.id}">افزودن به سبد خرید</button>`}
       </article>`;
-    }).join('') : `<p class="empty" style="grid-column:1/-1">${favOnly ? 'هنوز محصولی رو به علاقه‌مندی‌ها اضافه نکردی.' : term ? 'محصولی با این نام پیدا نشد.' : 'فعلاً محصولی در این دسته نیست.'}</p>`;
+    }).join('') : `<div class="empty" style="grid-column:1/-1">${favOnly ? 'هنوز محصولی رو به علاقه‌مندی‌ها اضافه نکردی.' : term ? `محصولی با «${esc(query.trim())}» پیدا نشد.` : 'فعلاً محصولی در این دسته نیست.'}
+      ${favOnly ? '' : `<div class="empty-go">${term ? '<span>یکی از این‌ها رو ببین:</span>' : ''}<button data-cat="0" data-q="0">همه‌ی محصولات</button>${CATS.slice(1).filter((c, i) => products.some(p => !p.sample && (CKEYS[i + 1] ? p.category === CKEYS[i + 1] : p.category_label === c))).slice(0, 5).map(c => `<button data-cat="${CATS.indexOf(c)}" data-q="0">${esc(c)}</button>`).join('')}</div>`}</div>`;
     reveal();
   }
   function reveal() {
@@ -272,7 +273,7 @@
   function setProductUrl(id) {
     const u = new URL(location.href);
     if (id) u.searchParams.set('p', id); else u.searchParams.delete('p');
-    if (u.href !== location.href) history.replaceState(null, '', u.pathname + u.search + u.hash);
+    if (u.href !== location.href) history.replaceState(history.state, '', u.pathname + u.search + u.hash);
   }
   async function shareProduct(p) {
     const url = `${location.origin}${location.pathname}?p=${p.id}`;
@@ -309,6 +310,11 @@
         ${p.description ? `<details class="pv-acc" open><summary>توضیحات محصول${IC.chev}</summary><div class="pv-desc">${descHtml(p.description)}</div></details>` : ''}
         <details class="pv-acc" id="pvRevAcc"><summary>نظر مشتری‌ها <span id="pvRevN"></span>${IC.chev}</summary><div class="pv-rev" id="pvRev"></div></details>
         <a class="pv-ask" href="https://wa.me/989121816762?text=${encodeURIComponent('سلام، درباره‌ی محصول «' + p.name + '» سوال داشتم.')}" target="_blank" rel="noopener">${IC.chat}<span>سوالی درباره‌ی این محصول داری؟ <b>در واتس‌اپ بپرس</b></span></a>
+        ${(() => {
+          // «شاید بپسندی»: اول همین دسته، بعد بقیه (موجودها جلوتر)
+          const rel = products.filter(x => x.id !== p.id && !x.sample).sort((a, b) => (b.category === p.category) - (a.category === p.category) || (!a.stock) - (!b.stock)).slice(0, 8);
+          return rel.length ? `<section class="pv-rel"><h4>شاید بپسندی</h4><div class="pv-rel-t">${rel.map(x => `<button class="pv-ri" data-view="${x.id}"><span class="pv-ri-im">${x.image_url ? thumbImg(x.image_url, x.name) : ''}${!x.stock ? '<em>ناموجود</em>' : ''}</span><b>${esc(x.name)}</b><span class="pv-ri-p">${priceHtml(x)}</span></button>`).join('')}</div></section>` : '';
+        })()}
         <div class="pv-bar" id="pvBar"></div></div>`;
     const gtrack = $('#pvT', sh);
     // گالری راست‌به‌چپ: عکس اول سمت راست؛ scrollLeft در RTL منفیه
@@ -440,8 +446,8 @@
         setTimeout(() => { busy = false; }, 340);
       }, 190);
     };
-    const open = (l, k) => { list = l; el.hidden = false; root.classList.add('zfull'); requestAnimationFrame(() => el.classList.add('on')); show(k || 0); };
-    const close = () => { busy = false; el.classList.remove('on'); el.hidden = true; root.classList.remove('zfull'); pts.clear(); g = null; };
+    const open = (l, k) => { list = l; el.hidden = false; root.classList.add('zfull'); requestAnimationFrame(() => el.classList.add('on')); show(k || 0); history.pushState({ ...(history.state || {}), zlZoom: 1 }, ''); };
+    const close = fromPop => { if (el.hidden) return; busy = false; el.classList.remove('on'); el.hidden = true; root.classList.remove('zfull'); pts.clear(); g = null; if (fromPop !== true && history.state?.zlZoom) { pendingBack++; history.back(); } };
     const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
     const startOne = (x, y) => { g = { type: s > 1 ? 'pan' : 'swipe', x0: x, y0: y, tx0: tx, ty0: ty, t: Date.now(), moved: false }; };
     stage.addEventListener('pointerdown', e => {
@@ -1092,23 +1098,36 @@
     window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
   }
   const locked = () => $('#acct').classList.contains('locked') && $('#acct').classList.contains('on');
-  function closeAll() {
+  // دکمه‌ی «برگشت» گوشی پنل باز رو می‌بنده، به‌جای اینکه از سایت بیرون بره
+  let pendingBack = 0;
+  const anyOpen = () => !!$('.drawer.on,.search.on,.sheet.on') || !$('#zv').hidden;
+  const pushOvl = id => { if (history.state?.zlOvl) history.replaceState({ ...history.state, zlOvl: id }, ''); else history.pushState({ ...(history.state || {}), zlOvl: id }, ''); };
+  const dropOvl = () => setTimeout(() => { if (!anyOpen() && history.state?.zlOvl) { pendingBack++; history.back(); } }, 0);
+  addEventListener('popstate', () => {
+    if (pendingBack) { pendingBack--; return; }
+    if (!$('#zv').hidden) { zoom.close(true); return; }
+    if (!anyOpen()) return;
+    if (locked()) { history.pushState({ zlOvl: 'acct' }, ''); return; }
+    closeAll(true);
+  });
+  function closeAll(fromPop) {
     if (new URLSearchParams(location.search).has('p')) setProductUrl(null);
+    if (fromPop !== true && fromPop !== 'keep') dropOvl();
     if (locked()) { $$('.drawer.on,.search.on,.sheet.on').forEach(d => d !== $('#acct') && d.classList.remove('on')); setOvl(true, isPhone()); return; }
     setOvl(false);
     $$('.drawer.on,.search.on,.sheet.on').forEach(d => d.classList.remove('on')); scrim.classList.remove('on'); unlockScroll(); }
   function open(id) {
     if (needsName() && id !== 'acct' && id !== 'res') { drawAcct(); open('acct'); toast('اول نام و نام خانوادگیت رو وارد کن', true); return; }
-    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); lockScroll(); setOvl(true, root.classList.contains('full')); return; }
-    closeAll();
-    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv' || id === 'favs') && isPhone()); lockScroll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); }
+    if (id === 'res') { $('#' + id).classList.add('on'); scrim.classList.add('on'); lockScroll(); setOvl(true, root.classList.contains('full')); pushOvl(id); return; }
+    closeAll('keep');
+    setOvl(true, (id === 'acct' || id === 'cart' || id === 'pv' || id === 'favs') && isPhone()); lockScroll(); $('#' + id).classList.add('on'); scrim.classList.add('on'); pushOvl(id); }
 
   document.addEventListener('click', e => {
     const t = e.target;
     const o = t.closest('[data-open]');
     if (o) { if (o.dataset.open === 'acct') drawAcct(); open(o.dataset.open); return; }
     if (t.closest('[data-open-acct]')) { afterLogin = null; drawAcct(); open('acct'); return; }
-    if (t.closest('[data-search]')) { closeAll(); setOvl(true); lockScroll(); $('#search').classList.add('on'); scrim.classList.add('on'); setTimeout(() => $('#search input').focus(), 300); return; }
+    if (t.closest('[data-search]')) { closeAll('keep'); setOvl(true); lockScroll(); $('#search').classList.add('on'); scrim.classList.add('on'); pushOvl('search'); setTimeout(() => $('#search input').focus(), 300); return; }
     const pv = t.closest('[data-pay]'); if (pv) { pay(pv.dataset.pay); return; }
     const fv = t.closest('[data-fav]'); if (fv) { e.stopPropagation(); toggleFav(+fv.dataset.fav, fv); return; }
     if (t.closest('#favBtn')) { renderFavs(); open('favs'); return; }
@@ -1132,6 +1151,8 @@
     if (mc) {
       e.preventDefault();
       const i = +mc.dataset.cat;
+      // پیشنهادهای «پیدا نشد» جستجو رو هم پاک می‌کنن
+      if (mc.dataset.q === '0') { query = ''; $('#search input').value = ''; }
       closeAll();
       if (i >= CATS.length) { scrollToEl($('#contact')); return; }
       setCat(i);

@@ -27,7 +27,10 @@
   --fa:'Vazirmatn',system-ui,sans-serif; --serif:'Bodoni Moda',Didot,Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+/* feel like an app on phones: no gray tap flash, no 300ms wait, no text selection when holding a control */
+button,a,[role="button"],label.chk,summary{touch-action:manipulation}
+button,[role="button"],summary,.chip,.chips button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body{font-family:var(--fa);color:var(--ink);background:var(--bg);line-height:1.7;font-size:14px;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 button,input,select,textarea{font:inherit;color:inherit}
