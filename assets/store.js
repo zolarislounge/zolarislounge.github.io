@@ -194,31 +194,49 @@
     cards.forEach((c, i) => { c.style.transitionDelay = (i % 2) * .08 + 's'; io.observe(c); });
   }
   let hiddenKeys = new Set();
-  async function loadProducts() {
-    if (!sb) { state = 'error'; render(); return; }
-    try {
-      const [rows, cs] = await Promise.all([
-        q(sb.from('products').select('*').order('created_at', { ascending: false })),
-        q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle()).catch(() => null),
-      ]);
-      const list = Array.isArray(cs?.value?.list) ? cs.value.list : null;
-      if (list) {
-        CATS = ['همه محصولات', ...list.filter(c => !c.hidden).map(c => c.label)];
-        CKEYS = [null, ...list.filter(c => !c.hidden).map(c => c.key)];
-        hiddenKeys = new Set(list.filter(c => c.hidden).map(c => c.key));
-      }
-      live = rows.length > 0;
-      // نمونه‌ها فقط وقتی که دیتابیس واقعاً هیچ محصولی نداره
-      // مدیرها محصولات مخفی رو هم از دیتابیس می‌گیرن؛ توی سایت نشون داده نمی‌شن
-      products = live ? rows.filter(p => !p.hidden) : SAMPLE;
-      state = 'ready';
-    } catch (e) { console.error(e); if (!live) { products = []; state = 'error'; } }
+  // اینترنت ایران گاهی اتصال به سرور (سنگاپور) رو کند یا قطع می‌کنه: آخرین لیست محصولات روی گوشی
+  // نگه داشته می‌شه و فوراً نشون داده می‌شه، بعد بی‌صدا با نسخه‌ی تازه جایگزین می‌شه.
+  const CACHE_KEY = 'zl-cache-v1';
+  function applyData(rows, list) {
+    if (list) {
+      CATS = ['همه محصولات', ...list.filter(c => !c.hidden).map(c => c.label)];
+      CKEYS = [null, ...list.filter(c => !c.hidden).map(c => c.key)];
+      hiddenKeys = new Set(list.filter(c => c.hidden).map(c => c.key));
+    }
+    live = rows.length > 0;
+    // نمونه‌ها فقط وقتی که دیتابیس واقعاً هیچ محصولی نداره
+    // مدیرها محصولات مخفی رو هم از دیتابیس می‌گیرن؛ توی سایت نشون داده نمی‌شن
+    products = live ? rows.filter(p => !p.hidden) : SAMPLE;
+    state = 'ready';
     // محصولی که دسته‌اش در لیست پنل نیست (و مخفی هم نشده) گم نمی‌شه: دسته‌اش ته منو اضافه می‌شه
     for (const p of products) {
       if (!p.category_label || hiddenKeys.has(p.category)) continue;
       if (p.category ? !CKEYS.includes(p.category) : !CATS.includes(p.category_label)) { CATS.push(p.category_label); CKEYS.push(p.category || null); }
     }
     drawCats(); drawSizes(); render(); renderCart();
+  }
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+  let fromCache = false;
+  async function loadProducts(attempt = 0) {
+    if (!sb) { state = 'error'; render(); return; }
+    if (!attempt && state === 'loading') {
+      const c = ls.get(CACHE_KEY);
+      if (c && Array.isArray(c.rows) && c.rows.length) { fromCache = true; applyData(c.rows, c.list); }
+    }
+    try {
+      const [rows, cs] = await withTimeout(Promise.all([
+        q(sb.from('products').select('*').order('created_at', { ascending: false })),
+        q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle()).catch(() => null),
+      ]), 15000);
+      const list = Array.isArray(cs?.value?.list) ? cs.value.list : null;
+      applyData(rows, list); fromCache = false;
+      ls.set(CACHE_KEY, { t: Date.now(), rows: rows.filter(p => !p.hidden), list });
+    } catch (e) {
+      console.error(e);
+      // یه بار دیگه خودکار امتحان می‌شه؛ اگه لیست ذخیره‌شده داریم، همون نمایش داده می‌مونه
+      if (attempt < 2) { setTimeout(() => loadProducts(attempt + 1), 2500); return; }
+      if (!live) { products = []; state = 'error'; render(); }
+    }
   }
   function drawCats() {
     $('#menuList').innerHTML = ['صفحه اصلی', ...CATS, 'تماس با ما'].map((c, i) => `<a href="${i === CATS.length + 1 ? '#contact' : '#shop'}" data-cat="${i - 1}"${i - 1 === cat ? ' class="on"' : ''}>${esc(c)}<span>‹</span></a>`).join('');
