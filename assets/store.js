@@ -216,6 +216,22 @@
     }
     drawCats(); drawSizes(); render(); renderCart();
   }
+  // اطلاعیه‌ی بالای سایت از پنل (تنظیمات ← اطلاعیه)؛ تا وقتی لود نشده متن پیش‌فرض داخل صفحه نشون داده می‌شه
+  const annLine = l => esc(l).replace(/(?:\+?98|0|۰)?[9۹][0-9۰-۹]{9}(?![0-9۰-۹])/g, m => { const en = toEn(m).replace(/^\+?98/, '0').replace(/^9/, '09'); return `<a href="tel:${en}" dir="ltr">${faDigits(en)}</a>`; });
+  function applyAnnounce(v) {
+    const el = $('#ann'); if (!el || !v) return;
+    const lines = String(v.text || '').split('\n').map(x => x.trim()).filter(Boolean);
+    el.hidden = v.enabled === false || !lines.length;
+    if (el.hidden) { document.documentElement.classList.remove('at-top'); return; }
+    const okc = c => /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : null;
+    const bg = okc(v.bg) || '#3D0D0B', fg = okc(v.fg) || '#F3E6E3';
+    el.style.background = bg; el.style.color = fg;
+    document.documentElement.style.setProperty('--ann-bg', bg);
+    el.className = 'announce' + (v.size === 'sm' || v.size === 'lg' ? ' ann-' + v.size : '');
+    const body = lines.map(v.link ? esc : annLine).join('<br>');
+    const link = /^https?:\/\//i.test(v.link || '') ? v.link : null;
+    el.innerHTML = link ? `<a class="ann-all" href="${esc(link)}"${link.startsWith(location.origin) ? '' : ' target="_blank" rel="noopener"'}>${body}</a>` : body;
+  }
   const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
   let fromCache = false;
   async function loadProducts(attempt = 0) {
@@ -223,17 +239,20 @@
     if (!attempt && state === 'loading') {
       const c = ls.get(CACHE_KEY);
       if (c && Array.isArray(c.rows) && c.rows.length) { fromCache = true; applyData(c.rows, c.list); }
+      if (c && c.ann) applyAnnounce(c.ann);
     }
     try {
       // بار اول از درخواستی که از <head> شروع شده استفاده می‌شه؛ تلاش‌های بعدی از راه معمول
       const early = !attempt && window.__zlEarly; window.__zlEarly = null;
       const [rows, cs] = await withTimeout(early || Promise.all([
         q(sb.from('products').select('*').order('created_at', { ascending: false })),
-        q(sb.from('site_settings').select('value').eq('key', 'categories').maybeSingle()).catch(() => null),
+        q(sb.from('site_settings').select('key, value').in('key', ['categories', 'announce'])).catch(() => []),
       ]), 15000);
-      const list = Array.isArray(cs?.value?.list) ? cs.value.list : null;
+      const set = Object.fromEntries((Array.isArray(cs) ? cs : []).map(r => [r.key, r.value]));
+      const list = Array.isArray(set.categories?.list) ? set.categories.list : null;
+      if (set.announce) applyAnnounce(set.announce);
       applyData(rows, list); fromCache = false;
-      ls.set(CACHE_KEY, { t: Date.now(), rows: rows.filter(p => !p.hidden), list });
+      ls.set(CACHE_KEY, { t: Date.now(), rows: rows.filter(p => !p.hidden), list, ann: set.announce || null });
     } catch (e) {
       console.error(e);
       // یه بار دیگه خودکار امتحان می‌شه؛ اگه لیست ذخیره‌شده داریم، همون نمایش داده می‌مونه

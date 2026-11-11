@@ -266,6 +266,10 @@ html:has(#dlg[open]) .edge{background:#fff}
 .ord-n{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cat-add .in{flex:1}
 @media (max-width:560px){.cat-row{flex-wrap:wrap}.cat-row .in{flex:1 1 calc(100% - 40px)}.cat-n{order:3;margin-right:28px}.cat-b{order:4;margin-right:auto}}
+.an-sw{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.an-sw button{height:34px;padding:0 12px;border-radius:17px;font-size:12px;border:1px solid rgba(0,0,0,.08)}
+.an-col{height:44px;padding:4px}
+.an-prev{margin-top:6px;border-radius:10px;padding:12px 14px;text-align:center;line-height:1.9;transition:background .2s,color .2s}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
 /* eraser */
 .er-b{padding:14px 20px;display:flex;flex-direction:column;gap:12px}
@@ -1621,7 +1625,7 @@ VIEWS.reviews = async () => {
 };
 
 // ═════════ تنظیمات ═════════
-const ACT = { categories: 'ویرایش دسته‌بندی‌ها', product_order: 'ترتیب محصولات', orders_export: 'خروجی اکسل سفارش‌ها', notify_phones: 'شماره‌های پیامک سفارش', order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
+const ACT = { announce: 'اطلاعیه‌ی سایت', categories: 'ویرایش دسته‌بندی‌ها', product_order: 'ترتیب محصولات', orders_export: 'خروجی اکسل سفارش‌ها', notify_phones: 'شماره‌های پیامک سفارش', order_update: 'تغییر سفارش', order_delete: 'حذف سفارش', order_manual: 'سفارش دستی', product_add: 'افزودن محصول', product_edit: 'ویرایش محصول', product_delete: 'حذف محصول', coupon_add: 'کد تخفیف جدید', coupon_edit: 'ویرایش کد تخفیف', coupon_delete: 'حذف کد تخفیف', customer_block: 'مسدود کردن مشتری', customer_unblock: 'رفع مسدودی', customer_reset_password: 'رمز جدید مشتری', review_approve: 'تایید نظر', review_unpublish: 'برداشتن نظر', review_delete: 'حذف نظر', payment_mode: 'حالت پرداخت', admin_add: 'افزودن مدیر', admin_edit: 'تغییر دسترسی مدیر', admin_remove: 'حذف مدیر' };
 // ═════════ مدیرها (فقط مالک‌ها) ═════════
 async function adminFn(body) {
   const { data, error } = await sb.functions.invoke('admin-users', { body });
@@ -1695,10 +1699,11 @@ function adminDialog(a) {
 }
 
 VIEWS.settings = async () => {
-  const [pay, logs, nt] = await Promise.all([
+  const [pay, logs, nt, an] = await Promise.all([
     q(sb.from('site_settings').select('value').eq('key', 'payment').maybeSingle()),
     q(sb.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(60)),
     q(sb.from('site_settings').select('value').eq('key', 'notify').maybeSingle()).catch(() => null),
+    q(sb.from('site_settings').select('value').eq('key', 'announce').maybeSingle()).catch(() => null),
   ]);
   let nPhones = Array.isArray(nt?.value?.phones) ? nt.value.phones : [];
   const modeNow = pay?.value?.mode || 'off';
@@ -1712,6 +1717,17 @@ VIEWS.settings = async () => {
             <label><input type="radio" name="pm" value="live" ${modeNow === 'live' ? 'checked' : ''}><span><b>روشن</b><small>همه‌ی مشتری‌ها قبل از ثبت نهایی از درگاه زیبال پرداخت می‌کنن. کد پذیرنده باید در Secrets ثبت شده باشه.</small></span></label>
           </div>
           <div style="margin-top:12px"><button class="btn" id="pmGo">ذخیره</button></div>
+        </div>
+        <div class="card pad"><h3>اطلاعیه‌ی بالای سایت</h3>
+          <label class="chk"><input type="checkbox" id="anOn">نمایش اطلاعیه</label>
+          <label class="f" style="margin-top:10px">متن (هر خط یک سطر)<textarea class="in" id="anT" rows="3" maxlength="400"></textarea>
+            <span style="font-weight:400">شماره موبایل خودکار قابل لمس می‌شه (تماس).</span></label>
+          <div class="f" style="margin-top:10px"><span>رنگ</span><div class="an-sw" id="anSw"></div></div>
+          <div class="row c2" style="margin-top:6px"><label class="f">پس‌زمینه<input type="color" class="in an-col" id="anBg"></label><label class="f">متن<input type="color" class="in an-col" id="anFg"></label></div>
+          <div class="row c2" style="margin-top:6px"><label class="f">اندازه‌ی متن<select class="in" id="anSz"><option value="sm">کوچیک</option><option value="">معمولی</option><option value="lg">بزرگ</option></select></label>
+            <label class="f">لینک (اختیاری)<input class="in ltr" id="anL" placeholder="https://…" inputmode="url"></label></div>
+          <div class="f" style="margin-top:10px"><span>پیش‌نمایش</span><div class="an-prev" id="anPv"></div></div>
+          <div style="margin-top:12px"><button class="btn" id="anGo">ذخیره</button></div>
         </div>
         <div class="card pad"><h3>پیامک سفارش جدید</h3>
           <p class="small muted" style="margin-bottom:10px">با هر سفارش جدید، برای این شماره‌ها پیامک می‌ره.</p>
@@ -1735,6 +1751,34 @@ VIEWS.settings = async () => {
     try {
       await q(sb.from('site_settings').upsert({ key: 'notify', value: { phones: nPhones }, updated_at: new Date().toISOString() }));
       log('notify_phones', nPhones.map(showPhone).join('، ') || 'خالی'); toast('ذخیره شد');
+    } catch (ex) { fail(ex); }
+    e.target.disabled = false;
+  };
+  // اطلاعیه‌ی بالای سایت
+  const AN_DEF = { enabled: true, text: 'سفارشات طبق روال هر هفته دو بار ارسال می‌شود.\nبرای ارتباط با ما در واتس‌اپ و بله با شماره ۰۹۱۲۱۸۱۶۷۶۲ در ارتباط باشید.', bg: '#3D0D0B', fg: '#F3E6E3', size: '', link: '' };
+  const A = { ...AN_DEF, ...(an?.value || {}) };
+  const SW = [['زرشکی', '#3D0D0B', '#F3E6E3'], ['مشکی', '#1E1413', '#FFFFFF'], ['طلایی', '#C6A57A', '#2B0907'], ['کرم', '#F6EFE9', '#3D0D0B'], ['سبز تیره', '#1F3B2D', '#F1EDE3'], ['قرمز حراج', '#B3261E', '#FFFFFF']];
+  $('#anOn').checked = A.enabled !== false; $('#anT').value = A.text || ''; $('#anBg').value = A.bg; $('#anFg').value = A.fg; $('#anSz').value = A.size || ''; $('#anL').value = A.link || '';
+  $('#anSw').innerHTML = SW.map(([n, b, f]) => `<button type="button" data-sw="${b}|${f}" title="${n}" style="background:${b};color:${f}">${n}</button>`).join('');
+  const anPrev = () => {
+    const lines = $('#anT').value.split('\n').map(x => x.trim()).filter(Boolean);
+    const pv = $('#anPv');
+    pv.style.background = $('#anBg').value; pv.style.color = $('#anFg').value;
+    pv.style.fontSize = { sm: '11.5px', lg: '14px' }[$('#anSz').value] || '12.5px';
+    pv.style.opacity = $('#anOn').checked ? 1 : .4;
+    pv.innerHTML = lines.length ? lines.map(esc).join('<br>') : '<span style="opacity:.6">متنی نوشته نشده</span>';
+  };
+  ['#anOn', '#anT', '#anBg', '#anFg', '#anSz'].forEach(id => $(id).addEventListener('input', anPrev));
+  $('#anSw').onclick = e => { const b = e.target.closest('[data-sw]'); if (!b) return; const [bg, fg] = b.dataset.sw.split('|'); $('#anBg').value = bg; $('#anFg').value = fg; anPrev(); };
+  anPrev();
+  $('#anGo').onclick = async e => {
+    const link = $('#anL').value.trim();
+    if (link && !/^https?:\/\//i.test(link)) return toast('لینک باید با https:// شروع بشه', true);
+    const v = { enabled: $('#anOn').checked, text: $('#anT').value.replace(/\r/g, '').trim().slice(0, 400), bg: $('#anBg').value, fg: $('#anFg').value, size: $('#anSz').value, link };
+    e.target.disabled = true;
+    try {
+      await q(sb.from('site_settings').upsert({ key: 'announce', value: v, updated_at: new Date().toISOString() }));
+      log('announce', v.enabled ? v.text.split('\n')[0].slice(0, 80) : 'خاموش'); toast('ذخیره شد؛ با تازه کردن سایت دیده می‌شه');
     } catch (ex) { fail(ex); }
     e.target.disabled = false;
   };
