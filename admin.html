@@ -20,7 +20,7 @@
 <script>if (window.top === window.self) document.getElementById('noframe').remove(); else window.top.location = window.self.location.href;</script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/bg/removebg.js?v=20261109a"></script>
-<script src="assets/announce.js?v=20261111b"></script>
+<script src="assets/announce.js?v=20261111c"></script>
 <style>
 :root{
   --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
@@ -270,7 +270,9 @@ html:has(#dlg[open]) .edge{background:#fff}
 .an-sw{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .an-sw button{height:34px;padding:0 12px;border-radius:17px;font-size:12px;border:1px solid rgba(0,0,0,.08)}
 .an-col{height:44px;padding:4px}
-.an-prev{margin-top:6px;border-radius:10px;overflow:hidden}
+/* the ticker track is max-content wide: keep it from widening the settings grid (Safari then zooms the page out) */
+.g2 > *,.g2 > * > .card{min-width:0}
+.an-prev{margin-top:6px;border-radius:10px;overflow:hidden;min-width:0;max-width:100%;contain:inline-size}
 .an-prev .announce{font-size:12.5px;text-align:center;padding:12px 14px;line-height:1.9;transition:background .2s,color .2s}
 .an-prev .announce.ann-mq{padding-left:0;padding-right:0}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}

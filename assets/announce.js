@@ -13,7 +13,7 @@
 .ann-rot > span.out{opacity:0;transform:translateY(-10px)}
 /* متن متحرک (راست‌به‌چپ: از همون اول دیده می‌شه و به سمت راست حرکت می‌کنه؛ دو نسخه پشت هم برای حلقه‌ی بی‌وقفه) */
 .announce.ann-mq{padding-left:0;padding-right:0;overflow:hidden}
-.ann-mq-w{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.ann-mq-w{overflow:hidden;max-width:100%;contain:inline-size;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 .ann-mq-t{display:flex;width:max-content;direction:rtl;animation:ann-mq var(--ann-dur,20s) linear infinite}
 .ann-mq-t > span{white-space:nowrap;padding:0 28px}
 .ann-mq-t i{font-style:normal;opacity:.55;margin:0 16px}
