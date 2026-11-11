@@ -20,6 +20,7 @@
 <script>if (window.top === window.self) document.getElementById('noframe').remove(); else window.top.location = window.self.location.href;</script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/bg/removebg.js?v=20261109a"></script>
+<script src="assets/announce.js?v=20261111b"></script>
 <style>
 :root{
   --m:#3D0D0B; --m2:#5A1A16; --tint:#EADCD7; --soft:#FAF6F5; --ink:#1E1413; --mut:#766461; --line:#EFE7E5; --bg:#F7F3F2; --card:#fff;
@@ -269,7 +270,9 @@ html:has(#dlg[open]) .edge{background:#fff}
 .an-sw{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .an-sw button{height:34px;padding:0 12px;border-radius:17px;font-size:12px;border:1px solid rgba(0,0,0,.08)}
 .an-col{height:44px;padding:4px}
-.an-prev{margin-top:6px;border-radius:10px;padding:12px 14px;text-align:center;line-height:1.9;transition:background .2s,color .2s}
+.an-prev{margin-top:6px;border-radius:10px;overflow:hidden}
+.an-prev .announce{font-size:12.5px;text-align:center;padding:12px 14px;line-height:1.9;transition:background .2s,color .2s}
+.an-prev .announce.ann-mq{padding-left:0;padding-right:0}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
 /* eraser */
 .er-b{padding:14px 20px;display:flex;flex-direction:column;gap:12px}
@@ -1726,7 +1729,10 @@ VIEWS.settings = async () => {
           <div class="row c2" style="margin-top:6px"><label class="f">پس‌زمینه<input type="color" class="in an-col" id="anBg"></label><label class="f">متن<input type="color" class="in an-col" id="anFg"></label></div>
           <div class="row c2" style="margin-top:6px"><label class="f">اندازه‌ی متن<select class="in" id="anSz"><option value="sm">کوچیک</option><option value="">معمولی</option><option value="lg">بزرگ</option></select></label>
             <label class="f">لینک (اختیاری)<input class="in ltr" id="anL" placeholder="https://…" inputmode="url"></label></div>
-          <div class="f" style="margin-top:10px"><span>پیش‌نمایش</span><div class="an-prev" id="anPv"></div></div>
+          <div class="row c2" style="margin-top:6px"><label class="f">انیمیشن<select class="in" id="anA">
+              <option value="none">بدون انیمیشن</option><option value="rotate">چرخشی (هر بار یک خط)</option><option value="marquee">متن متحرک</option><option value="shine">درخشش</option><option value="pulse">تپش (جلب توجه)</option></select></label>
+            <label class="f">سرعت<select class="in" id="anS"><option value="slow">آهسته</option><option value="">معمولی</option><option value="fast">سریع</option></select></label></div>
+          <div class="f" style="margin-top:10px"><span>پیش‌نمایش</span><div class="an-prev"><div id="anPv"></div></div></div>
           <div style="margin-top:12px"><button class="btn" id="anGo">ذخیره</button></div>
         </div>
         <div class="card pad"><h3>پیامک سفارش جدید</h3>
@@ -1758,23 +1764,24 @@ VIEWS.settings = async () => {
   const AN_DEF = { enabled: true, text: 'سفارشات طبق روال هر هفته دو بار ارسال می‌شود.\nبرای ارتباط با ما در واتس‌اپ و بله با شماره ۰۹۱۲۱۸۱۶۷۶۲ در ارتباط باشید.', bg: '#3D0D0B', fg: '#F3E6E3', size: '', link: '' };
   const A = { ...AN_DEF, ...(an?.value || {}) };
   const SW = [['زرشکی', '#3D0D0B', '#F3E6E3'], ['مشکی', '#1E1413', '#FFFFFF'], ['طلایی', '#C6A57A', '#2B0907'], ['کرم', '#F6EFE9', '#3D0D0B'], ['سبز تیره', '#1F3B2D', '#F1EDE3'], ['قرمز حراج', '#B3261E', '#FFFFFF']];
-  $('#anOn').checked = A.enabled !== false; $('#anT').value = A.text || ''; $('#anBg').value = A.bg; $('#anFg').value = A.fg; $('#anSz').value = A.size || ''; $('#anL').value = A.link || '';
+  $('#anOn').checked = A.enabled !== false; $('#anT').value = A.text || ''; $('#anBg').value = A.bg; $('#anFg').value = A.fg; $('#anSz').value = A.size || ''; $('#anL').value = A.link || ''; $('#anA').value = A.anim || 'none'; $('#anS').value = A.speed || '';
   $('#anSw').innerHTML = SW.map(([n, b, f]) => `<button type="button" data-sw="${b}|${f}" title="${n}" style="background:${b};color:${f}">${n}</button>`).join('');
+  const anVal = () => ({ enabled: $('#anOn').checked, text: $('#anT').value.replace(/\r/g, '').trim().slice(0, 400), bg: $('#anBg').value, fg: $('#anFg').value, size: $('#anSz').value, link: $('#anL').value.trim(), anim: $('#anA').value, speed: $('#anS').value });
+  // پیش‌نمایش با همون کدی ساخته می‌شه که سایت استفاده می‌کنه (assets/announce.js)
   const anPrev = () => {
-    const lines = $('#anT').value.split('\n').map(x => x.trim()).filter(Boolean);
-    const pv = $('#anPv');
-    pv.style.background = $('#anBg').value; pv.style.color = $('#anFg').value;
-    pv.style.fontSize = { sm: '11.5px', lg: '14px' }[$('#anSz').value] || '12.5px';
-    pv.style.opacity = $('#anOn').checked ? 1 : .4;
-    pv.innerHTML = lines.length ? lines.map(esc).join('<br>') : '<span style="opacity:.6">متنی نوشته نشده</span>';
+    const pv = $('#anPv'), v = anVal();
+    if (!v.text) { clearInterval(pv._annT); pv.className = 'announce'; pv.innerHTML = '<span style="opacity:.6">متنی نوشته نشده</span>'; return; }
+    if (window.ZLAnn) ZLAnn.render(pv, { ...v, link: '' });
+    pv.style.opacity = v.enabled ? 1 : .4;
   };
-  ['#anOn', '#anT', '#anBg', '#anFg', '#anSz'].forEach(id => $(id).addEventListener('input', anPrev));
+  let anDeb; const anPrevD = () => { clearTimeout(anDeb); anDeb = setTimeout(anPrev, 150); };
+  ['#anOn', '#anT', '#anBg', '#anFg', '#anSz', '#anA', '#anS'].forEach(id => $(id).addEventListener('input', anPrevD));
   $('#anSw').onclick = e => { const b = e.target.closest('[data-sw]'); if (!b) return; const [bg, fg] = b.dataset.sw.split('|'); $('#anBg').value = bg; $('#anFg').value = fg; anPrev(); };
   anPrev();
   $('#anGo').onclick = async e => {
     const link = $('#anL').value.trim();
     if (link && !/^https?:\/\//i.test(link)) return toast('لینک باید با https:// شروع بشه', true);
-    const v = { enabled: $('#anOn').checked, text: $('#anT').value.replace(/\r/g, '').trim().slice(0, 400), bg: $('#anBg').value, fg: $('#anFg').value, size: $('#anSz').value, link };
+    const v = { ...anVal(), link };
     e.target.disabled = true;
     try {
       await q(sb.from('site_settings').upsert({ key: 'announce', value: v, updated_at: new Date().toISOString() }));

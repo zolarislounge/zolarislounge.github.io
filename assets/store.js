@@ -216,21 +216,15 @@
     }
     drawCats(); drawSizes(); render(); renderCart();
   }
-  // اطلاعیه‌ی بالای سایت از پنل (تنظیمات ← اطلاعیه)؛ تا وقتی لود نشده متن پیش‌فرض داخل صفحه نشون داده می‌شه
-  const annLine = l => esc(l).replace(/(?:\+?98|0|۰)?[9۹][0-9۰-۹]{9}(?![0-9۰-۹])/g, m => { const en = toEn(m).replace(/^\+?98/, '0').replace(/^9/, '09'); return `<a href="tel:${en}" dir="ltr">${faDigits(en)}</a>`; });
+  // اطلاعیه‌ی بالای سایت از پنل (تنظیمات ← اطلاعیه)؛ تا وقتی لود نشده متن پیش‌فرض داخل صفحه نشون داده می‌شه.
+  // ساخت متن، رنگ و انیمیشن در assets/announce.js (همون کد پیش‌نمایش پنل)
   function applyAnnounce(v) {
-    const el = $('#ann'); if (!el || !v) return;
-    const lines = String(v.text || '').split('\n').map(x => x.trim()).filter(Boolean);
-    el.hidden = v.enabled === false || !lines.length;
-    if (el.hidden) { document.documentElement.classList.remove('at-top'); return; }
-    const okc = c => /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : null;
-    const bg = okc(v.bg) || '#3D0D0B', fg = okc(v.fg) || '#F3E6E3';
-    el.style.background = bg; el.style.color = fg;
+    const el = $('#ann'); if (!el || !v || !window.ZLAnn) return;
+    const hasText = String(v.text || '').trim().length > 0;
+    el.hidden = v.enabled === false || !hasText;
+    if (el.hidden) { clearInterval(el._annT); document.documentElement.classList.remove('at-top'); return; }
+    const { bg } = ZLAnn.render(el, v);
     document.documentElement.style.setProperty('--ann-bg', bg);
-    el.className = 'announce' + (v.size === 'sm' || v.size === 'lg' ? ' ann-' + v.size : '');
-    const body = lines.map(v.link ? esc : annLine).join('<br>');
-    const link = /^https?:\/\//i.test(v.link || '') ? v.link : null;
-    el.innerHTML = link ? `<a class="ann-all" href="${esc(link)}"${link.startsWith(location.origin) ? '' : ' target="_blank" rel="noopener"'}>${body}</a>` : body;
   }
   const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
   let fromCache = false;
