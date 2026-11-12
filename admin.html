@@ -275,6 +275,9 @@ html:has(#dlg[open]) .edge{background:#fff}
 .an-prev{margin-top:6px;border-radius:10px;overflow:hidden;min-width:0;max-width:100%;contain:inline-size}
 .an-prev .announce{font-size:12.5px;text-align:center;padding:12px 14px;line-height:1.9;transition:background .2s,color .2s}
 .an-prev .announce.ann-mq{padding-left:0;padding-right:0}
+.ad-st{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.on-dot{width:8px;height:8px;border-radius:50%;background:#2E7D4F;box-shadow:0 0 0 3px rgba(46,125,79,.18)}
+.on-t{color:#2E7D4F;font-weight:600}
 .bg-opts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
 /* eraser */
 .er-b{padding:14px 20px;display:flex;flex-direction:column;gap:12px}
@@ -659,8 +662,10 @@ async function boot() {
   // فقط بخش‌هایی که این مدیر بهشون دسترسی داره (سمت دیتابیس هم همین محدودیت اعمال می‌شه)
   $$('#menu button[data-v]').forEach(b => { b.hidden = !canView(b.dataset.v); });
   $('#login').hidden = true; $('#app').hidden = false;
-  sb.rpc('admin_heartbeat').then(() => {});
-  setInterval(() => sb.rpc('admin_heartbeat').then(() => {}), 60000);
+  // حضور در پنل: هر ۶۰ ثانیه، و هر بار که پنل دوباره جلوی چشمه (موبایل تب‌های پس‌زمینه رو متوقف می‌کنه)
+  const beat = () => { if (document.visibilityState === 'visible') sb.rpc('admin_heartbeat').then(() => {}, () => {}); };
+  beat(); setInterval(beat, 60000);
+  document.addEventListener('visibilitychange', beat); addEventListener('focus', beat);
   go(location.hash.slice(1) || firstView());
   refreshBadges(); setInterval(refreshBadges, 60000);
 }
@@ -1641,8 +1646,33 @@ async function adminFn(body) {
 }
 const ADMIN_ERR = { bad_phone: 'شماره موبایل درست نیست', short_password: 'رمز عبور باید حداقل ۶ کاراکتر باشه', need_password: 'این شماره هنوز حساب نداره؛ یه رمز عبور براش بذار تا بتونه وارد بشه', owner_password: 'رمز مالک‌ها از این بخش عوض نمی‌شه', owner_locked: 'مالک فروشگاه حذف نمی‌شه', owner_only: 'این بخش فقط برای مالک‌هاست', not_found: 'این مدیر پیدا نشد', create_failed: 'ساخت حساب انجام نشد' };
 const adminErr = e => ADMIN_ERR[e.message] || errText(e);
+// زمان آنلاین مدیرها از جلسه‌های پنل (admin_sessions، با ضربان هر دقیقه) — نه «آخرین ورود» که فقط زمان لاگینه
+const TEHRAN_OFF = 3.5 * 3600e3;
+const tehranMidnight = () => { const t = new Date(Date.now() + TEHRAN_OFF); return Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()) - TEHRAN_OFF; };
+const dur = ms => { const m = Math.round(ms / 60000); if (m < 1) return 'کمتر از ۱ دقیقه'; const h = Math.floor(m / 60), r = m % 60; return (h ? fa(h) + ' ساعت' : '') + (h && r ? ' و ' : '') + (r ? fa(r) + ' دقیقه' : ''); };
+function presence(rows) {
+  const now = Date.now(), day = tehranMidnight(), by = {};
+  for (const r of rows) {
+    const a = new Date(r.started_at).getTime(), b = new Date(r.ended_at).getTime() + 60e3;   // هر ضربان یعنی حداقل یک دقیقه حضور
+    const p = by[r.phone] || (by[r.phone] = { last: 0, today: 0, week: 0 });
+    p.last = Math.max(p.last, new Date(r.ended_at).getTime());
+    p.today += Math.max(0, Math.min(b, now) - Math.max(a, day));
+    p.week += Math.max(0, Math.min(b, now) - Math.max(a, now - 7 * 864e5));
+  }
+  return by;
+}
 VIEWS.admins = async () => {
-  const { admins } = await adminFn({ action: 'list' });
+  const [{ admins }, sess] = await Promise.all([adminFn({ action: 'list' }),
+    q(sb.from('admin_sessions').select('phone, started_at, ended_at').gte('ended_at', new Date(Date.now() - 7 * 864e5).toISOString()).limit(5000)).catch(() => [])]);
+  const pres = presence(sess || []);
+  const status = a => {
+    const p = pres[a.phone];
+    const online = p && Date.now() - p.last < 150e3;
+    const lastTxt = p ? (online ? '<span class="on-dot"></span><b class="on-t">آنلاین</b>' : `آخرین فعالیت ${ago(p.last)} <span class="muted">(${esc(ftime(p.last))})</span>`)
+      : a.last_sign_in_at ? `آخرین ورود ${ago(a.last_sign_in_at)}` : a.has_account ? 'هنوز وارد نشده' : 'حساب ساخته نشده';
+    const usage = p && (p.today || p.week) ? `<div class="small muted">امروز: ${p.today ? dur(p.today) : '—'} · ۷ روز اخیر: ${dur(p.week)}</div>` : '';
+    return `<div class="small ad-st">${lastTxt}</div>${usage}`;
+  };
   const permChips = a => a.role === 'owner' ? '<span class="pill ok">دسترسی کامل + مدیریت مدیرها</span>'
     : a.perms.length ? a.perms.map(k => `<span class="pill">${esc((PERMS.find(x => x[0] === k) || [k, k])[1])}</span>`).join(' ')
     : '<span class="pill cancel">بدون دسترسی</span>';
@@ -1653,7 +1683,7 @@ VIEWS.admins = async () => {
     <div class="olist">${admins.map(a => `<div class="card ad-row">
       <div class="ad-av">${esc((a.name || 'Z').trim().charAt(0))}</div>
       <div class="ad-b"><div class="ad-h"><b>${esc(a.name || 'بدون نام')}</b>${a.role === 'owner' ? '<span class="pill new">مالک</span>' : '<span class="pill">مدیر</span>'}${a.phone === me.phone ? '<span class="pill">شما</span>' : ''}</div>
-        <div class="small muted num ltr" style="text-align:right">${esc(showPhone(a.phone))} · ${a.last_sign_in_at ? 'آخرین ورود ' + ago(a.last_sign_in_at) : a.has_account ? 'هنوز وارد نشده' : 'حساب ساخته نشده'}</div>
+        <div class="small muted num ltr" style="text-align:right">${esc(showPhone(a.phone))}</div>${status(a)}
         <div class="ad-p">${permChips(a)}</div></div>
       <div class="ad-a"><button class="btn ghost sm" data-ed="${esc(a.phone)}">ویرایش</button>${a.role === 'owner' ? '' : `<button class="btn danger sm" data-rmv="${esc(a.phone)}">حذف</button>`}</div>
     </div>`).join('')}</div>`;
