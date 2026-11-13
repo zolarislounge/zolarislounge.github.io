@@ -378,8 +378,7 @@
         }
         if (!addToCart(p.id, sel, qty, true)) return;
         added = true; draw();
-        // a short confirmation, then the cart opens so the customer sees it landed
-        setTimeout(() => { if ($('#pv').classList.contains('on')) { renderCart(); open('cart'); } }, 850);
+        addedAlert(p, sel, qty);   // مشتری خودش تصمیم می‌گیره بره سبد یا ادامه بده
       };
     };
     loadReviews(p);
@@ -535,6 +534,18 @@
     saveCart(); renderCart(); if (!quiet) toast('به سبد خرید اضافه شد'); track('cart', id);
     return true;
   }
+  // هشدار «کالا اضافه شد» بالای صفحه با دکمه‌ی رفتن به سبد؛ خودکار بعد از چند ثانیه بسته می‌شه
+  let addT = 0;
+  function addedAlert(p, variant, qty) {
+    const el = $('#added'); if (!el || !p) return;
+    $('#addedIm').innerHTML = p.image_url ? thumbImg(p.image_url, p.name) : '';
+    $('#addedN').textContent = p.name + (qty > 1 ? ' × ' + fa(qty) : '');
+    $('#addedV').textContent = variant || '';
+    el.hidden = false; el.classList.remove('on', 'ok'); void el.offsetWidth; el.classList.add('on', 'ok');
+    clearTimeout(addT); addT = setTimeout(hideAdded, 4500);
+    try { navigator.vibrate && navigator.vibrate(18); } catch (e) { }
+  }
+  function hideAdded() { const el = $('#added'); if (!el || !el.classList.contains('on')) return; clearTimeout(addT); el.classList.remove('on'); setTimeout(() => { if (!el.classList.contains('on')) el.hidden = true; }, 350); }
   function cartLines() {
     return cart.map(i => ({ ...i, p: products.find(x => x.id === i.id) })).filter(l => l.p && !l.p.sample);
   }
@@ -1156,7 +1167,7 @@
       const p = products.find(x => x.id === +fa_.dataset.fadd), o = p && optsOf(p);
       // محصولی که فقط یک سایز/رنگ داره، همون انتخاب می‌شه
       const v = o ? [o.sizes.length ? o.sizes[0] : null, o.colors.length ? o.colors[0].name : null].filter(Boolean).join(SEP) || null : null;
-      if (p && addToCart(p.id, v, 1, true)) { fa_.classList.add('done'); fa_.innerHTML = `${IC.check}<span>به سبد اضافه شد</span>`; setTimeout(() => { if (fa_.isConnected) { fa_.classList.remove('done'); fa_.innerHTML = `${IC.bag}<span>افزودن به سبد</span>`; } }, 1600); }
+      if (p && addToCart(p.id, v, 1, true)) { addedAlert(p, v, 1); fa_.classList.add('done'); fa_.innerHTML = `${IC.check}<span>به سبد اضافه شد</span>`; setTimeout(() => { if (fa_.isConnected) { fa_.classList.remove('done'); fa_.innerHTML = `${IC.bag}<span>افزودن به سبد</span>`; } }, 1600); }
       return;
     }
     const vw = t.closest('[data-view]'); if (vw) { openProduct(+vw.dataset.view); return; }
@@ -1182,7 +1193,9 @@
     if (t.closest('#filter .dfoot [data-close]')) { closeAll(); scrollToEl($('#shop')); return; }
     if (t.closest('[data-close]') || t === scrim || t.id === 'acct') { closeAll(); return; }
     const a = t.closest('[data-add]');
-    if (a) { if (addToCart(+a.dataset.add, null, 1)) { a.classList.add('done'); a.textContent = 'اضافه شد ✓'; setTimeout(() => { a.classList.remove('done'); a.textContent = 'افزودن به سبد خرید'; }, 1300); } return; }
+    if (a) { if (addToCart(+a.dataset.add, null, 1, true)) { addedAlert(products.find(x => x.id === +a.dataset.add), null, 1); a.classList.add('done'); a.textContent = 'اضافه شد ✓'; setTimeout(() => { a.classList.remove('done'); a.textContent = 'افزودن به سبد خرید'; }, 1300); } return; }
+    if (t.closest('#addedGo')) { hideAdded(); renderCart(); open('cart'); return; }
+    if (t.closest('#addedX')) { hideAdded(); return; }
     const cq = t.closest('[data-cq]');
     if (cq) { const l = cartLines()[+cq.dataset.cq]; const i = cart.find(x => x.id === l.id && x.variant === l.variant); i.qty += +cq.dataset.d; if (i.qty <= 0) cart.splice(cart.indexOf(i), 1); saveCart(); renderCart(); return; }
     const r = t.closest('[data-rm]');

@@ -592,8 +592,8 @@ html.ovl:not(.full):not(.zfull) .edge{background:#9A918F}
 .lg-out{align-self:center;color:var(--mut)!important}
 /* iOS 26 Safari toolbar: what shows under the floating bar is the page itself */
 html.ovl .scrim{position:absolute;bottom:auto;height:var(--doc-h,100%)}
-@media (max-width:640px){html.full body > :not(.drawer.on):not(.sheet.on):not(#zv):not(.toast):not(.edge){visibility:hidden}}
-html.zfull body > :not(#zv):not(.toast):not(.edge){visibility:hidden}
+@media (max-width:640px){html.full body > :not(.drawer.on):not(.sheet.on):not(#zv):not(.toast):not(#added):not(.edge){visibility:hidden}}
+html.zfull body > :not(#zv):not(.toast):not(#added):not(.edge){visibility:hidden}
 html.full,html.full body,html.zfull,html.zfull body{background:#fff}
 
 /* browser surfaces */
@@ -771,6 +771,33 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   .ft-trust{justify-content:flex-start}
   .ft-wm{width:560px;left:-120px;bottom:-110px}
 }
+
+/* «کالا اضافه شد» */
+.added{position:fixed;z-index:97;left:12px;right:12px;top:max(12px,calc(env(safe-area-inset-top) + 8px));max-width:520px;margin:0 auto;background:#fff;border-radius:22px;box-shadow:0 18px 50px rgba(30,10,8,.22),0 2px 8px rgba(30,10,8,.08);padding:12px 14px 12px;overflow:hidden;transform:translateY(-130%);opacity:0;transition:transform .45s cubic-bezier(.32,.72,0,1),opacity .3s}
+.added.on{transform:none;opacity:1}
+.added[hidden]{display:none}
+.added-h{display:flex;align-items:center;gap:10px}
+.added-x{width:40px;height:40px;display:grid;place-items:center;flex:none;color:var(--ink)}
+.added-x svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.added-t{flex:1;display:flex;align-items:center;gap:8px;color:#2E7D4F;font-size:16px;font-weight:700}
+.added-ck{width:22px;height:22px;fill:none;stroke:#2E7D4F;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.added-ck circle{stroke-dasharray:60;stroke-dashoffset:60}.added-ck path{stroke-dasharray:16;stroke-dashoffset:16}
+.added.ok .added-ck circle{animation:ad-draw .55s cubic-bezier(.65,0,.35,1) forwards}
+.added.ok .added-ck path{animation:ad-draw .3s .45s cubic-bezier(.65,0,.35,1) forwards}
+@keyframes ad-draw{to{stroke-dashoffset:0}}
+.added-go{display:inline-flex;align-items:center;gap:4px;height:42px;padding:0 16px 0 10px;border-radius:21px;background:#F1EEEE;color:var(--ink);font-size:14px;font-weight:500;flex:none;transition:transform .16s ease-out,background .2s}
+.added-go:active{transform:scale(.96);background:#E8E3E2}
+.added-go svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.added-p{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 6px 2px;border-top:1px solid var(--line)}
+.added-im{width:44px;height:56px;flex:none;background:#FAF7F6;overflow:hidden;border-radius:8px}
+.added-im img{width:100%;height:100%;object-fit:cover}
+.added-p b{display:block;font-size:13.5px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62vw}
+.added-p small{display:block;font-size:12px;color:var(--mut)}
+.added-p small:empty{display:none}
+.added-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#2E7D4F;opacity:.35;transform-origin:left;transform:scaleX(0)}
+.added.ok .added-bar{animation:ad-bar 4.5s linear forwards}
+@keyframes ad-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.added{transition:opacity .2s}.added-ck circle,.added-ck path{stroke-dashoffset:0;animation:none!important}}
 </style>
 </head>
 <body>
@@ -916,6 +943,15 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <div class="search" id="search"><form onsubmit="return false"><input type="search" placeholder="جستجو در محصولات…" aria-label="جستجو"><button type="button" class="ib" data-close aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></form></div>
 <div class="toast" id="toast"></div>
+<div class="added" id="added" role="status" aria-live="polite" hidden>
+  <div class="added-h">
+    <button class="added-x" id="addedX" aria-label="بستن"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <b class="added-t"><svg class="added-ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.3 3 3 6-6.3"/></svg>کالا اضافه شد!</b>
+    <button class="added-go" id="addedGo">برو به سبد خرید<svg viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></svg></button>
+  </div>
+  <div class="added-p"><span class="added-im" id="addedIm"></span><span><b id="addedN"></b><small id="addedV"></small></span></div>
+  <i class="added-bar"></i>
+</div>
 
 <div class="zv" id="zv" hidden role="dialog" aria-modal="true" aria-label="بزرگ‌نمایی عکس">
   <div class="zv-stage"><img alt=""></div>
@@ -927,7 +963,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261113a"></script>
+<script src="assets/store.js?v=20261113b"></script>
 <script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>
 </html>
