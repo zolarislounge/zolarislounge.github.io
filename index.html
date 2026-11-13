@@ -133,15 +133,6 @@ header.scrolled .brand{transform:scale(.9)}
 .feat div{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;font-size:13.5px;font-weight:500}
 .feat svg{width:24px;height:24px;stroke:var(--m);fill:none;stroke-width:1.3}
 .feat small{color:var(--mut);font-size:12px;font-weight:400}
-footer{background:var(--m);color:#E3CFCB;font-size:13.5px}
-footer .wrap{display:grid;gap:30px;padding-top:44px;padding-bottom:28px}
-@media (min-width:768px){footer .wrap{grid-template-columns:1fr 1.4fr auto}}
-footer h4{color:#fff;font-weight:500;font-size:14px;margin-bottom:10px}
-footer li{list-style:none;margin:6px 0}
-footer a:hover{color:#fff}
-.f-brand img{height:96px;margin-bottom:10px}
-.f-trust a{display:inline-block;background:#fff;border-radius:10px;padding:8px;line-height:0}
-.f-trust img{width:100px;height:auto;min-height:60px}
 .copy{border-top:1px solid rgba(255,255,255,.12);padding:16px;text-align:center;font-size:12px;color:#BFA19B}
 
 /* whatsapp */
@@ -723,6 +714,63 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 .cnt.bump{animation:zl-bump .38s var(--ease)}
 @keyframes zl-bump{35%{transform:scale(1.32)}}
 @media (prefers-reduced-motion:reduce){.cnt.bump{animation:none}}
+/* ───── footer ───── */
+.ft2{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 85% 0%,#5a1a16 0%,#3D0D0B 45%,#2a0907 100%);color:#E6D3CE;font-size:13.5px}
+.ft2 .wrap{position:relative;z-index:1}
+.ft-wm{position:absolute;left:-90px;bottom:-60px;width:420px;opacity:.05;pointer-events:none}
+.ft-wm img{width:100%}
+.ft-k{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.42em;color:var(--gold);margin-bottom:8px;direction:ltr}
+.ft-ig{display:grid;gap:18px;padding-top:40px;padding-bottom:34px;border-bottom:1px solid rgba(198,165,122,.22)}
+.ft-ig h3{font-size:20px;font-weight:700;color:#fff;line-height:1.5}
+.ft-ig-btn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;height:42px;padding:0 18px;border:1px solid rgba(198,165,122,.6);color:#fff;font-family:var(--sans);font-size:13.5px;transition:background .25s,transform .16s ease-out}
+.ft-ig-btn svg{width:18px;height:18px}
+.ft-ig-btn:active{transform:scale(.97)}
+.ft-ig-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ft-ig-g a{aspect-ratio:3/4;overflow:hidden;background:rgba(255,255,255,.06)}
+.ft-ig-g img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+@media (hover:hover) and (pointer:fine){.ft-ig-g a:hover img{transform:scale(1.06)}.ft-ig-btn:hover{background:rgba(255,255,255,.06)}.ft2 a:hover{color:#fff}.ft-soc a:hover{background:var(--gold);color:var(--m);border-color:var(--gold)}}
+.ft-main{display:grid;gap:6px;padding-top:34px;padding-bottom:26px}
+.ft-brand{text-align:center;padding-bottom:22px}
+.ft-brand img{height:86px;display:block;margin:0 auto}
+.ft-brand p{margin-top:10px;color:#D9C2BC;font-size:13px}
+.ft-soc{display:flex;justify-content:center;gap:10px;margin-top:16px}
+.ft-soc a{width:42px;height:42px;border-radius:50%;border:1px solid rgba(198,165,122,.5);display:grid;place-items:center;color:#fff;transition:background .25s,color .25s,border-color .25s,transform .16s ease-out}
+.ft-soc a:active{transform:scale(.92)}
+.ft2 svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ft-col{border-top:1px solid rgba(255,255,255,.1)}
+.ft-col summary,.ft-col h4{display:flex;align-items:center;justify-content:space-between;padding:15px 0;color:#fff;font-weight:600;font-size:14px;list-style:none;cursor:pointer}
+.ft-col summary::-webkit-details-marker{display:none}
+.ft-chev{transition:transform .3s var(--ease);opacity:.7}
+.ft-col[open] .ft-chev{transform:rotate(180deg)}
+.ft-col ul{list-style:none;padding:0 0 14px;display:grid;gap:2px}
+.ft-col li a{display:block;padding:7px 0;color:#E0CBC6;transition:color .2s,padding .25s var(--ease)}
+.ft-col li a:active{color:#fff}
+.ft-contact{padding-bottom:10px}
+.ft-ci{display:flex;gap:12px;align-items:flex-start;padding:8px 0;line-height:1.8;color:#E6D3CE}
+.ft-ci svg{margin-top:4px;color:var(--gold)}
+.ft-ci small{display:block;font-size:11.5px;color:#BFA19B}
+.ft-ci b{font-weight:600;color:#fff;font-size:15px;letter-spacing:.02em}
+.ft-trust{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:16px;color:#D9C2BC;font-size:12.5px}
+.ft-trust a{display:inline-block;background:#fff;border-radius:12px;padding:8px;line-height:0}
+.ft-trust img{width:84px;height:auto;min-height:60px}
+.ft-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid rgba(198,165,122,.22);padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));font-size:11.5px;color:#BFA19B}
+.ft-by{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);letter-spacing:.04em;color:#BFA19B;min-height:36px;transition:color .2s}
+.ft2 .ft-by svg{width:16px;height:16px;color:var(--gold)}
+.ft-by:active{color:#fff}
+.ft-top{width:40px;height:40px;border-radius:50%;border:1px solid rgba(198,165,122,.5);display:grid;place-items:center;color:#fff;transition:transform .16s ease-out}
+.ft-top:active{transform:scale(.92)}
+@media (max-width:767px){.ft-bottom{flex-direction:column;text-align:center}.ft-top{position:absolute;left:16px;top:12px}}
+@media (min-width:768px){
+  .ft-ig{grid-template-columns:1fr 1.6fr;align-items:center;gap:40px;padding-top:54px;padding-bottom:46px}
+  .ft-ig h3{font-size:26px}
+  .ft-main{grid-template-columns:1.3fr .9fr .9fr 1.5fr;grid-template-areas:"b c s t" "x x x x";column-gap:44px;row-gap:28px;padding-top:48px}
+  .ft-brand{grid-area:b}.ft-main > details:nth-of-type(1){grid-area:c}.ft-main > details:nth-of-type(2){grid-area:s}.ft-contact{grid-area:t}.ft-trust{grid-area:x}
+  .ft-brand{text-align:right;padding:0}.ft-brand img{margin:0}.ft-soc{justify-content:flex-start}
+  .ft-col{border:0}.ft-col summary{pointer-events:none;padding-top:0}.ft-chev{display:none}
+  .ft-col h4{padding-top:0}
+  .ft-trust{justify-content:flex-start}
+  .ft-wm{width:560px;left:-120px;bottom:-110px}
+}
 </style>
 </head>
 <body>
@@ -761,20 +809,42 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   </div>
 </section>
 
-<footer id="contact">
-  <div class="wrap">
-    <div class="f-brand"><img src="assets/logo-full-white.png" alt="Zolaris Lounge"><p>طراحی شده برای زنانی که الهام‌بخش هستند</p></div>
-    <div><h4>تماس با ما</h4><ul>
-      <li>تلفن و واتس‌اپ/بله: <a href="tel:09121816762" dir="ltr">۰۹۱۲۱۸۱۶۷۶۲</a></li>
-      <li>قزوین، فلسطین، روبه‌روی مخابرات، بین کافه سور و هایپرمارکت، پلاک ۳۸۰، طبقه ۳، واحد زولاریس</li>
-      <li>اینستاگرام: <a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" dir="ltr">@zolaris.lounge</a></li>
-    </ul></div>
-    <div class="f-trust"><h4>نماد اعتماد</h4>
+<footer id="contact" class="ft2">
+  <div class="ft-wm" aria-hidden="true"><img src="assets/logo-z-white.png" alt=""></div>
+  <section class="ft-ig wrap">
+    <div class="ft-ig-h"><span class="ft-k">INSTAGRAM</span><h3>استایل‌های زولاریس رو<br>در اینستاگرام ببین</h3>
+      <a class="ft-ig-btn" href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg><span dir="ltr">@zolaris.lounge</span></a></div>
+    <div class="ft-ig-g"><a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" aria-label="اینستاگرام زولاریس"><img src="https://avwgfmdnwibtxurlnphw.supabase.co/storage/v1/object/public/image/products/1794170728699-6o556x.jpg.t.jpg" alt="" loading="lazy"></a><a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" aria-label="اینستاگرام زولاریس"><img src="https://avwgfmdnwibtxurlnphw.supabase.co/storage/v1/object/public/image/products/1794168258168-4tq710.jpg.t.jpg" alt="" loading="lazy"></a><a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" aria-label="اینستاگرام زولاریس"><img src="https://avwgfmdnwibtxurlnphw.supabase.co/storage/v1/object/public/image/products/1793862387252-zh4tuf.jpeg.t.jpg" alt="" loading="lazy"></a><a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" aria-label="اینستاگرام زولاریس"><img src="https://avwgfmdnwibtxurlnphw.supabase.co/storage/v1/object/public/image/products/1794168260441-oryj68.jpg.t.jpg" alt="" loading="lazy"></a></div>
+  </section>
+  <div class="ft-main wrap">
+    <div class="ft-brand">
+      <img src="assets/logo-full-white.png" alt="Zolaris Lounge">
+      <p>طراحی شده برای زنانی که الهام‌بخش هستند</p>
+      <div class="ft-soc">
+        <a href="https://www.instagram.com/zolaris.lounge" target="_blank" rel="noopener" aria-label="اینستاگرام"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg></a>
+        <a href="https://wa.me/989121816762" target="_blank" rel="noopener" aria-label="واتس‌اپ"><svg viewBox="0 0 24 24"><path d="M4 20l1.3-4.2A8 8 0 1 1 8.4 19z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1.2-1.2 1.8.8c-.3 1.2-1.3 1.9-2.5 1.7-3-.5-5.6-3.1-6.1-6.1-.2-1.2.5-2.2 1.7-2.5l.8 1.8z"/></svg></a>
+        <a href="tel:09121816762" aria-label="تماس"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg></a>
+      </div>
+    </div>
+    <details class="ft-col" open><summary>دسته‌بندی‌ها<svg class="ft-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
+      <li><a href="#shop" data-cat="0">همه‌ی محصولات</a></li><li><a href="#shop" data-cat="1">بافت و پلیور</a></li><li><a href="#shop" data-cat="2">مانتو، کت و جلیقه</a></li><li><a href="#shop" data-cat="3">پالتو</a></li><li><a href="#shop" data-cat="10">بامبرجکت</a></li></ul></details>
+    <details class="ft-col"><summary>خدمات مشتریان<svg class="ft-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
+      <li><a href="#" data-open="acct">حساب کاربری</a></li><li><a href="#" data-open="acct">پیگیری سفارش</a></li><li><a href="#" id="ftFav">علاقه‌مندی‌ها</a></li><li><a href="#" data-open="cart">سبد خرید</a></li>
+      <li><a href="https://wa.me/989121816762?text=%D8%B3%D9%84%D8%A7%D9%85" target="_blank" rel="noopener">راهنمای سایز و خرید</a></li></ul></details>
+    <div class="ft-col ft-contact"><h4>تماس با ما</h4>
+      <a class="ft-ci" href="tel:09121816762"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg><span><small>تلفن، واتس‌اپ و بله</small><b dir="ltr">۰۹۱۲ ۱۸۱ ۶۷۶۲</b></span></a>
+      <a class="ft-ci" href="https://www.google.com/maps/search/?api=1&query=%D9%82%D8%B2%D9%88%DB%8C%D9%86%20%D8%AE%DB%8C%D8%A7%D8%A8%D8%A7%D9%86%20%D9%81%D9%84%D8%B3%D8%B7%DB%8C%D9%86%20%D8%B1%D9%88%D8%A8%D8%B1%D9%88%DB%8C%20%D9%85%D8%AE%D8%A7%D8%A8%D8%B1%D8%A7%D8%AA" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span><small>آدرس فروشگاه · مسیریابی</small>قزوین، فلسطین، روبه‌روی مخابرات، بین کافه سور و هایپرمارکت، پلاک ۳۸۰، طبقه ۳، واحد زولاریس</span></a>
+    </div>
+    <div class="ft-trust"><span>نماد اعتماد</span>
       <!-- Enamad trust seal: keep exactly as issued (no rel="noopener noreferrer") -->
       <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=8582669&Code=Leth3SbKnkGCo3EQscGrLuXmiBZCp6fe'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=8582669&Code=Leth3SbKnkGCo3EQscGrLuXmiBZCp6fe' alt='' style='cursor:pointer' code='Leth3SbKnkGCo3EQscGrLuXmiBZCp6fe'></a>
     </div>
   </div>
-  <div class="copy">© Zolaris Lounge — تمام حقوق محفوظ است</div>
+  <div class="ft-bottom wrap">
+    <span>© ۱۴۰۵ Zolaris Lounge · تمام حقوق محفوظ است</span>
+    <a class="ft-by" href="https://instagram.com/webbuilder_ir" target="_blank" rel="noopener" aria-label="اینستاگرام Webbuilder_ir">طراحی و توسعه: <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg><span dir="ltr">Webbuilder_ir</span></a>
+    <button class="ft-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="بازگشت به بالا"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+  </div>
 </footer>
 
 <a class="wa" href="https://wa.me/989121816762" target="_blank" rel="noopener" aria-label="گفتگو در واتس‌اپ"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg></a>
@@ -857,6 +927,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261111b"></script>
+<script src="assets/store.js?v=20261113a"></script>
+<script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>
 </html>
