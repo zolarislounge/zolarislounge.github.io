@@ -155,6 +155,9 @@ header.scrolled .brand{transform:scale(.9)}
 .edge{position:fixed;left:0;right:0;height:2px;background:#fff;z-index:45;pointer-events:none;opacity:0;transition:background-color .35s}
 .edge-t{top:0}.edge-b{bottom:0}
 html.at-top .edge-t{background:var(--ann-bg,var(--m))}
+/* footer reaches the bottom: Safari's bottom bar and the rubber-band area match the footer, not white */
+html{background:#2a0907}
+html.at-bottom .edge-b{background:#2a0907}
 /* full-screen pages: the top strip matches the page that is open, not the page behind */
 html.full .edge.edge-t,html.zfull .edge.edge-t{background:#fff}
 html.full:has(#acct.on,#cart.on,#favs.on):not(.zfull) .edge.edge-t{background:#4A120F}
@@ -750,6 +753,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 .ft-ci svg{margin-top:4px;color:var(--gold)}
 .ft-ci small{display:block;font-size:11.5px;color:#BFA19B}
 .ft-ci b{font-weight:600;color:#fff;font-size:15px;letter-spacing:.02em}
+.ft-trust[hidden]{display:none}
 .ft-trust{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:16px;color:#D9C2BC;font-size:12.5px}
 .ft-trust a{display:inline-block;background:#fff;border-radius:12px;padding:8px;line-height:0}
 .ft-trust img{width:84px;height:auto;min-height:60px}
@@ -759,7 +763,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 .ft-by:active{color:#fff}
 .ft-top{width:40px;height:40px;border-radius:50%;border:1px solid rgba(198,165,122,.5);display:grid;place-items:center;color:#fff;transition:transform .16s ease-out}
 .ft-top:active{transform:scale(.92)}
-@media (max-width:767px){.ft-bottom{flex-direction:column;text-align:center}.ft-top{position:absolute;left:16px;top:12px}}
+@media (max-width:767px){.ft-bottom{flex-direction:column;text-align:center;padding-right:64px;padding-left:64px}.ft-top{position:absolute;right:16px;top:50%;transform:translateY(-50%)}.ft-top:active{transform:translateY(-50%) scale(.92)}}
 @media (min-width:768px){
   .ft-ig{grid-template-columns:1fr 1.6fr;align-items:center;gap:40px;padding-top:54px;padding-bottom:46px}
   .ft-ig h3{font-size:26px}
@@ -963,7 +967,8 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261113b"></script>
+<script src="assets/store.js?v=20261113c"></script>
+<script>(()=>{const i=document.querySelector(".ft-trust img");if(!i)return;const hide=()=>{if(!i.naturalWidth)i.closest(".ft-trust").hidden=true};i.addEventListener("error",hide);if(i.complete)hide()})();</script>
 <script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>
 </html>

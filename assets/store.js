@@ -1221,6 +1221,7 @@
     $('header').classList.toggle('scrolled', scrollY > 10);
     // top strip matches what's under Safari's address bar: the maroon announcement, then the white header
     document.documentElement.classList.toggle('at-top', !!ann && scrollY < ann.offsetHeight - 2);
+    document.documentElement.classList.toggle('at-bottom', innerHeight + scrollY > document.documentElement.scrollHeight - ($('footer')?.offsetHeight || 0) * .5);
   };
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
   // iOS 26: after the keyboard closes, fixed layers (WhatsApp button, bars) can stay where the keyboard top
