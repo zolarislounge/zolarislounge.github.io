@@ -80,7 +80,9 @@ if (window.__zlEarly) window.__zlEarly.catch(() => { });
 .ft-trust a{display:inline-block;background:#fff;border-radius:12px;padding:8px;line-height:0}
 .ft-trust img{width:84px;height:auto;min-height:60px}
 .ft-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid rgba(198,165,122,.22);padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));font-size:11.5px;color:#BFA19B}
-.ft-by{font-family:var(--sans);letter-spacing:.04em}
+.ft-by{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);letter-spacing:.04em;color:#BFA19B;min-height:36px;transition:color .2s}
+.ft2 .ft-by svg{width:16px;height:16px;color:var(--gold)}
+.ft-by:active{color:#fff}
 .ft-top{width:40px;height:40px;border-radius:50%;border:1px solid rgba(198,165,122,.5);display:grid;place-items:center;color:#fff;transition:transform .16s ease-out}
 .ft-top:active{transform:scale(.92)}
 @media (max-width:767px){.ft-bottom{flex-direction:column;text-align:center}.ft-top{position:absolute;left:16px;top:12px}}
@@ -851,7 +853,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
   </div>
   <div class="ft-bottom wrap">
     <span>© ۱۴۰۵ Zolaris Lounge · تمام حقوق محفوظ است</span>
-    <span class="ft-by">طراحی و توسعه: <span dir="ltr">Webbuilder_ir</span></span>
+    <a class="ft-by" href="https://instagram.com/webbuilder_ir" target="_blank" rel="noopener" aria-label="اینستاگرام Webbuilder_ir">طراحی و توسعه: <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg><span dir="ltr">Webbuilder_ir</span></a>
     <button class="ft-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="بازگشت به بالا"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
   </div>
 </footer>
