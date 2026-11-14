@@ -862,8 +862,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
         <a href="tel:09121816762" aria-label="تماس"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg></a>
       </div>
     </div>
-    <details class="ft-col" open><summary>دسته‌بندی‌ها<svg class="ft-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
-      <li><a href="#shop" data-cat="0">همه‌ی محصولات</a></li><li><a href="#shop" data-cat="1">بافت و پلیور</a></li><li><a href="#shop" data-cat="2">مانتو، کت و جلیقه</a></li><li><a href="#shop" data-cat="3">پالتو</a></li><li><a href="#shop" data-cat="10">بامبرجکت</a></li></ul></details>
+    <details class="ft-col" open><summary>دسته‌بندی‌ها<svg class="ft-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><ul id="ftCats"><li><a href="./#shop" data-cat="0">همه‌ی محصولات</a></li></ul></details>
     <details class="ft-col"><summary>خدمات مشتریان<svg class="ft-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
       <li><a href="#" data-open="acct">حساب کاربری</a></li><li><a href="#" data-open="acct">پیگیری سفارش</a></li><li><a href="#" id="ftFav">علاقه‌مندی‌ها</a></li><li><a href="#" data-open="cart">سبد خرید</a></li>
       <li><a href="https://wa.me/989121816762?text=%D8%B3%D9%84%D8%A7%D9%85" target="_blank" rel="noopener">راهنمای سایز و خرید</a></li></ul></details>
@@ -972,7 +971,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261113c"></script>
+<script src="assets/store.js?v=20261114a"></script>
 <script>(()=>{const i=document.querySelector(".ft-trust img");if(!i)return;const hide=()=>{if(!i.naturalWidth)i.closest(".ft-trust").hidden=true};i.addEventListener("error",hide);if(i.complete)hide()})();</script>
 <script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>

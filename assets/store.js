@@ -255,7 +255,11 @@
     }
   }
   function drawCats() {
-    $('#menuList').innerHTML = ['صفحه اصلی', ...CATS, 'تماس با ما'].map((c, i) => `<a href="${i === CATS.length + 1 ? '#contact' : '#shop'}" data-cat="${i - 1}"${i - 1 === cat ? ' class="on"' : ''}>${esc(c)}<span>‹</span></a>`).join('');
+    // هر دسته آدرس واقعی خودش رو داره (?c=knit) تا گوگل بتونه زیرلینک‌های دسته رو زیر نتیجه‌ی سایت نشون بده
+    const catHref = i => i < 0 ? './' : i >= CATS.length ? '#contact' : CKEYS[i] ? `?c=${encodeURIComponent(CKEYS[i])}` : './#shop';
+    $('#menuList').innerHTML = ['صفحه اصلی', ...CATS, 'تماس با ما'].map((c, i) => `<a href="${catHref(i - 1)}" data-cat="${i - 1}"${i - 1 === cat ? ' class="on"' : ''}>${esc(c)}<span>‹</span></a>`).join('');
+    const fc = $('#ftCats');
+    if (fc) fc.innerHTML = CATS.map((c, i) => [c, i]).filter(([c, i]) => !i || products.some(p => !p.sample && (CKEYS[i] ? p.category === CKEYS[i] : p.category_label === c))).slice(0, 7).map(([c, i]) => `<li><a href="${catHref(i)}" data-cat="${i}">${i ? esc(c) : 'همه‌ی محصولات'}</a></li>`).join('');
     $('#fcat').innerHTML = CATS.map((c, i) => `<button data-fc="${i}"${i === cat ? ' class="on"' : ''}>${esc(c)}</button>`).join('');
   }
   function drawSizes() {
@@ -274,8 +278,22 @@
     const y = el.getBoundingClientRect().top + window.scrollY - head;
     window.scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
-  function setCat(i) {
+  // عنوان، توضیح و آدرس اصلی صفحه برای گوگل و اشتراک‌گذاری (دسته یا محصول باز)
+  const BASE_TITLE = document.title, BASE_DESC = document.querySelector('meta[name=description]')?.content || '';
+  function setMeta(title, desc, path) {
+    document.title = title || BASE_TITLE;
+    const d = document.querySelector('meta[name=description]'); if (d) d.content = desc || BASE_DESC;
+    const c = document.querySelector('link[rel=canonical]'); if (c) c.href = 'https://zolaris.ir/' + (path || '');
+  }
+  function catMeta() {
+    const k = CKEYS[cat];
+    if (cat && k) setMeta(`${CATS[cat]} | زولاریس Zolaris Lounge`, `خرید آنلاین ${CATS[cat]} زنانه از زولاریس (Zolaris Lounge) — ارسال به سراسر ایران و پرداخت امن.`, `?c=${encodeURIComponent(k)}`);
+    else setMeta();
+  }
+  function setCat(i, keepUrl) {
     cat = i >= 0 && i < CATS.length ? i : 0; favOnly = false;
+    if (!keepUrl) { const u = new URL(location.href); if (cat && CKEYS[cat]) u.searchParams.set('c', CKEYS[cat]); else u.searchParams.delete('c'); u.searchParams.delete('p'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); }
+    catMeta();
     $$('[data-fc]').forEach(b => b.classList.toggle('on', +b.dataset.fc === cat));
     $$('#menuList a').forEach(a => a.classList.toggle('on', +a.dataset.cat === cat));
     render();
@@ -286,6 +304,8 @@
   function setProductUrl(id) {
     const u = new URL(location.href);
     if (id) u.searchParams.set('p', id); else u.searchParams.delete('p');
+    const p = id && products.find(x => x.id === id);
+    if (p) setMeta(`${p.name} | زولاریس`, `${p.name}${p.category_label ? ' — ' + p.category_label : ''} | خرید آنلاین از زولاریس (Zolaris Lounge)، ارسال به سراسر ایران.`, `?p=${id}`); else catMeta();
     if (u.href !== location.href) history.replaceState(history.state, '', u.pathname + u.search + u.hash);
   }
   async function shareProduct(p) {
@@ -1240,6 +1260,8 @@
   Promise.all([loadProducts(), loadUser()]).then(() => {
     if (needsName()) { drawAcct(); open('acct'); }
     // لینک مستقیم محصول: zolaris.ir/?p=12
+    const ck = new URLSearchParams(location.search).get('c');
+    if (ck && CKEYS.includes(ck)) { setCat(CKEYS.indexOf(ck), true); requestAnimationFrame(() => scrollToEl($('#shop'))); }
     const pid = +new URLSearchParams(location.search).get('p');
     if (pid && !needsName()) { if (products.some(x => x.id === pid)) openProduct(pid); else setProductUrl(null); }
     return handleReturn();
