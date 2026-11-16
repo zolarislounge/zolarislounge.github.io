@@ -46,7 +46,7 @@
   }
   const ERR = {
     HG_LOGIN: 'برای ثبت سفارش اول وارد حساب شو', HG_TOO_MANY: 'چند سفارش پشت هم ثبت کردی؛ چند دقیقه دیگه دوباره امتحان کن',
-    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_NAME: 'نام و نام خانوادگی گیرنده رو کامل بنویس', HG_ADDR: 'آدرس رو کامل بنویس: شهر، خیابان، پلاک و واحد', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
+    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_NAME: 'نام و نام خانوادگی گیرنده رو کامل بنویس', HG_ADDR: 'آدرس رو کامل بنویس: شهر، خیابان، پلاک و واحد', HG_POSTAL: 'کد پستی ۱۰ رقمی رو وارد کن', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
     HG_ITEMS: 'سبد خرید معتبر نیست؛ صفحه رو تازه کن', HG_STOCK: 'موجودی کافی نیست', HG_GONE: 'این محصول دیگه موجود نیست',
     HG_COUPON_USED: 'قبلاً از این کد تخفیف استفاده کردی', HG_COUPON: 'کد تخفیف معتبر نیست یا تموم شده',
   };
@@ -1031,6 +1031,10 @@
     // نام و نام خانوادگی از پروفایل، جدا از هم
     const fullInit = (profile?.full_name || '').replace(/\s+/g, ' ').trim(), sp = fullInit.indexOf(' ');
     const fnInit = sp > 0 ? fullInit.slice(0, sp) : fullInit, lnInit = sp > 0 ? fullInit.slice(sp + 1) : '';
+    // کد پستی جدا از آدرس؛ اگه قبلاً با آدرس ذخیره شده، جداش می‌کنیم
+    const ZIP_TAIL = /\s*[—-]?\s*کد پستی:?\s*([0-9۰-۹]{10})\s*$/;
+    const addr0 = profile?.address || '', zm = addr0.match(ZIP_TAIL);
+    const addrInit = zm ? addr0.replace(ZIP_TAIL, '') : addr0, zipInit = zm ? toEn(zm[1]) : '';
     b.innerHTML = `<form class="form" id="coF">
       <div class="sumbox">${lines.map(l => `<div><span><bdi>${esc(l.p.name)}${l.variant ? ' (' + esc(l.variant) + ')' : ''}</bdi> × ${fa(l.qty)}</span><span>${toman(priceOf(l.p, l.variant) * l.qty)}</span></div>`).join('')}
         <div id="coDisc" hidden class="ok"><span>تخفیف</span><span></span></div>
@@ -1038,7 +1042,8 @@
       <div class="co-2"><label><span>نام <em class="req">*</em></span><input class="fld" name="fn" maxlength="40" autocomplete="given-name" required placeholder="مثلاً سارا" value="${esc(fnInit)}"><small class="fld-err" data-e="fn"></small></label>
         <label><span>نام خانوادگی <em class="req">*</em></span><input class="fld" name="ln" maxlength="60" autocomplete="family-name" required placeholder="مثلاً محمدی" value="${esc(lnInit)}"><small class="fld-err" data-e="ln"></small></label></div>
       <label><span>شماره موبایل <em class="req">*</em></span><input class="fld ltr" name="p" type="tel" inputmode="numeric" autocomplete="tel" required placeholder="09xxxxxxxxx" value="${esc(normPhone(profile?.phone || user.phone) || '')}"><small class="fld-err" data-e="p"></small></label>
-      <label><span>آدرس کامل پستی <em class="req">*</em></span><textarea class="fld" name="a" rows="3" maxlength="600" autocomplete="street-address" required placeholder="استان، شهر، خیابان، کوچه، پلاک، واحد و کد پستی">${esc(profile?.address || '')}</textarea><small class="fld-err" data-e="a"></small></label>
+      <label><span>آدرس کامل پستی <em class="req">*</em></span><textarea class="fld" name="a" rows="3" maxlength="600" autocomplete="street-address" required placeholder="استان، شهر، خیابان، کوچه، پلاک و واحد">${esc(addrInit)}</textarea><small class="fld-err" data-e="a"></small></label>
+      <label><span>کد پستی <em class="req">*</em></span><input class="fld ltr" name="z" inputmode="numeric" autocomplete="postal-code" maxlength="12" required placeholder="۱۰ رقم، بدون خط تیره" value="${esc(zipInit)}"><small class="fld-err" data-e="z"></small></label>
       <label>توضیحات (اختیاری)<input class="fld" name="t" maxlength="600"></label>
       <div class="cpn"><input class="fld ltr" name="c" placeholder="کد تخفیف" autocomplete="off"><button type="button" class="btn btn-o" id="coC">اعمال</button></div>
       <p class="muted">${online ? 'بعد از ثبت، به درگاه امن زیبال می‌ری و پرداخت رو انجام می‌دی.' : 'بعد از ثبت سفارش، برای هماهنگی پرداخت (کارت‌به‌کارت) و ارسال باهات تماس می‌گیریم.'}</p>
@@ -1046,7 +1051,8 @@
       <p class="err" id="coE"></p></form>`;
     const f = $('#coF');
     const fieldErr = (name, msg) => { const el = f[name], e = f.querySelector(`[data-e="${name}"]`); el.classList.toggle('bad', !!msg); if (e) e.textContent = msg || ''; return !!msg; };
-    ['fn', 'ln', 'p', 'a'].forEach(n => f[n].addEventListener('input', () => { if (f[n].classList.contains('bad')) fieldErr(n, ''); }));
+    f.z.addEventListener('input', () => { const v = toEn(f.z.value).replace(/\D/g, '').slice(0, 10); if (f.z.value !== v) f.z.value = v; });
+    ['fn', 'ln', 'p', 'a', 'z'].forEach(n => f[n].addEventListener('input', () => { if (f[n].classList.contains('bad')) fieldErr(n, ''); }));
     const drawTot = () => { const d = disc(); $('#coDisc').hidden = !d; $('#coDisc span:last-child').textContent = '− ' + toman(d); $('#coTot').textContent = toman(sub - d); };
     $('#coC').onclick = async () => {
       const code = toEn(f.c.value).trim().toUpperCase();
@@ -1064,25 +1070,27 @@
       const clean = v => v.replace(/\s+/g, ' ').trim();
       const fn = clean(f.fn.value), ln = clean(f.ln.value), addr = f.a.value.replace(/[ \t]+/g, ' ').trim();
       f.fn.value = fn; f.ln.value = ln;
-      const phone = normPhone(f.p.value);
+      const phone = normPhone(f.p.value), zip = toEn(f.z.value).replace(/\D/g, '');
       const bads = [
         fieldErr('fn', !fn ? 'نام رو بنویس' : !NAME_RE.test(fn) ? 'نام فقط باید شامل حروف باشه' : ''),
         fieldErr('ln', !ln ? 'نام خانوادگی رو بنویس' : !NAME_RE.test(ln) ? 'نام خانوادگی فقط باید شامل حروف باشه' : ''),
         fieldErr('p', !f.p.value.trim() ? 'شماره موبایل رو بنویس' : !phone ? 'شماره موبایل درست نیست (مثلاً ۰۹۱۲۳۴۵۶۷۸۹)' : ''),
         fieldErr('a', !addr ? 'آدرس رو بنویس' : addr.replace(/\s/g, '').length < 15 ? 'آدرس رو کامل بنویس: شهر، خیابان، پلاک و واحد' : ''),
+        fieldErr('z', !zip ? 'کد پستی رو بنویس' : !/^[1-9]\d{9}$/.test(zip) ? 'کد پستی باید ۱۰ رقم باشه' : ''),
       ];
-      const first = ['fn', 'ln', 'p', 'a'][bads.indexOf(true)];
+      const first = ['fn', 'ln', 'p', 'a', 'z'][bads.indexOf(true)];
+      const fullAddr = addr.replace(ZIP_TAIL, '') + ' — کد پستی: ' + zip;
       if (first) { f[first].focus(); f[first].scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
       const nm = fn + ' ' + ln;
       const go = $('#coGo'); go.disabled = true; go.textContent = 'در حال ثبت…';
       try {
         const r = await q(sb.rpc('place_order', {
           p_items: lines.map(l => ({ id: l.id, qty: l.qty, variant: l.variant, name: l.p.name })),
-          p_name: nm, p_phone: phone, p_address: addr, p_note: f.t.value.trim() || null,
+          p_name: nm, p_phone: phone, p_address: fullAddr, p_note: f.t.value.trim() || null,
           p_coupon: coupon ? coupon.code : (toEn(f.c.value).trim().toUpperCase() || null),
         }));
         cart = []; saveCart(); renderCart();
-        saveProfile(profile?.full_name || nm, addr).catch(() => { });
+        saveProfile(profile?.full_name || nm, fullAddr).catch(() => { });
         if (source) sb.rpc('set_order_source', { p_tracking: r.tracking_code, p_source: source }).then(() => { }, () => { });
         loadProducts();
         if (r.needs_payment) return pay(r.tracking_code, r.total);
