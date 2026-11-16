@@ -1,0 +1,25 @@
+name: Shop snapshot
+# Keeps assets/snap/ (products + card images) in sync with the database every 10 minutes,
+# so the first screen loads from the site itself (Iranian CDN) instead of the server abroad.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: snapshot
+  cancel-in-progress: false
+jobs:
+  snap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/snapshot.py
+      - name: Commit if changed
+        run: |
+          git add -A assets/snap
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git -c user.name="zolaris-bot" -c user.email="actions@users.noreply.github.com" commit -m "Update shop snapshot"
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -105,7 +105,9 @@
   const norm = t => toEn(String(t || '')).replace(/ك/g, 'ک').replace(/[يى]/g, 'ی').replace(/\u200c/g, ' ').toLowerCase();
   // عکس کوچیک (حدود ۶۰۰px) برای کارت‌ها؛ پنل موقع آپلود کنار هر عکس می‌سازه (…/x.jpg → …/x.jpg.t.jpg).
   // اگه نبود (عکس‌های قدیمی‌تر)، خودِ عکس اصلی لود می‌شه.
-  const thumbOf = u => /\/storage\/v1\/object\/public\/image\/products\/[^/?#]+\.(jpe?g|png|webp)$/i.test(u || '') ? u + '.t.jpg' : u;
+  // عکس کارت از «نسخه‌ی آماده»ی داخل سایت (assets/snap، از CDN ایران) اگه موجود باشه
+  let SNAP_IMG = {};
+  const thumbOf = u => SNAP_IMG[u] || (/\/storage\/v1\/object\/public\/image\/products\/[^/?#]+\.(jpe?g|png|webp)$/i.test(u || '') ? u + '.t.jpg' : u);
   const thumbImg = (u, alt = '', extra = '') => { const t = thumbOf(u); return `<img src="${esc(t)}"${t !== u ? ` data-full="${esc(u)}" onerror="this.onerror=null;this.src=this.dataset.full"` : ''} alt="${esc(alt)}" loading="lazy"${extra}>`; };
   function descHtml(t) {
     return String(t || '').replace(/\r/g, '').trim().split(/\n\s*\n/).map(block => {
@@ -231,9 +233,17 @@
   async function loadProducts(attempt = 0) {
     if (!sb) { state = 'error'; render(); return; }
     if (!attempt && state === 'loading') {
+      // نسخه‌ی آماده‌ی داخل سایت (هر ۱۰ دقیقه از دیتابیس ساخته می‌شه) — از CDN ایران، تقریباً فوری
+      const snap = await Promise.race([window.__zlSnap || Promise.resolve(null), new Promise(r => setTimeout(() => r(null), 4000))]).catch(() => null);
+      if (snap && snap.imgs) SNAP_IMG = snap.imgs;
       const c = ls.get(CACHE_KEY);
-      if (c && Array.isArray(c.rows) && c.rows.length) { fromCache = true; applyData(c.rows, c.list); }
-      if (c && c.ann) applyAnnounce(c.ann);
+      // اگه قبلاً سایت رو با اطلاعات زنده دیده، همون (جدیدتره)؛ وگرنه نسخه‌ی آماده
+      const useSnap = snap && Array.isArray(snap.rows) && snap.rows.length && !(c && Array.isArray(c.rows) && c.rows.length);
+      if (useSnap) {
+        const set = Object.fromEntries((snap.sets || []).map(r => [r.key, r.value]));
+        fromCache = true; applyData(snap.rows, Array.isArray(set.categories?.list) ? set.categories.list : null);
+        if (set.announce) applyAnnounce(set.announce);
+      } else if (c && Array.isArray(c.rows) && c.rows.length) { fromCache = true; applyData(c.rows, c.list); if (c.ann) applyAnnounce(c.ann); }
     }
     try {
       // بار اول از درخواستی که از <head> شروع شده استفاده می‌شه؛ تلاش‌های بعدی از راه معمول
