@@ -46,7 +46,7 @@
   }
   const ERR = {
     HG_LOGIN: 'برای ثبت سفارش اول وارد حساب شو', HG_TOO_MANY: 'چند سفارش پشت هم ثبت کردی؛ چند دقیقه دیگه دوباره امتحان کن',
-    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_NAME: 'نام و نام خانوادگی گیرنده رو کامل بنویس', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
+    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_NAME: 'نام و نام خانوادگی گیرنده رو کامل بنویس', HG_ADDR: 'آدرس رو کامل بنویس: شهر، خیابان، پلاک و واحد', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
     HG_ITEMS: 'سبد خرید معتبر نیست؛ صفحه رو تازه کن', HG_STOCK: 'موجودی کافی نیست', HG_GONE: 'این محصول دیگه موجود نیست',
     HG_COUPON_USED: 'قبلاً از این کد تخفیف استفاده کردی', HG_COUPON: 'کد تخفیف معتبر نیست یا تموم شده',
   };
@@ -1028,20 +1028,25 @@
     const disc = () => !coupon ? 0 : Math.min(sub, coupon.discount_type === 'percent' ? Math.round(sub * Math.min(coupon.discount_value, 100) / 100) : Math.round(coupon.discount_value));
     const online = payMode === 'live';
     const b = $('#coBody');
+    // نام و نام خانوادگی از پروفایل، جدا از هم
+    const fullInit = (profile?.full_name || '').replace(/\s+/g, ' ').trim(), sp = fullInit.indexOf(' ');
+    const fnInit = sp > 0 ? fullInit.slice(0, sp) : fullInit, lnInit = sp > 0 ? fullInit.slice(sp + 1) : '';
     b.innerHTML = `<form class="form" id="coF">
       <div class="sumbox">${lines.map(l => `<div><span><bdi>${esc(l.p.name)}${l.variant ? ' (' + esc(l.variant) + ')' : ''}</bdi> × ${fa(l.qty)}</span><span>${toman(priceOf(l.p, l.variant) * l.qty)}</span></div>`).join('')}
         <div id="coDisc" hidden class="ok"><span>تخفیف</span><span></span></div>
         <div class="tot"><span>مبلغ قابل پرداخت</span><b id="coTot">${toman(sub)}</b></div></div>
-      <label>نام و نام خانوادگی گیرنده <em class="req">*</em><input class="fld" name="n" maxlength="100" autocomplete="name" required minlength="5" placeholder="مثلاً سارا محمدی" value="${esc(profile?.full_name || '')}"><small class="fld-err" id="coNE"></small></label>
-      <label>شماره موبایل<input class="fld ltr" name="p" type="tel" inputmode="numeric" required value="${esc(normPhone(profile?.phone || user.phone) || '')}"></label>
-      <label>آدرس کامل پستی (با کد پستی)<textarea class="fld" name="a" rows="3" maxlength="600" autocomplete="street-address" required>${esc(profile?.address || '')}</textarea></label>
+      <div class="co-2"><label><span>نام <em class="req">*</em></span><input class="fld" name="fn" maxlength="40" autocomplete="given-name" required placeholder="مثلاً سارا" value="${esc(fnInit)}"><small class="fld-err" data-e="fn"></small></label>
+        <label><span>نام خانوادگی <em class="req">*</em></span><input class="fld" name="ln" maxlength="60" autocomplete="family-name" required placeholder="مثلاً محمدی" value="${esc(lnInit)}"><small class="fld-err" data-e="ln"></small></label></div>
+      <label><span>شماره موبایل <em class="req">*</em></span><input class="fld ltr" name="p" type="tel" inputmode="numeric" autocomplete="tel" required placeholder="09xxxxxxxxx" value="${esc(normPhone(profile?.phone || user.phone) || '')}"><small class="fld-err" data-e="p"></small></label>
+      <label><span>آدرس کامل پستی <em class="req">*</em></span><textarea class="fld" name="a" rows="3" maxlength="600" autocomplete="street-address" required placeholder="استان، شهر، خیابان، کوچه، پلاک، واحد و کد پستی">${esc(profile?.address || '')}</textarea><small class="fld-err" data-e="a"></small></label>
       <label>توضیحات (اختیاری)<input class="fld" name="t" maxlength="600"></label>
       <div class="cpn"><input class="fld ltr" name="c" placeholder="کد تخفیف" autocomplete="off"><button type="button" class="btn btn-o" id="coC">اعمال</button></div>
       <p class="muted">${online ? 'بعد از ثبت، به درگاه امن زیبال می‌ری و پرداخت رو انجام می‌دی.' : 'بعد از ثبت سفارش، برای هماهنگی پرداخت (کارت‌به‌کارت) و ارسال باهات تماس می‌گیریم.'}</p>
       <button class="btn btn-m" id="coGo">${online ? 'ثبت و پرداخت آنلاین' : 'ثبت سفارش'}</button>
       <p class="err" id="coE"></p></form>`;
     const f = $('#coF');
-    f.n.addEventListener('input', () => { if (f.n.classList.contains('bad')) { f.n.classList.remove('bad'); $('#coNE').textContent = ''; } });
+    const fieldErr = (name, msg) => { const el = f[name], e = f.querySelector(`[data-e="${name}"]`); el.classList.toggle('bad', !!msg); if (e) e.textContent = msg || ''; return !!msg; };
+    ['fn', 'ln', 'p', 'a'].forEach(n => f[n].addEventListener('input', () => { if (f[n].classList.contains('bad')) fieldErr(n, ''); }));
     const drawTot = () => { const d = disc(); $('#coDisc').hidden = !d; $('#coDisc span:last-child').textContent = '− ' + toman(d); $('#coTot').textContent = toman(sub - d); };
     $('#coC').onclick = async () => {
       const code = toEn(f.c.value).trim().toUpperCase();
@@ -1055,22 +1060,29 @@
     f.onsubmit = async e => {
       e.preventDefault();
       const err = $('#coE'); err.textContent = '';
-      // نام و نام خانوادگی اجباری و کامل (حداقل دو کلمه، فقط حروف)
-      const nm = f.n.value.replace(/\s+/g, ' ').trim(); f.n.value = nm;
-      const nmBad = !nm ? 'نام و نام خانوادگی گیرنده رو بنویس' : (!NAME_RE.test(nm) || nm.split(' ').length < 2 || nm.split(' ').some(w => w.replace(/\u200c/g, '').length < 2)) ? 'نام و نام خانوادگی رو کامل بنویس (مثلاً سارا محمدی)' : '';
-      $('#coNE').textContent = nmBad; f.n.classList.toggle('bad', !!nmBad);
-      if (nmBad) { f.n.focus(); f.n.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+      // همه‌ی فیلدهای گیرنده اجباری: نام، نام خانوادگی، موبایل، آدرس کامل
+      const clean = v => v.replace(/\s+/g, ' ').trim();
+      const fn = clean(f.fn.value), ln = clean(f.ln.value), addr = f.a.value.replace(/[ \t]+/g, ' ').trim();
+      f.fn.value = fn; f.ln.value = ln;
       const phone = normPhone(f.p.value);
-      if (!phone) { err.textContent = 'شماره موبایل درست نیست'; return; }
+      const bads = [
+        fieldErr('fn', !fn ? 'نام رو بنویس' : !NAME_RE.test(fn) ? 'نام فقط باید شامل حروف باشه' : ''),
+        fieldErr('ln', !ln ? 'نام خانوادگی رو بنویس' : !NAME_RE.test(ln) ? 'نام خانوادگی فقط باید شامل حروف باشه' : ''),
+        fieldErr('p', !f.p.value.trim() ? 'شماره موبایل رو بنویس' : !phone ? 'شماره موبایل درست نیست (مثلاً ۰۹۱۲۳۴۵۶۷۸۹)' : ''),
+        fieldErr('a', !addr ? 'آدرس رو بنویس' : addr.replace(/\s/g, '').length < 15 ? 'آدرس رو کامل بنویس: شهر، خیابان، پلاک و واحد' : ''),
+      ];
+      const first = ['fn', 'ln', 'p', 'a'][bads.indexOf(true)];
+      if (first) { f[first].focus(); f[first].scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+      const nm = fn + ' ' + ln;
       const go = $('#coGo'); go.disabled = true; go.textContent = 'در حال ثبت…';
       try {
         const r = await q(sb.rpc('place_order', {
           p_items: lines.map(l => ({ id: l.id, qty: l.qty, variant: l.variant, name: l.p.name })),
-          p_name: f.n.value.trim(), p_phone: phone, p_address: f.a.value.trim(), p_note: f.t.value.trim() || null,
+          p_name: nm, p_phone: phone, p_address: addr, p_note: f.t.value.trim() || null,
           p_coupon: coupon ? coupon.code : (toEn(f.c.value).trim().toUpperCase() || null),
         }));
         cart = []; saveCart(); renderCart();
-        saveProfile(profile?.full_name || f.n.value.trim(), f.a.value.trim()).catch(() => { });
+        saveProfile(profile?.full_name || nm, addr).catch(() => { });
         if (source) sb.rpc('set_order_source', { p_tracking: r.tracking_code, p_source: source }).then(() => { }, () => { });
         loadProducts();
         if (r.needs_payment) return pay(r.tracking_code, r.total);

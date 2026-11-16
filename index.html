@@ -812,6 +812,8 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 .fld.bad{border-color:#B3261E!important;box-shadow:0 0 0 3px rgba(179,38,30,.12)}
 .fld-err{display:block;color:#B3261E;font-size:12px;margin-top:4px}
 .fld-err:empty{display:none}
+.co-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.co-2 label{min-width:0}
 </style>
 </head>
 <body>
@@ -977,7 +979,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261117a"></script>
+<script src="assets/store.js?v=20261117b"></script>
 <script>(()=>{const i=document.querySelector(".ft-trust img");if(!i)return;const hide=()=>{if(!i.naturalWidth)i.closest(".ft-trust").hidden=true};i.addEventListener("error",hide);if(i.complete)hide()})();</script>
 <script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>
