@@ -46,7 +46,7 @@
   }
   const ERR = {
     HG_LOGIN: 'برای ثبت سفارش اول وارد حساب شو', HG_TOO_MANY: 'چند سفارش پشت هم ثبت کردی؛ چند دقیقه دیگه دوباره امتحان کن',
-    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
+    HG_REQUIRED: 'نام و آدرس رو کامل وارد کن', HG_NAME: 'نام و نام خانوادگی گیرنده رو کامل بنویس', HG_BAD_PHONE: 'شماره موبایل درست نیست', HG_BLOCKED: 'امکان ثبت سفارش برای این حساب وجود نداره؛ با پشتیبانی تماس بگیر',
     HG_ITEMS: 'سبد خرید معتبر نیست؛ صفحه رو تازه کن', HG_STOCK: 'موجودی کافی نیست', HG_GONE: 'این محصول دیگه موجود نیست',
     HG_COUPON_USED: 'قبلاً از این کد تخفیف استفاده کردی', HG_COUPON: 'کد تخفیف معتبر نیست یا تموم شده',
   };
@@ -1032,7 +1032,7 @@
       <div class="sumbox">${lines.map(l => `<div><span><bdi>${esc(l.p.name)}${l.variant ? ' (' + esc(l.variant) + ')' : ''}</bdi> × ${fa(l.qty)}</span><span>${toman(priceOf(l.p, l.variant) * l.qty)}</span></div>`).join('')}
         <div id="coDisc" hidden class="ok"><span>تخفیف</span><span></span></div>
         <div class="tot"><span>مبلغ قابل پرداخت</span><b id="coTot">${toman(sub)}</b></div></div>
-      <label>نام و نام خانوادگی گیرنده<input class="fld" name="n" maxlength="100" autocomplete="name" required value="${esc(profile?.full_name || '')}"></label>
+      <label>نام و نام خانوادگی گیرنده <em class="req">*</em><input class="fld" name="n" maxlength="100" autocomplete="name" required minlength="5" placeholder="مثلاً سارا محمدی" value="${esc(profile?.full_name || '')}"><small class="fld-err" id="coNE"></small></label>
       <label>شماره موبایل<input class="fld ltr" name="p" type="tel" inputmode="numeric" required value="${esc(normPhone(profile?.phone || user.phone) || '')}"></label>
       <label>آدرس کامل پستی (با کد پستی)<textarea class="fld" name="a" rows="3" maxlength="600" autocomplete="street-address" required>${esc(profile?.address || '')}</textarea></label>
       <label>توضیحات (اختیاری)<input class="fld" name="t" maxlength="600"></label>
@@ -1041,6 +1041,7 @@
       <button class="btn btn-m" id="coGo">${online ? 'ثبت و پرداخت آنلاین' : 'ثبت سفارش'}</button>
       <p class="err" id="coE"></p></form>`;
     const f = $('#coF');
+    f.n.addEventListener('input', () => { if (f.n.classList.contains('bad')) { f.n.classList.remove('bad'); $('#coNE').textContent = ''; } });
     const drawTot = () => { const d = disc(); $('#coDisc').hidden = !d; $('#coDisc span:last-child').textContent = '− ' + toman(d); $('#coTot').textContent = toman(sub - d); };
     $('#coC').onclick = async () => {
       const code = toEn(f.c.value).trim().toUpperCase();
@@ -1054,6 +1055,11 @@
     f.onsubmit = async e => {
       e.preventDefault();
       const err = $('#coE'); err.textContent = '';
+      // نام و نام خانوادگی اجباری و کامل (حداقل دو کلمه، فقط حروف)
+      const nm = f.n.value.replace(/\s+/g, ' ').trim(); f.n.value = nm;
+      const nmBad = !nm ? 'نام و نام خانوادگی گیرنده رو بنویس' : (!NAME_RE.test(nm) || nm.split(' ').length < 2 || nm.split(' ').some(w => w.replace(/\u200c/g, '').length < 2)) ? 'نام و نام خانوادگی رو کامل بنویس (مثلاً سارا محمدی)' : '';
+      $('#coNE').textContent = nmBad; f.n.classList.toggle('bad', !!nmBad);
+      if (nmBad) { f.n.focus(); f.n.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
       const phone = normPhone(f.p.value);
       if (!phone) { err.textContent = 'شماره موبایل درست نیست'; return; }
       const go = $('#coGo'); go.disabled = true; go.textContent = 'در حال ثبت…';

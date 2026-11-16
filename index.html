@@ -808,6 +808,10 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 @keyframes ad-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.added{transition:opacity .2s}.added-ck circle,.added-ck path{stroke-dashoffset:0;animation:none!important}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.req{color:#B3261E;font-style:normal}
+.fld.bad{border-color:#B3261E!important;box-shadow:0 0 0 3px rgba(179,38,30,.12)}
+.fld-err{display:block;color:#B3261E;font-size:12px;margin-top:4px}
+.fld-err:empty{display:none}
 </style>
 </head>
 <body>
@@ -973,7 +977,7 @@ textarea.fld{height:auto;padding:10px 12px;resize:vertical}
 
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/announce.js?v=20261111c"></script>
-<script src="assets/store.js?v=20261116a"></script>
+<script src="assets/store.js?v=20261117a"></script>
 <script>(()=>{const i=document.querySelector(".ft-trust img");if(!i)return;const hide=()=>{if(!i.naturalWidth)i.closest(".ft-trust").hidden=true};i.addEventListener("error",hide);if(i.complete)hide()})();</script>
 <script>if(matchMedia("(min-width:768px)").matches)document.querySelectorAll(".ft-col").forEach(d=>d.open=true);document.getElementById("ftFav").onclick=e=>{e.preventDefault();document.getElementById("favBtn").click()}</script>
 </body>
